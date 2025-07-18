@@ -14,7 +14,7 @@ It's under development currently. If you want to build a web site using XOOPS, v
 
 Here is an outline of what you need to participate in XOOPS development:
 
-You will need a development environment with at least PHP 7.1 and MySQL 5.6.
+You will need a development environment with at least PHP 7.1 and MySQL 5.6 or equivalent MariaDB.
 
 You will need to interact with [GitHub.com](https://guides.github.com/)
 
