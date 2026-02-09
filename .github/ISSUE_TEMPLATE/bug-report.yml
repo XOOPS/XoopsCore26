@@ -14,7 +14,7 @@ body:
   attributes:
     label: PHP Version
     description: Provide the PHP version that you are using.
-    options: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
+    options: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5 (pre-release)']
     multiple: true
   validations:
     required: true

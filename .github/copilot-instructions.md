@@ -2,6 +2,7 @@
 
 <!-- Generic XOOPS conventions: see .github/xoops-copilot-template.md for reuse in other repos -->
 
+
 ## About This Repository
 
 XoopsCore is the XOOPS 2.6 CMS framework. It provides a modern, PSR-4 autoloaded architecture with the Xoops\ and Xmf\ namespaces, a kernel layer for legacy compatibility, and a full module system for building dynamic web applications.
