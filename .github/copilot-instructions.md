@@ -36,7 +36,7 @@ Composer vendors install to `xoops_lib/vendor/` (non-standard path). PHPUnit con
 
 ## PHP Compatibility
 
-Code must run on PHP 7.2 through 8.5. Do not use features exclusive to PHP 8.0+ (named arguments, match expressions, union type hints in signatures, enums, fibers, readonly properties, intersection types, `never` return type, first-class callable syntax, constructor promotion). CI tests all versions in the matrix.
+Code must run on PHP 7.2 through 8.5. Do not use language features introduced after PHP 7.2, including but not limited to PHP 7.3+ (trailing commas in function calls, flexible heredoc/nowdoc), PHP 7.4+ (typed properties, arrow functions, null coalescing assignment `??=`, numeric literal separators, spread operator in arrays), and PHP 8.0+ (named arguments, match expressions, union type hints in signatures, enums, fibers, readonly properties, intersection types, `never` return type, first-class callable syntax, constructor promotion). CI tests all versions in the matrix.
 
 ## Coding Conventions
 
