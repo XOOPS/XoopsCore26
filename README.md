@@ -1,7 +1,7 @@
-![alt XOOPS CMS](http://xoops.org/images/logoXoops4GithubRepository.png)
+![alt XOOPS CMS](https://xoops.org/images/logoXoops4GithubRepository.png)
 # XOOPS Core
 
-[![Backers on Open Collective](https://opencollective.com/XoopsCore/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/XoopsCore/sponsors/badge.svg)](#sponsors) [![Build Status](https://img.shields.io/travis/XOOPS/XoopsCore/master.svg?style=flat)](https://travis-ci.org/XOOPS/XoopsCore)
+[![Backers on Open Collective](https://opencollective.com/XoopsCore/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/XoopsCore/sponsors/badge.svg)](#sponsors) [![CI](https://github.com/XOOPS/XoopsCore26/actions/workflows/ci.yml/badge.svg)](https://github.com/XOOPS/XoopsCore26/actions/workflows/ci.yml)
 [![Software License](https://img.shields.io/badge/license-GPL-brightgreen.svg?style=flat)](docs/license.txt)
 [![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/XOOPS/XoopsCore.svg?style=flat)](https://scrutinizer-ci.com/g/XOOPS/XoopsCore/code-structure)
 [![Quality Score](https://img.shields.io/scrutinizer/g/XOOPS/XoopsCore.svg?style=flat)](https://scrutinizer-ci.com/g/XOOPS/XoopsCore)
@@ -14,11 +14,11 @@ It's under development currently. If you want to build a web site using XOOPS, v
 
 Here is an outline of what you need to participate in XOOPS development:
 
-You will need a development environment with at least PHP 7.1 and MySQL 5.6 or equivalent MariaDB.
+You will need a development environment with at least PHP 7.2 and MySQL 5.6 or equivalent MariaDB.
 
 You will need to interact with [GitHub.com](https://guides.github.com/)
 
-You will need to have Composer installed. You can get it here: http://getcomposer.org/
+You will need to have Composer installed. You can get it here: https://getcomposer.org/
 
 Fork the [XoopsCore](https://github.com/XOOPS/XoopsCore) repository to your account on GitHub.
 

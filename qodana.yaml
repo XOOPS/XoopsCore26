@@ -8,7 +8,7 @@ profile:
 php:
   version: "7.2"
 
-bootstrap: cp composer.json.dist composer.json && composer install --ignore-platform-reqs --no-interaction --prefer-dist
+bootstrap: cp composer.json.dist composer.json && composer config platform.php 7.2 && composer install --no-interaction --prefer-dist
 
 exclude:
   - name: All

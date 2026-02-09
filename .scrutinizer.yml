@@ -1,4 +1,10 @@
 build:
+  environment:
+    php: 7.4
+  dependencies:
+    before:
+      - cp composer.json.dist composer.json
+      - composer install --no-interaction --prefer-dist
   nodes:
     analysis:
       tests:
