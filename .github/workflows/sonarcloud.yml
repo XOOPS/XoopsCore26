@@ -5,10 +5,15 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: sonarcloud-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sonarcloud:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.repository == 'XOOPS/XoopsCore26'
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -7,7 +7,7 @@
 
 Contributions are **welcome** and will be fully **credited**.
 
-We accept contributions via Pull Requests on [GitHub](https://github.com/XOOPS/XoopsCore).
+We accept contributions via Pull Requests on [GitHub](https://github.com/XOOPS/XoopsCore26).
 
 ## Pull Requests
 
