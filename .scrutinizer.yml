@@ -7,11 +7,11 @@ build:
 
 filter:
   excluded_paths:
-    - 'tests/*'
-    - 'extras/*'
-    - 'console/*'
-    - 'upgrade/*'
-    - 'docs/*'
+    - 'tests/'
+    - 'extras/'
+    - 'console/'
+    - 'upgrade/'
+    - 'docs/'
   dependency_paths:
     - 'xoops_lib/vendor/'
 

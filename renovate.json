@@ -6,6 +6,7 @@
     ":rebaseStalePrs"
   ],
   "labels": ["dependencies"],
+  "separateMinorPatch": true,
   "platformAutomerge": true,
   "packageRules": [
     {

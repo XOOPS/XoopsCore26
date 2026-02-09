@@ -32,21 +32,20 @@ reviews:
       instructions: >-
         Review test code for proper assertions, test isolation, and edge
         case coverage.
+  tools:
+    phpcs:
+      enabled: true
+    phpstan:
+      enabled: true
+    gitleaks:
+      enabled: true
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 90000
 
 chat:
   auto_reply: true
-
-tools:
-  phpcs:
-    enabled: true
-  phpstan:
-    enabled: true
-  gitleaks:
-    enabled: true
-  markdownlint:
-    enabled: true
-  yamllint:
-    enabled: true
-  github-checks:
-    enabled: true
-    timeout_ms: 90000
