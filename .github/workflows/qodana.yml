@@ -8,7 +8,7 @@ on:
 
 jobs:
   qodana:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.repository == 'XOOPS/XoopsCore26'
     permissions:
       contents: read

@@ -12,7 +12,7 @@ concurrency:
 jobs:
   sonarcloud:
     name: SonarCloud Analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     if: github.repository == 'XOOPS/XoopsCore26'
     env:
