@@ -1,0 +1,19 @@
+version: "1.0"
+
+linter: jetbrains/qodana-php:2025.2
+
+profile:
+  name: qodana.recommended
+
+php:
+  version: "7.2"
+
+bootstrap: cp composer.json.dist composer.json && composer config platform.php 7.2 && composer install --no-interaction --prefer-dist
+
+exclude:
+  - name: All
+    paths:
+      - xoops_lib/vendor
+      - extras
+      - upgrade
+      - build

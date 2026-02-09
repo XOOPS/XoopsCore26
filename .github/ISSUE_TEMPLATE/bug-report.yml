@@ -1,0 +1,40 @@
+name: Bug Report
+description: Report a bug or error, providing details about the issue, steps to reproduce, and your environment setup.
+title: "[Bug]: "
+labels: ['Triage', 'Bug']
+body:
+- type: input
+  attributes:
+    label: XOOPS Version
+    description: Provide the XOOPS version that you are using.
+    value: 2.6.0
+  validations:
+    required: true
+- type: dropdown
+  attributes:
+    label: PHP Version
+    description: Provide the PHP version that you are using.
+    options: ['7.2', '7.3', '7.4', '8.0', '8.1', '8.2', '8.3', '8.4', '8.5 (pre-release)']
+    multiple: true
+  validations:
+    required: true
+- type: dropdown
+  attributes:
+    label: Operating System
+    description: Provide the operating system that you are using.
+    options: ['Linux', 'MacOS', 'Windows', 'Other']
+    multiple: true
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Description
+    description: Please provide a detailed description of the issue you are running into.
+  validations:
+    required: true
+- type: textarea
+  attributes:
+    label: Steps to Reproduce
+    description: Please provide detailed steps on how we can reproduce the issue you are reporting. For a shot at getting our "Perfect Storm" label, submit a PR with a failing test!
+  validations:
+    required: true

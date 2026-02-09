@@ -1,0 +1,10 @@
+parameters:
+    level: max
+    paths:
+        - xoops_lib/Xoops
+        - xoops_lib/Xmf
+        - htdocs/kernel
+    excludePaths:
+        - tests/
+        - xoops_lib/vendor/
+    treatPhpDocTypesAsCertain: false

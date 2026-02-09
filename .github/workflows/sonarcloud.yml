@@ -1,0 +1,50 @@
+name: SonarCloud
+on:
+  push:
+    branches: [master]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: sonarcloud-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    if: github.repository == 'XOOPS/XoopsCore26'
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: "8.3"
+          extensions: intl, mbstring, mysqli
+          tools: composer
+          coverage: xdebug
+
+      - name: Prepare composer.json
+        run: cp composer.json.dist composer.json
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --no-interaction --prefer-dist --no-progress
+
+      - name: Ensure build directory exists
+        run: mkdir -p build/logs
+
+      - name: Run tests with coverage
+        run: xoops_lib/vendor/bin/phpunit --colors=always --coverage-clover coverage.clover
+
+      - name: SonarCloud Scan
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
