@@ -3,6 +3,8 @@
 \#*
 *.bak
 .idea/
+
+# XOOPS runtime/config files
 htdocs/mainfile.php
 xoops_data/caches/smarty_cache/*.php
 xoops_data/caches/smarty_compile/*.php
@@ -13,14 +15,37 @@ xoops_data/stash/*
 xoops_data/composer/
 xoops_data/data/secure.php
 xoops_data/logs/
+
+# Composer
 xoops_lib/vendor/
 xoops_lib/composer.lock
+composer.json
+composer.lock
+
+# Uploads
 htdocs/uploads/avatars/
 htdocs/uploads/banners/
 htdocs/uploads/images/
 htdocs/uploads/filemanager/
 htdocs/assets/*/
+
+# Test artifacts
 coverage.clover
-composer.json
-composer.lock
+git-phpcs.phar
 xoopsCIconfigs.php
+
+# Local config overrides (only .dist files are tracked)
+phpunit.xml
+.phpcs.xml
+
+# Build artifacts
+build/
+
+# PHPUnit result cache
+.phpunit.result.cache
+.phpunit.cache/
+
+# Claude local files
+CLAUDE.md
+.claude/
+docs/tasks.md

@@ -1,22 +1,19 @@
-# .scrutinizer.yml
 build:
-    environment:
-        php:
-          version: '7.1.12'
-    dependencies:
-        before:
-            - cp composer.json.dist composer.json
-            - composer install
-    project_setup:
-        override: true
-    tests:
-        override: [php-scrutinizer-run]
+  nodes:
+    analysis:
+      tests:
+        override:
+          - php-scrutinizer-run
+
 filter:
-    excluded_paths:
-        - "tests/*"
-    dependency_paths:
-        - "htdocs/xoops_lib/vendor/"
+  excluded_paths:
+    - 'tests/*'
+    - 'extras/*'
+    - 'console/*'
+    - 'upgrade/*'
+    - 'docs/*'
+  dependency_paths:
+    - 'xoops_lib/vendor/'
+
 tools:
-    external_code_coverage:
-        timeout: 1800   # Timeout in seconds.
-        runs: 1         # Scrutinizer will wait for n code coverage submissions
+  php_analyzer: true

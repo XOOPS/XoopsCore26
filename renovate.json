@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":preserveSemverRanges",
+    ":rebaseStalePrs"
+  ],
+  "labels": ["dependencies"],
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "description": "Group all minor and patch updates together",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Minor and patch dependencies"
+    },
+    {
+      "description": "Auto-merge patch updates after 3-day stability window",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Auto-merge GitHub Actions minor and patch updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Require dashboard approval for major updates",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+early_access: false
+tone_instructions: >-
+  Expert PHP code reviewer. Focus on type safety, PSR-12 compliance,
+  PHP 7.2 compatibility, and security. This is the XOOPS Core CMS framework
+  supporting PHP 7.2 through 8.5 — no PHP 8.0+ language features allowed.
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "xoops_lib/**/*.php"
+      instructions: >-
+        Review for PHP 7.2 compatibility (no union types, named arguments,
+        match expressions, enums, readonly, constructor promotion, fibers,
+        intersection types, never return type, or first-class callable syntax).
+        Check for proper use of declare(strict_types=1), self:: for class
+        constants, and PSR-12 code style.
+    - path: "htdocs/kernel/**/*.php"
+      instructions: >-
+        Review legacy kernel code for PHP 7.2 compatibility and security.
+        Check for SQL injection, XSS, and proper input sanitization.
+    - path: "tests/**/*.php"
+      instructions: >-
+        Review test code for proper assertions, test isolation, and edge
+        case coverage.
+
+chat:
+  auto_reply: true
+
+tools:
+  phpcs:
+    enabled: true
+  phpstan:
+    enabled: true
+  gitleaks:
+    enabled: true
+  markdownlint:
+    enabled: true
+  yamllint:
+    enabled: true
+  github-checks:
+    enabled: true
+    timeout_ms: 90000
