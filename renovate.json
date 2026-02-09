@@ -21,13 +21,6 @@
       "minimumReleaseAge": "3 days"
     },
     {
-      "description": "Auto-merge GitHub Actions minor and patch updates",
-      "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true,
-      "minimumReleaseAge": "3 days"
-    },
-    {
       "description": "Require dashboard approval for major updates",
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true

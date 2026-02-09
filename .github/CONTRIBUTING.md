@@ -11,7 +11,7 @@ We accept contributions via Pull Requests on [GitHub](https://github.com/XOOPS/X
 
 ## Pull Requests
 
-- **[PSR-12 Coding Standard](https://www.php-fig.org/psr/psr-12/)** - The easiest way to apply the conventions is to install [PHP Code Sniffer](http://pear.php.net/package/PHP_CodeSniffer).
+- **[PSR-12 Coding Standard](https://www.php-fig.org/psr/psr-12/)** - The easiest way to apply the conventions is to install [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer) via Composer: `composer require --dev squizlabs/php_codesniffer`.
 - **Add tests!** - We encourage providing tests for your contributions.
 - **Document any change in behavior** - Make sure the `/docs/changelog.txt` and any other relevant documentation are up-to-date.
 - **Consider our release cycle** - We try to follow [Semantic Versioning v2.0.0](http://semver.org/). Randomly breaking public APIs is not an option.
