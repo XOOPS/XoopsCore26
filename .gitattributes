@@ -12,12 +12,12 @@
 *.dist text eol=lf
 
 # Export ignores (not included in dist packages)
-/tests export-ignore
-/docs export-ignore
-/extras export-ignore
-/console export-ignore
-/upgrade export-ignore
-.github/ export-ignore
+/tests/** export-ignore
+/docs/** export-ignore
+/extras/** export-ignore
+/console/** export-ignore
+/upgrade/** export-ignore
+.github/** export-ignore
 .gitattributes export-ignore
 .gitignore export-ignore
 .editorconfig export-ignore

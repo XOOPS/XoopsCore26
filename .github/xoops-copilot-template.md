@@ -15,7 +15,7 @@
 
 ## Project Layout
 
-```
+```text
 {ADJUST THIS TREE TO MATCH YOUR MODULE}
 class/                    # Module classes
 include/                  # Include files (functions, common setup)

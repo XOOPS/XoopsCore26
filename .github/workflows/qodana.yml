@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'XOOPS/XoopsCore'
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       checks: write
     steps:

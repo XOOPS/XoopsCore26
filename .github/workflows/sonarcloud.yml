@@ -10,6 +10,8 @@ jobs:
     name: SonarCloud Analysis
     runs-on: ubuntu-latest
     if: github.repository == 'XOOPS/XoopsCore'
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -37,7 +39,7 @@ jobs:
         run: xoops_lib/vendor/bin/phpunit --colors=always --coverage-clover coverage.clover
 
       - name: SonarCloud Scan
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
