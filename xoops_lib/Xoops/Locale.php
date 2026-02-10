@@ -457,9 +457,12 @@ class Locale
      */
     public static function normalizeLocale($locale, $separator = '_', $withScript = true)
     {
+        if (empty($locale) || !is_string($locale)) {
+            return '';
+        }
         try {
             $keys = Data::explodeLocale($locale);
-            $key = strtolower($keys['language']);
+            $key = strtolower((string) $keys['language']);
             $key .= (empty($keys['script']) || false === $withScript) ?
                 '' : $separator . ucfirst(strtolower($keys['script']));
             $key .= empty($keys['territory']) ? '' : $separator . strtoupper($keys['territory']);

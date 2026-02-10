@@ -42,7 +42,7 @@ class XoopsPrivateMessageHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct(
             $db,
@@ -66,8 +66,8 @@ class XoopsPrivateMessageHandler extends XoopsPersistableObjectHandler
             ->update($this->table)
             ->set('read_msg', ':readmsg')
             ->where('msg_id = :msgid')
-            ->setParameter(':readmsg', 1, ParameterType::INTEGER)
-            ->setParameter(':msgid', (int)$pm->getVar('msg_id'), ParameterType::INTEGER);
+            ->setParameter('readmsg', 1, ParameterType::INTEGER)
+            ->setParameter('msgid', (int)$pm->getVar('msg_id'), ParameterType::INTEGER);
         $result = $qb->execute();
 
         if (!$result) {

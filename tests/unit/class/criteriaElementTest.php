@@ -14,7 +14,7 @@ class CriteriaElementTestInstance extends CriteriaElement
     public function renderLdap()
     {
     }
-    public function renderQb(QueryBuilder $qb = null, $whereMode = '')
+    public function renderQb(?QueryBuilder $qb = null, $whereMode = '')
     {
     }
     public function buildExpressionQb(QueryBuilder $qb)

@@ -26,14 +26,14 @@ EOT
              );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $module = $input->getArgument('module');
         $output->writeln(sprintf('Updating %s', $module));
         $xoops = \Xoops::getInstance();
         if (false === $xoops->getModuleByDirname($module)) {
             $output->writeln(sprintf('<error>%s is not an installed module!</error>', $module));
-            return;
+            return Command::FAILURE;
         }
         $xoops->setTpl(new XoopsTpl());
         \XoopsLoad::load('module', 'system');
@@ -56,5 +56,7 @@ EOT
             $output->writeln(sprintf('<info>Update of %s completed.</info>', $module));
         }
         $xoops->cache()->delete('system');
+
+        return Command::SUCCESS;
     }
 }

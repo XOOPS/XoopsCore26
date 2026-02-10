@@ -2,6 +2,7 @@
 require_once(__DIR__.'/../../../../../init_new.php');
 
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 
 class ImportSchemaTest extends \PHPUnit\Framework\TestCase
 {
@@ -18,7 +19,7 @@ class ImportSchemaTest extends \PHPUnit\Framework\TestCase
         $instance = new Xoops\Core\Database\Schema\ExportVisitor();
 
         $table = new Doctrine\DBAL\Schema\Table('system_group');
-        $type = Type::getType(Type::INTEGER);
+        $type = Type::getType(Types::INTEGER);
         $col_name = 'groupid';
         $column = new Doctrine\DBAL\Schema\Column($col_name, $type);
 

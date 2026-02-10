@@ -507,7 +507,7 @@ class Protector
             if (strlen($val) < 6) {
                 return;
             }
-            $val = get_magic_quotes_gpc() ? stripslashes($val) : $val;
+            // get_magic_quotes_gpc() removed in PHP 8.0; magic quotes no longer exist
             foreach ($this->_dblayertrap_doubtful_needles as $needle) {
                 if (stristr($val, $needle)) {
                     $this->_dblayertrap_doubtfuls[] = $val;

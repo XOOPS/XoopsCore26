@@ -48,7 +48,7 @@ class CriteriaCompo extends CriteriaElement
      * @param CriteriaElement|null $ele       a criteria element to start the compo
      * @param string               $condition joining condition for element, AND or OR
      */
-    public function __construct(CriteriaElement $ele = null, $condition = 'AND')
+    public function __construct(?CriteriaElement $ele = null, $condition = 'AND')
     {
         if (isset($ele)) {
             $this->add($ele, $condition);
@@ -140,7 +140,7 @@ class CriteriaCompo extends CriteriaElement
      *
      * @return QueryBuilder query builder instance
      */
-    public function renderQb(QueryBuilder $qb = null, $whereMode = '')
+    public function renderQb(?QueryBuilder $qb = null, $whereMode = '')
     {
         if ($qb==null) {
             $qb = \Xoops::getInstance()->db()->createXoopsQueryBuilder();

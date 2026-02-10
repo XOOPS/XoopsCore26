@@ -32,7 +32,7 @@ class MimetypeHandler extends XoopsPersistableObjectHandler
      *
      * @param null|Connection $db database connection
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'publisher_mimetypes', 'PublisherMimetype', 'mime_id', 'mime_ext');
     }

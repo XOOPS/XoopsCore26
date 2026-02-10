@@ -7,7 +7,7 @@ class legacy_blockHandlerTest extends \PHPUnit\Framework\TestCase
 {
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->conn = Xoops::getInstance()->db();
     }

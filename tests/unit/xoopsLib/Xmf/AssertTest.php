@@ -35,6 +35,7 @@ use Error;
 use LogicException;
 use RuntimeException;
 use stdClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Xmf\Assert;
 
 /**
@@ -55,12 +56,12 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         return static::$resource;
     }
 
-    public static function tearDownAfterClass()
+    public static function tearDownAfterClass(): void
     {
         @fclose(self::$resource);
     }
 
-    public function getTests()
+    public static function getTests()
     {
         $resource = self::getResource();
 
@@ -109,7 +110,7 @@ class AssertTest extends \PHPUnit\Framework\TestCase
             array('resource', array($resource, 'other'), false),
             array('resource', array(1), false),
             array('isCallable', array('strlen'), true),
-            array('isCallable', array(array($this, 'getTests')), true),
+            array('isCallable', array(array(self::class, 'getTests')), true),
             array('isCallable', array(function () {}), true),
             array('isCallable', array(1234), false),
             array('isCallable', array('foobar'), false),
@@ -317,20 +318,18 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function getMethods()
+    public static function getMethods()
     {
         $methods = array();
 
-        foreach ($this->getTests() as $params) {
+        foreach (self::getTests() as $params) {
             $methods[$params[0]] = array($params[0]);
         }
 
         return array_values($methods);
     }
 
-    /**
-     * @dataProvider getTests
-     */
+    #[DataProvider('getTests')]
     public function testAssert($method, $args, $success, $multibyte = false, $minVersion = null)
     {
         if ($minVersion && PHP_VERSION_ID < $minVersion) {
@@ -352,9 +351,7 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         self::assertTrue(true, 'Return type ensures this assertion is never reached on failure');
     }
 
-    /**
-     * @dataProvider getTests
-     */
+    #[DataProvider('getTests')]
     public function testNullOr($method, $args, $success, $multibyte = false, $minVersion = null)
     {
         if ($minVersion && PHP_VERSION_ID < $minVersion) {
@@ -376,18 +373,25 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         self::assertTrue(true, 'Return type ensures this assertion is never reached on failure');
     }
 
-    /**
-     * @dataProvider getMethods
-     */
+    #[DataProvider('getMethods')]
     public function testNullOrAcceptsNull($method)
     {
-        call_user_func(array('Xmf\Assert', 'nullOr'.ucfirst($method)), null);
+        // Build args with null as first argument plus any required additional args
+        // from the test data for methods that need more than one argument
+        $args = array(null);
+        foreach (self::getTests() as $params) {
+            if ($params[0] === $method && $params[2] === true) {
+                // Use the extra args (after the first) from a passing test case
+                $extraArgs = array_slice($params[1], 1);
+                $args = array_merge($args, $extraArgs);
+                break;
+            }
+        }
+        call_user_func_array(array('Xmf\Assert', 'nullOr'.ucfirst($method)), $args);
         self::assertTrue(true, 'Return type ensures this assertion is never reached on failure');
     }
 
-    /**
-     * @dataProvider getTests
-     */
+    #[DataProvider('getTests')]
     public function testAllArray($method, $args, $success, $multibyte = false, $minVersion = null)
     {
         if ($minVersion && PHP_VERSION_ID < $minVersion) {
@@ -412,9 +416,7 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         self::assertTrue(true, 'Return type ensures this assertion is never reached on failure');
     }
 
-    /**
-     * @dataProvider getTests
-     */
+    #[DataProvider('getTests')]
     public function testAllTraversable($method, $args, $success, $multibyte = false, $minVersion = null)
     {
         if ($minVersion && PHP_VERSION_ID < $minVersion) {
@@ -439,7 +441,7 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         self::assertTrue(true, 'Return type ensures this assertion is never reached on failure');
     }
 
-    public function getStringConversions()
+    public static function getStringConversions()
     {
         return array(
             array('integer', array('foobar'), 'Expected an integer. Got: string'),
@@ -461,9 +463,7 @@ class AssertTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    /**
-     * @dataProvider getStringConversions
-     */
+    #[DataProvider('getStringConversions')]
     public function testConvertValuesToStrings($method, $args, $exceptionMessage)
     {
         $this->expectException('\InvalidArgumentException', $exceptionMessage);

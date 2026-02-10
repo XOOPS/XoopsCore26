@@ -11,7 +11,6 @@
 
 namespace Xmf\Database;
 
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Driver\Statement;
 use Xmf\Language;
 use Xoops\Core\Database\Connection;
@@ -799,7 +798,7 @@ class Tables
      */
     protected function fetch($result)
     {
-        return $result->fetch(FetchMode::ASSOCIATIVE);
+        return $result->fetchAssociative();
     }
 
     /**

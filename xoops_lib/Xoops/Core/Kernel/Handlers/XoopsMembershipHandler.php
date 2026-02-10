@@ -21,7 +21,6 @@ namespace Xoops\Core\Kernel\Handlers;
 
 use Xoops\Core\Database\Connection;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -43,7 +42,7 @@ class XoopsMembershipHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct(
             $db,
@@ -69,9 +68,9 @@ class XoopsMembershipHandler extends XoopsPersistableObjectHandler
         $qb ->select('groupid')
             ->fromPrefix('system_usergroup', 'g')
             ->where($eb->eq('g.uid', ':uid'))
-            ->setParameter(':uid', $uid, ParameterType::INTEGER);
+            ->setParameter('uid', $uid, ParameterType::INTEGER);
         $result = $qb->execute();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $ret[] = $myrow['groupid'];
         }
 
@@ -95,13 +94,13 @@ class XoopsMembershipHandler extends XoopsPersistableObjectHandler
         $qb ->select('uid')
             ->fromPrefix('system_usergroup', 'g')
             ->where($eb->eq('g.groupid', ':gid'))
-            ->setParameter(':gid', $groupid, ParameterType::INTEGER);
+            ->setParameter('gid', $groupid, ParameterType::INTEGER);
         if ($limit!=0 || $start!=0) {
             $qb->setFirstResult($start)
                 ->setMaxResults($limit);
         }
         $result = $qb->execute();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $ret[] = $myrow['uid'];
         }
 

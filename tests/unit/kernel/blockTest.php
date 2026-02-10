@@ -6,7 +6,7 @@ require_once(XOOPS_TU_ROOT_PATH . '/kernel/block.php');
 class legacy_blockTest extends \PHPUnit\Framework\TestCase
 {
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

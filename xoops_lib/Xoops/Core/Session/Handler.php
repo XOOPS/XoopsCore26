@@ -12,7 +12,6 @@
 namespace Xoops\Core\Session;
 
 //use Doctrine\DBAL\TransactionIsolationLevel;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -84,12 +83,12 @@ class Handler implements \SessionHandlerInterface
             ->fromPrefix($this->sessionTable, 's')
             ->where($eb->eq('s.session_id', ':sessid'))
             ->andWhere($eb->gt('s.expires_at', ':expires'))
-            ->setParameter(':sessid', $session_id, ParameterType::STRING)
-            ->setParameter(':expires', time(), ParameterType::INTEGER);
+            ->setParameter('sessid', $session_id, ParameterType::STRING)
+            ->setParameter('expires', time(), ParameterType::INTEGER);
 
         $session_data = '';
         if ($result = $qb->execute()) {
-            if ($row = $result->fetch(FetchMode::NUMERIC)) {
+            if ($row = $result->fetchNumeric()) {
                 list ($session_data) = $row;
             }
         }
@@ -125,9 +124,9 @@ class Handler implements \SessionHandlerInterface
             ->set('expires_at', ':expires')
             ->set('session_data', ':sessdata')
             ->where($eb->eq('session_id', ':sessid'))
-            ->setParameter(':sessid', $session_id, ParameterType::STRING)
-            ->setParameter(':expires', $expires, ParameterType::INTEGER)
-            ->setParameter(':sessdata', $session_data, ParameterType::STRING);
+            ->setParameter('sessid', $session_id, ParameterType::STRING)
+            ->setParameter('expires', $expires, ParameterType::INTEGER)
+            ->setParameter('sessdata', $session_data, ParameterType::STRING);
         $this->db->setForce(true);
         $result = $qb->execute();
         if ($result<=0) {
@@ -138,9 +137,9 @@ class Handler implements \SessionHandlerInterface
                     'expires_at'   => ':expires',
                     'session_data' => ':sessdata',
                     ))
-                ->setParameter(':sessid', $session_id, ParameterType::STRING)
-                ->setParameter(':expires', $expires, ParameterType::INTEGER)
-                ->setParameter(':sessdata', $session_data, ParameterType::STRING);
+                ->setParameter('sessid', $session_id, ParameterType::STRING)
+                ->setParameter('expires', $expires, ParameterType::INTEGER)
+                ->setParameter('sessdata', $session_data, ParameterType::STRING);
             $this->db->setForce(true);
             $result = $qb->execute();
         }
@@ -163,7 +162,7 @@ class Handler implements \SessionHandlerInterface
         $eb = $qb->expr();
         $qb ->deletePrefix($this->sessionTable)
             ->where($eb->eq('session_id', ':sessid'))
-            ->setParameter(':sessid', $session_id, ParameterType::STRING);
+            ->setParameter('sessid', $session_id, ParameterType::STRING);
         $this->db->setForce(true);
         $result = $qb->execute();
         //return (boolean) ($result>0);
@@ -184,7 +183,7 @@ class Handler implements \SessionHandlerInterface
         $eb = $qb->expr();
         $qb ->deletePrefix($this->sessionTable)
             ->where($eb->lt('expires_at', ':expires'))
-            ->setParameter(':expires', $mintime, ParameterType::INTEGER);
+            ->setParameter('expires', $mintime, ParameterType::INTEGER);
         $this->db->setForce(true);
         $result = $qb->execute();
         return (boolean) ($result>0);

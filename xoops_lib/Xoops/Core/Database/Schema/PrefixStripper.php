@@ -42,7 +42,7 @@ class PrefixStripper extends Schema
      * @param string[]     $tableList    list of table names (without prefix) to include
      * @param SchemaConfig $schemaConfig SchemaConfig object to include in schema
      */
-    public function __construct(string $prefix, array $tableList = [], SchemaConfig $schemaConfig = null)
+    public function __construct(string $prefix, array $tableList = [], ?SchemaConfig $schemaConfig = null)
     {
         $this->xPrefix = $prefix;
         $this->tableList = $tableList;
@@ -56,7 +56,7 @@ class PrefixStripper extends Schema
      *
      * @return void
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function addTable(Table $table)
     {
@@ -66,19 +66,18 @@ class PrefixStripper extends Schema
             if (substr_compare($name, $this->xPrefix, 0, $len)===0) {
                 $name = substr($name, $len);
                 if (empty($this->tableList) || in_array($name, $this->tableList)) {
-                    $idGeneratorType = 0; // how should we handle this?
                     $newtable = new Table(
                         $name,
                         $table->getColumns(),
                         $table->getIndexes(),
+                        $table->getUniqueConstraints(),
                         $table->getForeignKeys(),
-                        $idGeneratorType,
                         $table->getOptions()
                     );
                     $this->_addTable($newtable);
                 }
             }
-        } catch (\Doctrine\DBAL\DBALException $e) {
+        } catch (\Doctrine\DBAL\Exception $e) {
             \Xoops::getInstance()->events()->triggerEvent('core.exception', $e);
             throw $e;
         }

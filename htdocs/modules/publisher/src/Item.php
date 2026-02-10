@@ -26,7 +26,6 @@ use XoopsLoad;
 use XoopsLocale;
 use XoopsModules\Publisher;
 use XoopsUserUtility;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * @copyright       The XUUPS Project http://sourceforge.net/projects/xuups/
@@ -858,7 +857,7 @@ class Item extends XoopsObject
             $qb->select('i.image_id', 'i.image_name')->fromPrefix('image', 'i')->orderBy('i.image_id');
             $result = $qb->execute();
 
-            while (false !== ($myrow = $result->fetch(FetchMode::ASSOCIATIVE))) {
+            while (false !== ($myrow = $result->fetchAssociative())) {
                 $image_name = $myrow['image_name'];
                 $id = $myrow['image_id'];
                 if ($image_name == $image_featured) {

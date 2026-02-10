@@ -58,7 +58,7 @@ class PagePage_relatedHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'page_related', 'pagepage_related', 'related_id', 'related_name');
     }

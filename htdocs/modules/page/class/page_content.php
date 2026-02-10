@@ -160,7 +160,7 @@ class PagePage_contentHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'page_content', 'pagepage_content', 'content_id', 'content_title');
     }

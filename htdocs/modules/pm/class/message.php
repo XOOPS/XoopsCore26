@@ -56,7 +56,7 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'system_privatemessage', 'PmMessage', 'msg_id', 'subject');
     }
@@ -135,7 +135,7 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
      * @param XoopsUser|null $user
      * @return int
      */
-    public function getSavecount(XoopsUser $user = null)
+    public function getSavecount(?XoopsUser $user = null)
     {
         $xoops = Xoops::getInstance();
         if (!is_object($user)) {
@@ -159,7 +159,7 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
      * @param null|XoopsUser $user
      * @return bool
      */
-    public function sendEmail(PmMessage $pm, XoopsUser $user = null)
+    public function sendEmail(PmMessage $pm, ?XoopsUser $user = null)
     {
         $xoops = Xoops::getInstance();
         if (!is_object($user)) {

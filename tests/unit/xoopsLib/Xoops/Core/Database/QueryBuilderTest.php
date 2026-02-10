@@ -6,7 +6,7 @@ class QueryBuilderTest extends \PHPUnit\Framework\TestCase
     protected $myclass = '\Xoops\Core\Database\QueryBuilder';
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         if (empty($this->conn)) {
             $this->conn = Xoops::getInstance()->db();

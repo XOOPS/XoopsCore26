@@ -34,9 +34,9 @@ EOT
      *
      * @param InputInterface  $input  input handler
      * @param OutputInterface $output output handler
-     * @return void
+     * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $xoops = \Xoops::getInstance();
 
@@ -47,7 +47,7 @@ EOT
         $sysmodule = $xoops->getModuleByDirname('system');
         if (empty($sysmodule)) {
             $output->writeln('<error>Module system is not installed!</error>');
-            return;
+            return Command::FAILURE;
         }
         $mid = $sysmodule->mid();
         $criteria = new CriteriaCompo;
@@ -57,7 +57,7 @@ EOT
         $configItem = reset($objArray);
         if (empty($configItem)) {
             $output->writeln(sprintf('<error>Config item %s not found!</error>', $name));
-            return;
+            return Command::FAILURE;
         }
         $configItem->setConfValueForInput($value);
         $result = $configHandler->insertConfig($configItem);
@@ -65,5 +65,7 @@ EOT
             $output->writeln(sprintf('<error>Could not set %s!</error>', $name));
         }
         $output->writeln(sprintf('Set %s', $name));
+
+        return Command::SUCCESS;
     }
 }

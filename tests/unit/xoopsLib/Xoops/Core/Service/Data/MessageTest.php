@@ -14,7 +14,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = new Message();
     }
@@ -23,7 +23,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -105,7 +105,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->withToId('0');
         } catch (\InvalidArgumentException $e) {
-            $this->assertContains('To', $e->getMessage());
+            $this->assertStringContainsString('To', $e->getMessage());
         }
         $this->assertInstanceOf(\InvalidArgumentException::class, $e);
     }
@@ -115,7 +115,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->withFromId(-88);
         } catch (\InvalidArgumentException $e) {
-            $this->assertContains('From', $e->getMessage());
+            $this->assertStringContainsString('From', $e->getMessage());
         }
         $this->assertInstanceOf(\InvalidArgumentException::class, $e);
     }
@@ -125,7 +125,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->withSubject(' ');
         } catch (\InvalidArgumentException $e) {
-            $this->assertContains('Subject', $e->getMessage());
+            $this->assertStringContainsString('Subject', $e->getMessage());
         }
         $this->assertInstanceOf(\InvalidArgumentException::class, $e);
     }
@@ -135,7 +135,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->withBody("\n");
         } catch (\InvalidArgumentException $e) {
-            $this->assertContains('Body', $e->getMessage());
+            $this->assertStringContainsString('Body', $e->getMessage());
         }
         $this->assertInstanceOf(\InvalidArgumentException::class, $e);
     }
@@ -145,7 +145,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->getToId();
         } catch (\LogicException $e) {
-            $this->assertContains('To', $e->getMessage());
+            $this->assertStringContainsString('To', $e->getMessage());
         }
         $this->assertInstanceOf(\LogicException::class, $e);
     }
@@ -155,7 +155,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->getFromId();
         } catch (\LogicException $e) {
-            $this->assertContains('From', $e->getMessage());
+            $this->assertStringContainsString('From', $e->getMessage());
         }
         $this->assertInstanceOf(\LogicException::class, $e);
     }
@@ -165,7 +165,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->getSubject();
         } catch (\LogicException $e) {
-            $this->assertContains('Subject', $e->getMessage());
+            $this->assertStringContainsString('Subject', $e->getMessage());
         }
         $this->assertInstanceOf(\LogicException::class, $e);
     }
@@ -175,7 +175,7 @@ class MessageTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->getBody();
         } catch (\LogicException $e) {
-            $this->assertContains('Body', $e->getMessage());
+            $this->assertStringContainsString('Body', $e->getMessage());
         }
         $this->assertInstanceOf(\LogicException::class, $e);
     }

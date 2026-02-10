@@ -16,7 +16,6 @@ use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
 use Xoops\Core\Kernel\Handlers\XoopsUser;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * A Notification
@@ -141,7 +140,7 @@ class NotificationsNotificationHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db {@link Connection}
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'notifications', 'NotificationsNotification', 'id', 'itemid');
     }
@@ -154,7 +153,7 @@ class NotificationsNotificationHandler extends XoopsPersistableObjectHandler
      *
      * @return  array   Array of {@link NotificationsNotification} objects
      */
-    public function getObjectsArray(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getObjectsArray(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         $qb = $this->db2->createXoopsQueryBuilder()
             ->select('*')
@@ -167,7 +166,7 @@ class NotificationsNotificationHandler extends XoopsPersistableObjectHandler
         if (!$result) {
             return $ret;
         }
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $notification = new NotificationsNotification();
             $notification->assignVars($myrow);
             if (!$id_as_key) {

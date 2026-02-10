@@ -54,7 +54,7 @@ class ElementFactory
      */
     protected function validateSpec(&$specification)
     {
-        if (!array_key_exists(self::CLASS_KEY, $specification)) {
+        if (!isset($specification[self::CLASS_KEY])) {
             throw new \DomainException('Specification CLASS_KEY required.');
         }
         $elementClass = $specification[self::CLASS_KEY];
@@ -71,7 +71,7 @@ class ElementFactory
         }
 
         $specification[self::CLASS_KEY] = $elementClass;
-        if (!(array_key_exists(self::FORM_KEY, $specification)) && isset($this->container)) {
+        if (!isset($specification[self::FORM_KEY]) && isset($this->container)) {
             $specification[self::FORM_KEY] = $this->container;
         }
     }

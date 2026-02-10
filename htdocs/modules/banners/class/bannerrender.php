@@ -106,17 +106,17 @@ class BannerRender
                                 ->set('banner_status', ':stat')
                                 ->set('banner_dateend', ':dateend')
                                 ->where('banner_bid = :bid')
-                                ->setParameter(':impr', $impmade, ParameterType::INTEGER)
-                                ->setParameter(':stat', 0, ParameterType::INTEGER)
-                                ->setParameter(':dateend', time(), ParameterType::INTEGER)
-                                ->setParameter(':bid', $bid, ParameterType::INTEGER);
+                                ->setParameter('impr', $impmade, ParameterType::INTEGER)
+                                ->setParameter('stat', 0, ParameterType::INTEGER)
+                                ->setParameter('dateend', time(), ParameterType::INTEGER)
+                                ->setParameter('bid', $bid, ParameterType::INTEGER);
                             $result = $query->execute();
                         } else {
                             $query = $qb->updatePrefix('banners_banner')
                                 ->set('banner_impmade', ':impr')
                                 ->where('banner_bid = :bid')
-                                ->setParameter(':impr', $impmade, ParameterType::INTEGER)
-                                ->setParameter(':bid', $bid, ParameterType::INTEGER);
+                                ->setParameter('impr', $impmade, ParameterType::INTEGER)
+                                ->setParameter('bid', $bid, ParameterType::INTEGER);
                             $result = $query->execute();
                         }
                     }

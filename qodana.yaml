@@ -6,9 +6,9 @@ profile:
   name: qodana.recommended
 
 php:
-  version: "7.2"
+  version: "8.4"
 
-bootstrap: cp composer.json.dist composer.json && composer config platform.php 7.2 && composer install --no-interaction --prefer-dist
+bootstrap: cp composer.json.dist composer.json && composer config platform.php 8.4 && composer install --no-interaction --prefer-dist
 
 exclude:
   - name: All

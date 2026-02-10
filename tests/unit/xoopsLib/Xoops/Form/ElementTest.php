@@ -16,16 +16,18 @@ class ElementTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->object = $this->getMockForAbstractClass('Xoops\Form\Element');
+        $this->object = $this->getMockBuilder('Xoops\Form\Element')
+            ->onlyMethods(['defaultRender'])
+            ->getMock();
     }
 
     /**
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -430,15 +432,15 @@ class ElementTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($value, $instance[$key]);
 
         $key = 'hidden';
-        $this->assertFalse(array_key_exists($key, $instance));
+        $this->assertFalse($instance->offsetExists($key));
         $instance->setHidden();
-        $this->assertTrue(array_key_exists($key, $instance));
+        $this->assertTrue($instance->offsetExists($key));
         $this->assertNull($instance[$key]);
 
         $key = 'required';
-        $this->assertFalse(array_key_exists($key, $instance));
+        $this->assertFalse($instance->offsetExists($key));
         $instance->setRequired(true);
-        $this->assertTrue(array_key_exists($key, $instance));
+        $this->assertTrue($instance->offsetExists($key));
         $this->assertNull($instance[$key]);
     }
 }

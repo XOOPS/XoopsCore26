@@ -3,6 +3,28 @@ require_once(__DIR__.'/../../../../init_new.php');
 
 class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 {
+    protected function setUp(): void
+    {
+        if (!extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension is not available');
+        }
+    }
+
+    /**
+     * Create an image handler with an initialized GD image resource.
+     * Skips the test if the image cannot be created.
+     */
+    protected function createHandlerWithImage(): XoopsCaptchaImageHandler
+    {
+        $handler = new XoopsCaptchaImageHandler();
+        $handler->setImageSize();
+        $handler->oImage = @imagecreatetruecolor($handler->width, $handler->height);
+        if (!$handler->oImage) {
+            $this->markTestSkipped('GD image could not be created');
+        }
+        return $handler;
+    }
+
     public function test___construct()
     {
         $image_handler = new XoopsCaptchaImageHandler();
@@ -76,7 +98,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_createFromFile()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->createFromFile();
@@ -86,7 +108,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawCode()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawCode();
@@ -96,7 +118,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawBorder()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawBorder();
@@ -106,7 +128,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawCircles()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawCircles();
@@ -116,7 +138,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawLines()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawLines();
@@ -126,7 +148,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawRectangles()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawRectangles();
@@ -136,7 +158,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawBars()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawBars();
@@ -146,7 +168,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawEllipses()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawEllipses();
@@ -156,7 +178,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_drawPolygons()
     {
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
 
         ob_start();
         $value = @$image_handler->drawPolygons();
@@ -166,8 +188,7 @@ class Scripts_ImageClassTest extends \PHPUnit\Framework\TestCase
 
     public function test_createImageBmp()
     {
-        Xoops::getInstance()->disableErrorReporting();
-        $image_handler = new XoopsCaptchaImageHandler();
+        $image_handler = $this->createHandlerWithImage();
         $image_handler->mode = 'bmp';
         ob_start();
         $value = @$image_handler->createImageBmp('not_empty_string');

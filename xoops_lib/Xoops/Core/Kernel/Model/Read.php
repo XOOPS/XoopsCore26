@@ -13,7 +13,6 @@ namespace Xoops\Core\Kernel\Model;
 
 use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsModelAbstract;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * Object render handler class.
@@ -36,7 +35,7 @@ class Read extends XoopsModelAbstract
      *
      * @return array of objects/array as specified in $asObject
      */
-    public function getAll(CriteriaElement $criteria = null, $fields = null, $asObject = true, $id_as_key = true)
+    public function getAll(?CriteriaElement $criteria = null, $fields = null, $asObject = true, $id_as_key = true)
     {
         $qb = $this->handler->db2->createXoopsQueryBuilder();
 
@@ -67,7 +66,7 @@ class Read extends XoopsModelAbstract
             return $ret;
         }
         if ($asObject) {
-            while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+            while ($myrow = $result->fetchAssociative()) {
                 $object = $this->handler->create(false);
                 $object->assignVars($myrow);
                 if ($id_as_key) {
@@ -79,7 +78,7 @@ class Read extends XoopsModelAbstract
             }
         } else {
             $object = $this->handler->create(false);
-            while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+            while ($myrow = $result->fetchAssociative()) {
                 $object->assignVars($myrow);
                 if ($id_as_key) {
                     $ret[$myrow[$this->handler->keyName]] = $object->getValues();
@@ -103,7 +102,7 @@ class Read extends XoopsModelAbstract
      *
      * @return array
      */
-    public function getObjects(CriteriaElement $criteria = null, $id_as_key = false, $as_object = true)
+    public function getObjects(?CriteriaElement $criteria = null, $id_as_key = false, $as_object = true)
     {
         $objects = $this->getAll($criteria, null, $as_object, $id_as_key);
         return $objects;
@@ -118,7 +117,7 @@ class Read extends XoopsModelAbstract
      *
      * @return array
      */
-    public function getList(CriteriaElement $criteria = null, $limit = 0, $start = 0)
+    public function getList(?CriteriaElement $criteria = null, $limit = 0, $start = 0)
     {
         //$qb = Xoops::getInstance()->db()->createXoopsQueryBuilder();
         $qb = $this->handler->db2->createXoopsQueryBuilder();
@@ -144,7 +143,7 @@ class Read extends XoopsModelAbstract
         }
 
         $myts = \Xoops\Core\Text\Sanitizer::getInstance();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             // identifiers should be textboxes, so sanitize them like that
             $ret[$myrow[$this->handler->keyName]] = empty($this->handler->identifierName) ? 1
                 : $myts->htmlSpecialChars($myrow[$this->handler->identifierName]);
@@ -159,7 +158,7 @@ class Read extends XoopsModelAbstract
      *
      * @return array of object IDs
      */
-    public function getIds(CriteriaElement $criteria = null)
+    public function getIds(?CriteriaElement $criteria = null)
     {
         $qb = $this->handler->db2->createXoopsQueryBuilder();
 
@@ -175,7 +174,7 @@ class Read extends XoopsModelAbstract
             return $ret;
         }
 
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $ret[] = $myrow[$this->handler->keyName];
         }
         return $ret;
@@ -188,7 +187,7 @@ class Read extends XoopsModelAbstract
      *
      * @return \Xoops\Core\Kernel\XoopsObject|null object or null if no matching object found
      */
-    public function getRandomObject(CriteriaElement $criteria = null)
+    public function getRandomObject(?CriteriaElement $criteria = null)
     {
         $qb = $this->handler->db2->createXoopsQueryBuilder();
         $qb ->select('COUNT(*)')
@@ -197,7 +196,7 @@ class Read extends XoopsModelAbstract
             $qb = $criteria->renderQb($qb);
         }
         $result = $qb->execute();
-        $count = $result->fetchColumn();
+        $count = $result->fetchOne();
 
         $offset = mt_rand(0, $count - 1);
 
@@ -211,7 +210,7 @@ class Read extends XoopsModelAbstract
             ->setMaxResults(1);
 
         $result = $qb->execute();
-        $randomKey = $result->fetchColumn();
+        $randomKey = $result->fetchOne();
 
         return $this->handler->get($randomKey);
     }

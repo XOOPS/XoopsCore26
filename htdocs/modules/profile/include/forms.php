@@ -124,7 +124,7 @@ function profile_getRegisterForm(XoopsUser $user, $profile, $step = null)
  * @param bool $action
  * @return Xoops\Form\ThemeForm
  */
-function profile_getUserForm(XoopsUser $user, ProfileProfile $profile = null, $action = false)
+function profile_getUserForm(XoopsUser $user, ?ProfileProfile $profile = null, $action = false)
 {
     $xoops = Xoops::getInstance();
 

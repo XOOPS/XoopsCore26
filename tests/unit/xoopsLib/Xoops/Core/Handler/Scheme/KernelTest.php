@@ -1,6 +1,7 @@
 <?php
 namespace Xoops\Core\Handler\Scheme;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Xoops\Core\Handler\Factory;
 use Xoops\Core\Handler\Scheme\SchemeInterface;
 
@@ -17,7 +18,7 @@ class KernelTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = new Kernel;
     }
@@ -26,7 +27,7 @@ class KernelTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -38,9 +39,8 @@ class KernelTest extends \PHPUnit\Framework\TestCase
     /**
      * @param string $name that would be supplied to Xoops::getHandler()
      * @param string $handlerClass FQN of expected handler class
-     *
-     * @dataProvider handlerValueProvider
      */
+    #[DataProvider('handlerValueProvider')]
     public function testBuild($name, $handlerClass)
     {
         $spec = Factory::getInstance()->newSpec()->scheme('kernel')->name($name);

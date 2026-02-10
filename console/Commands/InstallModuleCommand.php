@@ -32,20 +32,20 @@ EOT
      *
      * @param InputInterface  $input  input handler
      * @param OutputInterface $output output handler
-     * @return void
+     * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $xoops = \Xoops::getInstance();
         $module = $input->getArgument('module');
         if (false === \XoopsLoad::fileExists($xoops->path("modules/$module/xoops_version.php"))) {
             $output->writeln(sprintf('<error>No module named %s found!</error>', $module));
-            return;
+            return Command::FAILURE;
         }
         $output->writeln(sprintf('Installing %s', $module));
         if (false !== $xoops->getModuleByDirname($module)) {
             $output->writeln(sprintf('<error>%s module is already installed!</error>', $module));
-            return;
+            return Command::FAILURE;
         }
         $xoops->setTpl(new XoopsTpl());
         \XoopsLoad::load('module', 'system');
@@ -68,5 +68,7 @@ EOT
             $output->writeln(sprintf('<info>Install of %s completed.</info>', $module));
         }
         $xoops->cache()->delete('system');
+
+        return Command::SUCCESS;
     }
 }

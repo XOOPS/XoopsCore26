@@ -14,7 +14,6 @@ use Xoops\Core\Kernel\Dtype;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
 use Xoops\Core\Kernel\CriteriaElement;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * Extended User Profile
@@ -43,7 +42,7 @@ class ProfileVisibilityHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'profile_visibility', 'profilevisibility', 'field_id');
     }
@@ -72,8 +71,8 @@ class ProfileVisibilityHandler extends XoopsPersistableObjectHandler
 
         $result = $sql->execute();
         $field_ids = array();
-        while (list($field_id) = $result->fetch(FetchMode::NUMERIC)) {
-            $field_ids[] = $field_ids;
+        while (list($field_id) = $result->fetchNumeric()) {
+            $field_ids[] = $field_id;
         }
 
         return $field_ids;
@@ -86,7 +85,7 @@ class ProfileVisibilityHandler extends XoopsPersistableObjectHandler
      *
      * @return array of row arrays, indexed by field_id
      */
-    public function getAllByFieldId(CriteriaElement $criteria = null)
+    public function getAllByFieldId(?CriteriaElement $criteria = null)
     {
         $rawRows = $this->getAll($criteria, null, false, false);
 

@@ -39,7 +39,7 @@ class MenusMenusHandler extends XoopsPersistableObjectHandler
     /**
      * @param Connection $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'menus_menus', 'MenusMenus', 'id', 'title');
     }

@@ -182,7 +182,12 @@ class CacheManager
             $pool = new Pool($driver);
             if (is_object($pool)) {
                 $pool->setLogger($this->xoops->logger());
-                $pool->setNamespace($this->xoops->db()->prefix());
+                try {
+                    $prefix = $this->xoops->db()->prefix();
+                } catch (\Throwable $e) {
+                    $prefix = \XoopsBaseConfig::get('db-prefix') ?: 'xoops';
+                }
+                $pool->setNamespace($prefix);
             }
         }
         if (!$pool) {

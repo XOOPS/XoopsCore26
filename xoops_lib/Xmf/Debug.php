@@ -77,14 +77,12 @@ class Debug extends \Kint
     /**
      * Dump one or more variables
      *
-     * @param mixed $data variable(s) to dump
+     * @param mixed ...$args variable(s) to dump
      *
-     * @return void
+     * @return int|string
      */
-    public static function dump($data = null)
+    public static function dump(...$args): int|string
     {
-        $args = func_get_args();
-
         $events = \Xoops::getInstance()->events();
         $eventName = 'debug.log';
 
@@ -92,12 +90,13 @@ class Debug extends \Kint
             foreach ($args as $var) {
                 $events->triggerEvent($eventName, $var);
             }
+            return 0;
         } else {
             static::doOnce();
             RichRenderer::$folder = false;
             // options: 'original' (default), 'solarized', 'solarized-dark' and 'aante-light'
             RichRenderer::$theme = 'aante-light.css';
-            forward_static_call_array(array('parent', 'dump'), $args);
+            return parent::dump(...$args);
         }
     }
 

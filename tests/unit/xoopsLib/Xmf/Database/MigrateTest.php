@@ -14,16 +14,20 @@ class MigrateTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->object = new Migrate('page');
+        try {
+            $this->object = new Migrate('page');
+        } catch (\Exception $e) {
+            $this->markTestSkipped('Migrate requires a valid module and database: ' . $e->getMessage());
+        }
     }
 
     /**
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 

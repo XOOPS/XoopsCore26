@@ -5,7 +5,7 @@ require_once(XOOPS_TU_ROOT_PATH . '/kernel/module.php');
 
 class legacy_moduleTest extends \PHPUnit\Framework\TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
     }
 

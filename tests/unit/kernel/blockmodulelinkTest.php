@@ -6,7 +6,7 @@ require_once(XOOPS_TU_ROOT_PATH . '/kernel/blockmodulelink.php');
 class legacy_blockmodulelinkTest extends \PHPUnit\Framework\TestCase
 {
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

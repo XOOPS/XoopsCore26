@@ -6,7 +6,7 @@ class xoopslistsTest extends \PHPUnit\Framework\TestCase
     protected $myClass = 'XoopsLists';
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         if (empty($this->conn)) {
             $this->conn = Xoops::getInstance()->db();
@@ -139,7 +139,7 @@ class xoopslistsTest extends \PHPUnit\Framework\TestCase
             if (empty($k)) {
                 $this->assertSame('-', $v);
             } else {
-                $this->assertRegExp('/^[A-Z][A-Z]$/', $k);
+                $this->assertMatchesRegularExpression('/^[A-Z][A-Z]$/', $k);
                 $this->assertTrue(is_string($v));
             }
         }

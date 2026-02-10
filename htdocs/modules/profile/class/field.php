@@ -422,7 +422,7 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'profile_field', 'ProfileField', 'field_id', 'field_title');
     }

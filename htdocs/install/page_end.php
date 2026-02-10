@@ -31,7 +31,7 @@ $xoops = Xoops::getInstance();
 /* @var $wizard XoopsInstallWizard */
 $wizard = $_SESSION['wizard'];
 
-setcookie('xo_install_user', '', null, null, null);
+setcookie('xo_install_user', '', 0, '', '');
 
 $installer_modified = "install_remove_" . uniqid(mt_rand());
 register_shutdown_function('install_finalize', $installer_modified);

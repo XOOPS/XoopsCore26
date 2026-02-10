@@ -19,16 +19,18 @@ class ListAbstractTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->object = $this->getMockForAbstractClass('\Xoops\Core\Lists\ListAbstract');
+        $this->object = $this->getMockBuilder('\Xoops\Core\Lists\ListAbstract')
+            ->onlyMethods([])
+            ->getMock();
     }
 
     /**
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -39,7 +41,7 @@ class ListAbstractTest extends \PHPUnit\Framework\TestCase
         $method = $reflection->getMethod('getList');
         $this->assertTrue($method->isStatic());
 
-        $this->assertSame($this->object->getList(), []);
+        $this->assertSame($this->object::getList(), []);
     }
 
     public function testSetOptionsArray()

@@ -43,7 +43,7 @@ class XoopsTplSetHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct(
             $db,
@@ -72,7 +72,7 @@ class XoopsTplSetHandler extends XoopsPersistableObjectHandler
             $qb->select('*')
                 ->fromPrefix('system_tplset', null)
                 ->where($eb->eq('tplset_name', ':tplsetname'))
-                ->setParameter(':tplsetname', $tplset_name, ParameterType::STRING);
+                ->setParameter('tplsetname', $tplset_name, ParameterType::STRING);
             $result = $qb->execute();
             if (!$result) {
                 return false;
@@ -93,7 +93,7 @@ class XoopsTplSetHandler extends XoopsPersistableObjectHandler
      *
      * @return array array of tplsets matching the conditions
      **/
-    public function getNameList(CriteriaElement $criteria = null)
+    public function getNameList(?CriteriaElement $criteria = null)
     {
         $ret = array();
         $tplsets = $this->getObjects($criteria, true);

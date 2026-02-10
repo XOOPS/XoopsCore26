@@ -210,7 +210,7 @@ switch ($op) {
                                             if (is_object($btplfile)) {
                                                 if (!XoopsLoad::fileExists($physical_file) || $_REQUEST['force_generated'] == 1) {
                                                     $open = fopen($physical_file, 'w+');
-                                                    if (fwrite($open, "" . utf8_encode(html_entity_decode($btplfile->getVar('tpl_source', 'E'))) . "")) {
+                                                    if (fwrite($open, "" . mb_convert_encoding(html_entity_decode($btplfile->getVar('tpl_source', 'E')), 'UTF-8', 'ISO-8859-1') . "")) {
                                                         $text .= '<tr class="' . $class . '"><td align="center">' . XoopsLocale::BLOCKS . '</td><td>' . $physical_file . '</td><td align="center">';
                                                         if (XoopsLoad::fileExists($physical_file)) {
                                                             $text .= '<img width="16" src="' . system_AdminIcons('success.png') . '" /></td></tr>';
@@ -302,7 +302,7 @@ switch ($op) {
                                                 if (!XoopsLoad::fileExists($physical_file) || $_REQUEST['force_generated'] == 1) {
                                                     if ($select_templates_modules[$l] == $filename) {
                                                         $open = fopen($physical_file, 'w+');
-                                                        if (fwrite($open, utf8_encode(html_entity_decode($btplfile->getVar('tpl_source', 'E'))) . "")) {
+                                                        if (fwrite($open, mb_convert_encoding(html_entity_decode($btplfile->getVar('tpl_source', 'E')), 'UTF-8', 'ISO-8859-1') . "")) {
                                                             $text .= '<tr class="' . $class . '"><td align="center">' . XoopsLocale::BLOCKS . '</td><td>' . $physical_file . '</td><td align="center">';
                                                             if (XoopsLoad::fileExists($physical_file)) {
                                                                 $text .= '<img width="16" src="' . system_AdminIcons('success.png') . '" /></td></tr>';
@@ -377,7 +377,7 @@ switch ($op) {
             // Save modif
             if (isset($_REQUEST['templates'])) {
                 $open = fopen($path_file, "w+");
-                if (!fwrite($open, utf8_encode(stripslashes($_REQUEST['templates'])))) {
+                if (!fwrite($open, mb_convert_encoding(stripslashes($_REQUEST['templates']), 'UTF-8', 'ISO-8859-1'))) {
                     $xoops->redirect("admin.php?fct=tplsets", 2, XoopsLocale::E_NOT_DONE);
                 }
                 fclose($open);

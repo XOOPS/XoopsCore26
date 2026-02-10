@@ -1000,7 +1000,7 @@ class Utils
         }
 
         if ('windows-1256' !== XoopsLocale::getCharset()) {
-            return utf8_encode($item);
+            return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1');
         }
 
         if ($unserialize = \unserialize($item)) {
@@ -1157,12 +1157,12 @@ class Utils
 
             if ('htaccess' === $helper->getConfig('seo_url_rewrite')) {
                 // generate SEO url using htaccess
-                return XoopsBaseConfig::get('url') . '/' . $helper->getConfig('seo_module_name') . ".${op}.${id}/${short_url}";
+                return XoopsBaseConfig::get('url') . '/' . $helper->getConfig('seo_module_name') . ".{$op}.{$id}/{$short_url}";
             }
 
             if ('path-info' === $helper->getConfig('seo_url_rewrite')) {
                 // generate SEO url using path-info
-                return $helper->url("index.php/${op}.${id}/${short_url}");
+                return $helper->url("index.php/{$op}.{$id}/{$short_url}");
             }
 
             die('Unknown SEO method.');
@@ -1170,10 +1170,10 @@ class Utils
         // generate classic url
         switch ($op) {
                 case 'category':
-                    return $helper->url("${op}.php?categoryid=${id}");
+                    return $helper->url("{$op}.php?categoryid={$id}");
                 case 'item':
                 case 'print':
-                    return $helper->url("${op}.php?itemid=${id}");
+                    return $helper->url("{$op}.php?itemid={$id}");
                 default:
                     die('Unknown SEO operation.');
             }

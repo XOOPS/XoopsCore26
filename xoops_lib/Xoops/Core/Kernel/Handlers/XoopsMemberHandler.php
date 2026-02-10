@@ -24,7 +24,6 @@ use Xoops\Core\FixedGroups;
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaCompo;
 use Xoops\Core\Kernel\CriteriaElement;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * XOOPS member handler class.
@@ -66,7 +65,7 @@ class XoopsMemberHandler
      *
      * @param Connection|null $db database connection
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         $this->groupHandler = \Xoops::getInstance()->getHandlerGroup();
         $this->userHandler = \Xoops::getInstance()->getHandlerUser();
@@ -183,7 +182,7 @@ class XoopsMemberHandler
      *
      * @return XoopsGroup[]
      */
-    public function getGroups(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getGroups(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         return $this->groupHandler->getObjects($criteria, $id_as_key);
     }
@@ -196,7 +195,7 @@ class XoopsMemberHandler
      *
      * @return XoopsUser[]
      */
-    public function getUsers(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getUsers(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         return $this->userHandler->getObjects($criteria, $id_as_key);
     }
@@ -208,7 +207,7 @@ class XoopsMemberHandler
      *
      * @return array associative array of group-IDs and names
      */
-    public function getGroupList(CriteriaElement $criteria = null)
+    public function getGroupList(?CriteriaElement $criteria = null)
     {
         $realCriteria = new CriteriaCompo($criteria);
         $realCriteria->add(new Criteria('groupid', FixedGroups::REMOVED, '!='));
@@ -227,7 +226,7 @@ class XoopsMemberHandler
      *
      * @return array associative array of user-IDs and names
      */
-    public function getUserList(CriteriaElement $criteria = null)
+    public function getUserList(?CriteriaElement $criteria = null)
     {
         $users = $this->userHandler->getObjects($criteria, true);
         $ret = array();
@@ -374,7 +373,7 @@ class XoopsMemberHandler
      *
      * @return int
      */
-    public function getUserCount(CriteriaElement $criteria = null)
+    public function getUserCount(?CriteriaElement $criteria = null)
     {
         return $this->userHandler->getCount($criteria);
     }
@@ -415,7 +414,7 @@ class XoopsMemberHandler
      *
      * @return bool TRUE if success or unchanged, FALSE on failure
      */
-    public function updateUsersByField($fieldName, $fieldValue, CriteriaElement $criteria = null)
+    public function updateUsersByField($fieldName, $fieldValue, ?CriteriaElement $criteria = null)
     {
         if (is_null($criteria)) {
             $criteria = new Criteria(''); // empty criteria resolves to 'WHERE (1)'
@@ -453,7 +452,7 @@ class XoopsMemberHandler
      */
     public function getUsersByGroupLink(
         $groups,
-        CriteriaElement $criteria = null,
+        ?CriteriaElement $criteria = null,
         $asobject = false,
         $id_as_key = false
     ) {
@@ -481,7 +480,7 @@ class XoopsMemberHandler
             return $ret;
         }
 
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             if ($asobject) {
                 $user = new XoopsUser();
                 $user->assignVars($myrow);
@@ -527,7 +526,7 @@ class XoopsMemberHandler
         }
 
         $result = $qb->execute();
-        $ret = $result->fetchColumn(0);
+        $ret = $result->fetchOne();
 
         return $ret;
     }

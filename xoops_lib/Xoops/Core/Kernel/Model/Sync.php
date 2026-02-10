@@ -88,6 +88,6 @@ class Sync extends XoopsModelAbstract
             . " ON `{$this->handler->table}`.`{$this->handler->field_object}` = aa.`{$this->handler->field_link}`"
             . " WHERE (aa.`{$this->handler->field_link}` IS NULL)";
 
-        return $this->handler->db2->executeUpdate($sql);
+        return $this->handler->db2->executeStatement($sql);
     }
 }

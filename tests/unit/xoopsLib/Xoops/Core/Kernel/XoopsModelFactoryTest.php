@@ -7,7 +7,7 @@ class xoopsmodelfactoryTest extends \PHPUnit\Framework\TestCase
 {
     protected $myClass = 'Xoops\Core\Kernel\XoopsModelFactory';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

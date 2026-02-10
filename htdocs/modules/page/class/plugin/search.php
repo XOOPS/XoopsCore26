@@ -11,7 +11,6 @@
 
 use Xoops\Module\Plugin\PluginAbstract;
 use Xmf\Metagen;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -71,14 +70,14 @@ class PageSearchPlugin extends PluginAbstract implements SearchPluginInterface
                 $qb->andWhere(call_user_func_array(array($eb, "orX"), $queryParts));
             }
         } else {
-            $qb->setParameter(':uid', (int) $userid, ParameterType::INTEGER);
+            $qb->setParameter('uid', (int) $userid, ParameterType::INTEGER);
             $qb->andWhere($eb->eq('content_author', ':uid'));
         }
 
         $myts = \Xoops\Core\Text\Sanitizer::getInstance();
         $items = array();
         $result = $qb->execute();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $content = $myrow["content_shorttext"] . "<br /><br />" . $myrow["content_text"];
             $content = $myts->displayTarea($content);
             $items[] = array(

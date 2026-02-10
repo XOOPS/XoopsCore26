@@ -5,9 +5,11 @@ use Xoops\Core\Kernel\Handlers\XoopsBlock;
 
 class XoopsBlockTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myClass = 'Xoops\Core\Kernel\Handlers\XoopsBlock';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 
@@ -40,6 +42,7 @@ class XoopsBlockTest extends \PHPUnit\Framework\TestCase
 
     public function test___construct100()
     {
+        $this->requireDatabase();
         $instance = new $this->myClass(1);
         $this->assertInstanceOf($this->myClass, $instance);
     }

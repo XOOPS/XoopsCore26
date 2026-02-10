@@ -15,7 +15,7 @@ class XoopsUtilityTest extends \PHPUnit\Framework\TestCase
 {
     protected $myClass = 'XoopsUtility';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

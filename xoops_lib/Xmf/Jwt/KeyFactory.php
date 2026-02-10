@@ -38,7 +38,7 @@ class KeyFactory
      *
      * @throws \InvalidArgumentException on unusable key name
      */
-    public static function build($keyName, StorageInterface $storage = null)
+    public static function build($keyName, ?StorageInterface $storage = null)
     {
         if (empty($keyName) || !is_string($keyName)) {
             throw new \InvalidArgumentException('keyName must be a non-empty string');

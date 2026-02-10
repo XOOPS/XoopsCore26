@@ -3,7 +3,14 @@ require_once(__DIR__.'/../../../init_new.php');
 
 class Xoops_Auth_XoopsTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myClass = 'Xoops\Auth\Xoops';
+
+    public function setUp(): void
+    {
+        $this->requireDatabase();
+    }
 
     public function test___construct()
 	{

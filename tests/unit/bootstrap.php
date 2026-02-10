@@ -5,8 +5,8 @@ if (empty($_SERVER["argc"])) {
 	die(1);
 }
  
-if (!defined('PHP_VERSION_ID') || PHP_VERSION_ID < 50300) {
-	echo "Error: This script must be run from PHP >= 5.3.0";
+if (!defined('PHP_VERSION_ID') || PHP_VERSION_ID < 80400) {
+	echo "Error: This script must be run from PHP >= 8.4.0";
 	die(1);
 }
  
@@ -39,3 +39,5 @@ while (ob_get_level()) {
 -->
 
 */
+
+require_once __DIR__ . '/DatabaseTestTrait.php';

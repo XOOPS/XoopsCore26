@@ -11,18 +11,17 @@
 
 namespace Xoops\Core\Database;
 
-use Xoops\Core\Database\Logging\XoopsDebugStack;
+use Xoops\Core\Database\Logging\XoopsQueryLogger;
+use Xoops\Core\Database\Logging\XoopsLoggingMiddleware;
 
 /**
  * Xoops Database Factory class
- *
- * PHP version 5.3
  *
  * @category  Xoops\Class\Database\Factory
  * @package   Factory
  * @author    Kazumi Ono <onokazu@xoops.org>
  * @author    readheadedrod <redheadedrod@hotmail.com>
- * @copyright 2013-2014 XOOPS Project (http://xoops.org)
+ * @copyright 2013-2024 XOOPS Project (http://xoops.org)
  * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
  * @version   Release:2.6
  * @link      http://xoops.org
@@ -30,6 +29,23 @@ use Xoops\Core\Database\Logging\XoopsDebugStack;
  */
 class Factory
 {
+    /**
+     * @var XoopsQueryLogger|null shared query logger instance
+     */
+    private static ?XoopsQueryLogger $queryLogger = null;
+
+    /**
+     * Get the query logger instance
+     *
+     * @return XoopsQueryLogger
+     */
+    public static function getQueryLogger(): XoopsQueryLogger
+    {
+        if (self::$queryLogger === null) {
+            self::$queryLogger = new XoopsQueryLogger();
+        }
+        return self::$queryLogger;
+    }
 
     /**
      * Get a reference to the only instance of database class and connects to DB
@@ -51,9 +67,12 @@ class Factory
     {
         static $instance;
         if (!isset($instance)) {
-			$xoops = \Xoops::getInstance();
+            $xoops = \Xoops::getInstance();
+            $queryLogger = self::getQueryLogger();
+            $middleware = new XoopsLoggingMiddleware($queryLogger);
             $config = new \Doctrine\DBAL\Configuration();
-            $config->setSQLLogger(new XoopsDebugStack());
+            $config->setMiddlewares([$middleware]);
+
             $parameters = \XoopsBaseConfig::get('db-parameters');
             if (!empty($parameters) && is_array($parameters)) {
                 $connectionParams = $parameters;
@@ -70,11 +89,11 @@ class Factory
                     'wrapperClass' => '\Xoops\Core\Database\Connection',
                 );
                 // Support for other doctrine databases
-				$xoops_db_port = \XoopsBaseConfig::get('db-port');
+                $xoops_db_port = \XoopsBaseConfig::get('db-port');
                 if (!empty($xoops_db_port)) {
                     $connectionParams['port'] = $xoops_db_port;
                 }
-				$xoops_db_socket = \XoopsBaseConfig::get('db-socket');
+                $xoops_db_socket = \XoopsBaseConfig::get('db-socket');
                 if (!empty($xoops_db_socket)) {
                     $connectionParams['unix_socket'] = $xoops_db_socket;
                 }

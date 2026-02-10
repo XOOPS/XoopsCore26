@@ -33,6 +33,8 @@
 
 namespace Xoops\Test\Locale;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 use Xoops\Locale\MessageFormatter;
 
 // keep original formatting to help diff against upstream
@@ -41,15 +43,15 @@ use Xoops\Locale\MessageFormatter;
 /**
  * @author Alexander Makarov <sam@rmcreative.ru>
  * @since 2.0
- * @group i18n
  */
+#[Group('i18n')]
 class MessageFormatterTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
     }
 
@@ -57,7 +59,7 @@ class MessageFormatterTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -73,7 +75,7 @@ class MessageFormatterTest extends \PHPUnit\Framework\TestCase
     protected const SUBJECT = 'сабж';
     protected const SUBJECT_VALUE = 'Answer to the Ultimate Question of Life, the Universe, and Everything';
 
-    public function patterns()
+    public static function patterns()
     {
         return [
             [
@@ -319,7 +321,7 @@ _MSG_
         ];
     }
 
-    public function parsePatterns()
+    public static function parsePatterns()
     {
         return [
             [
@@ -393,13 +395,13 @@ _MSG_
     }
 
     /**
-     * @dataProvider patterns
      * @param string $pattern
      * @param string $expected
      * @param array $args
      * @param bool $skip
      * @param string $skipMessage
      */
+    #[DataProvider('patterns')]
     public function testNamedArguments($pattern, $expected, $args, $skip = false, $skipMessage = '')
     {
         if ($skip) {
@@ -411,12 +413,12 @@ _MSG_
     }
 
     /**
-     * @dataProvider parsePatterns
      * @param string $pattern
      * @param string $expected
      * @param array $args
      * @param string $locale
      */
+    #[DataProvider('parsePatterns')]
     public function testParseNamedArguments($pattern, $expected, $args, $locale = 'en-US')
     {
         if (!extension_loaded('intl')) {

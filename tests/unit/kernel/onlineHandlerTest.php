@@ -7,7 +7,7 @@ class legacy_onlineHandlerTest extends \PHPUnit\Framework\TestCase
 {
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->conn = Xoops::getInstance()->db();
     }

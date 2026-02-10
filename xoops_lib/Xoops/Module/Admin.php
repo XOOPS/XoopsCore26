@@ -550,8 +550,17 @@ class Admin
 
             $dbarray = $this->module->getInfo('min_db');
             if ($dbarray !== false) {
-                $dbCurrentPlatform = $xoops->db()->getDatabasePlatform()->getName();
-                $dbCurrentVersion  = $xoops->db()->getWrappedConnection()->getServerVersion();
+                // In DBAL 4.x, Platform::getName() was removed. Derive name from class.
+                $platform = $xoops->db()->getDatabasePlatform();
+                $platformClass = get_class($platform);
+                $dbCurrentPlatform = match (true) {
+                    str_contains($platformClass, 'MySQL') || str_contains($platformClass, 'MariaDb') => 'mysql',
+                    str_contains($platformClass, 'PostgreSQL') => 'postgresql',
+                    str_contains($platformClass, 'SQLite') => 'sqlite',
+                    default => strtolower(basename(str_replace('\\', '/', $platformClass))),
+                };
+                $pdo = $xoops->db()->getNativeConnection();
+                $dbCurrentVersion = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
                 if (isset($dbarray[$dbCurrentPlatform])) {
                     $dbRequiredVersion = $dbarray[$dbCurrentPlatform];
                     if (0 >= version_compare($dbCurrentVersion, $dbRequiredVersion)) {
@@ -723,11 +732,11 @@ class Admin
         $file = \XoopsBaseConfig::get('root-path') . "/modules/" . $this->module->getVar("dirname")
             . "/locale/" . $language . "/changelog.txt";
         if (is_readable($file)) {
-            $changelog = utf8_encode(implode("<br />", file($file))) . "\n";
+            $changelog = mb_convert_encoding(implode("<br />", file($file)), 'UTF-8', 'ISO-8859-1') . "\n";
         } else {
             $file = \XoopsBaseConfig::get('root-path') . "/modules/" . $this->module->getVar("dirname") . "/docs/changelog.txt";
             if (is_readable($file)) {
-                $changelog = utf8_encode(implode("<br />", file($file))) . "\n";
+                $changelog = mb_convert_encoding(implode("<br />", file($file)), 'UTF-8', 'ISO-8859-1') . "\n";
             }
         }
         $author_list = substr($author_list, 0, -2);

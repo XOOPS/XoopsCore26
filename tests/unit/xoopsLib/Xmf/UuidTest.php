@@ -15,7 +15,7 @@ class UuidTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
     }
 
@@ -23,7 +23,7 @@ class UuidTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -33,10 +33,10 @@ class UuidTest extends \PHPUnit\Framework\TestCase
         $uuidMatch = '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/';
 
         $result = Uuid::generate();
-        $this->assertRegExp($uuidMatch, $result);
+        $this->assertMatchesRegularExpression($uuidMatch, $result);
 
         $anotherResult = Uuid::generate();
-        $this->assertRegExp($uuidMatch, $anotherResult);
+        $this->assertMatchesRegularExpression($uuidMatch, $anotherResult);
 
         $this->assertNotEquals($result, $anotherResult);
     }

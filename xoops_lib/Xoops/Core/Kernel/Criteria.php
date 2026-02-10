@@ -157,7 +157,7 @@ class Criteria extends CriteriaElement
      *
      * @return QueryBuilder query builder instance
      */
-    public function renderQb(QueryBuilder $qb = null, $whereMode = '')
+    public function renderQb(?QueryBuilder $qb = null, $whereMode = '')
     {
         if ($qb==null) { // initialize query builder if not passed in
             $qb = \Xoops::getInstance()->db()->createXoopsQueryBuilder();

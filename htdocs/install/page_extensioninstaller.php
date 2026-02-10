@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $content .= "<tr id='" . $ext->getInfo('dirname') . "'" . $style . ">\n";
         $content .= "    <td class='img' ><img src='" . XOOPS_URL . "/modules/" . $ext->getInfo('dirname') . "/" . $ext->getInfo('image') . "' alt='" . $ext->getInfo('name') . "'/></td>\n";
         $content .= "    <td>";
-        $content .= "        " . $ext->getInfo('name') . "&nbsp;" . number_format(round($ext->getInfo('version'), 2), 2) . "&nbsp;(" . $ext->getInfo('dirname') . ")";
+        $content .= "        " . $ext->getInfo('name') . "&nbsp;" . number_format(round((float)$ext->getInfo('version'), 2), 2) . "&nbsp;(" . $ext->getInfo('dirname') . ")";
         $content .= "        <br />" . $ext->getInfo('description');
         $content .= "    </td>\n";
         $content .= "    <td class='yesno'>";

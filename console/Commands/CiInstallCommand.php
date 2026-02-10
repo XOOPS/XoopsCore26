@@ -34,9 +34,9 @@ EOT
      *
      * @param InputInterface  $input  input handler
      * @param OutputInterface $output output handler
-     * @return void
+     * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // install the 'system' module
         $xoops = \Xoops::getInstance();
@@ -44,7 +44,7 @@ EOT
         $output->writeln(sprintf('Installing %s', $module));
         if (false !== $xoops->getModuleByDirname($module)) {
             $output->writeln(sprintf('<error>%s module is already installed!</error>', $module));
-            return;
+            return Command::FAILURE;
         }
         $xoops->setTpl(new XoopsTpl());
         \XoopsLoad::load('module', 'system');
@@ -87,5 +87,7 @@ EOT
             )
         );
         $output->writeln(sprintf('<info>Inserted %d user.</info>', $result));
+
+        return Command::SUCCESS;
     }
 }

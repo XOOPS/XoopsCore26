@@ -13,7 +13,6 @@ namespace Xoops\Core\Kernel\Model;
 
 use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsModelAbstract;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * Object joint handler class.
@@ -71,7 +70,7 @@ class Joint extends XoopsModelAbstract
      * @return false|array array as requested by $asObject
      */
     public function getByLink(
-        CriteriaElement $criteria = null,
+        ?CriteriaElement $criteria = null,
         $fields = null,
         $asObject = true,
         $field_link = null,
@@ -118,7 +117,7 @@ class Joint extends XoopsModelAbstract
         $result = $qb->execute();
         $ret = array();
         if ($asObject) {
-            while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+            while ($myrow = $result->fetchAssociative()) {
                 $object = $this->handler->create(false);
                 $object->assignVars($myrow);
                 $ret[$myrow[$this->handler->keyName]] = $object;
@@ -126,7 +125,7 @@ class Joint extends XoopsModelAbstract
             }
         } else {
             $object = $this->handler->create(false);
-            while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+            while ($myrow = $result->fetchAssociative()) {
                 $object->assignVars($myrow);
                 $ret[$myrow[$this->handler->keyName]] = $object->getValues();
             }
@@ -142,7 +141,7 @@ class Joint extends XoopsModelAbstract
      *
      * @return false|int count of objects
      */
-    public function getCountByLink(CriteriaElement $criteria = null)
+    public function getCountByLink(?CriteriaElement $criteria = null)
     {
         if (!$this->validateLinks()) {
             return false;
@@ -164,7 +163,7 @@ class Joint extends XoopsModelAbstract
         }
 
         $result = $qb->execute();
-        return $result->fetchColumn(0);
+        return $result->fetchOne();
     }
 
     /**
@@ -174,7 +173,7 @@ class Joint extends XoopsModelAbstract
      *
      * @return false|int count of objects
      */
-    public function getCountsByLink(CriteriaElement $criteria = null)
+    public function getCountsByLink(?CriteriaElement $criteria = null)
     {
         if (!$this->validateLinks()) {
             return false;
@@ -201,7 +200,7 @@ class Joint extends XoopsModelAbstract
         $result = $qb->execute();
 
         $ret = array();
-        while (list($id, $count) = $result->fetch(FetchMode::NUMERIC)) {
+        while (list($id, $count) = $result->fetchNumeric()) {
             $ret[$id] = $count;
         }
         return $ret;
@@ -218,7 +217,7 @@ class Joint extends XoopsModelAbstract
      * @todo UPDATE ... LEFT JOIN is not portable
      * Note Alain91 : multi tables update is not allowed in Doctrine
      */
-    public function updateByLink(array $data, CriteriaElement $criteria = null)
+    public function updateByLink(array $data, ?CriteriaElement $criteria = null)
     {
         if (!$this->validateLinks()) {
             return false;
@@ -238,7 +237,7 @@ class Joint extends XoopsModelAbstract
             $sql .= " " . $criteria->renderWhere();
         }
 
-        return $this->handler->db2->executeUpdate($sql);
+        return $this->handler->db2->executeStatement($sql);
     }
 
     /**
@@ -251,7 +250,7 @@ class Joint extends XoopsModelAbstract
      * @todo DELETE ... LEFT JOIN is not portable
      * Note Alain91 : multi tables delete is not allowed in Doctrine
      */
-    public function deleteByLink(CriteriaElement $criteria = null)
+    public function deleteByLink(?CriteriaElement $criteria = null)
     {
         if (!$this->validateLinks()) {
             return false;
@@ -267,6 +266,6 @@ class Joint extends XoopsModelAbstract
             $sql .= " " . $criteria->renderWhere();
         }
 
-        return $this->handler->db2->executeUpdate($sql);
+        return $this->handler->db2->executeStatement($sql);
     }
 }

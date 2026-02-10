@@ -6,13 +6,16 @@ use Xoops\Core\Kernel\Handlers\XoopsGroupHandler;
 
 class JointTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $conn = null;
 
     protected $myClass = 'Xoops\Core\Kernel\Model\Joint';
     protected $myAbstractClass = 'Xoops\Core\Kernel\XoopsModelAbstract';
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->conn = \Xoops::getInstance()->db();
     }
 

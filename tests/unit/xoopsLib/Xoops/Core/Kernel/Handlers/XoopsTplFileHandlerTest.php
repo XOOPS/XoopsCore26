@@ -7,12 +7,15 @@ use Xoops\Core\Kernel\Criteria;
 
 class XoopsTplFileHandlerTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myclass='Xoops\Core\Kernel\Handlers\XoopsTplFileHandler';
     protected $conn = null;
     protected $xoopsTplfile = '\Xoops\Core\Kernel\Handlers\XoopsTplFile';
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->conn = Xoops::getInstance()->db();
         $this->conn->setSafe();
     }
@@ -20,7 +23,7 @@ class XoopsTplFileHandlerTest extends \PHPUnit\Framework\TestCase
     public function test___construct()
     {
         $instance = new $this->myclass($this->conn);
-        $this->assertRegExp('/^.*system_tplfile$/', $instance->table);
+        $this->assertMatchesRegularExpression('/^.*system_tplfile$/', $instance->table);
         $this->assertSame($this->xoopsTplfile, $instance->className);
         $this->assertSame('tpl_id', $instance->keyName);
         $this->assertSame('tpl_refid', $instance->identifierName);

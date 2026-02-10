@@ -14,7 +14,7 @@ class EmailAddressTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = new EmailAddress();
     }
@@ -23,7 +23,7 @@ class EmailAddressTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -61,7 +61,7 @@ class EmailAddressTest extends \PHPUnit\Framework\TestCase
         try {
             $this->object->getEmail();
         } catch (\LogicException $e) {
-            $this->assertContains('Email', $e->getMessage());
+            $this->assertStringContainsString('Email', $e->getMessage());
         }
         $this->assertInstanceOf(\LogicException::class, $e);
     }
@@ -86,7 +86,7 @@ class EmailAddressTest extends \PHPUnit\Framework\TestCase
         try {
             $address->getDisplayName();
         } catch (\LogicException $e) {
-            $this->assertContains('Display', $e->getMessage());
+            $this->assertStringContainsString('Display', $e->getMessage());
         }
         $this->assertInstanceOf(\LogicException::class, $e);
     }

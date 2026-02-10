@@ -14,7 +14,6 @@ use Xoops\Core\Kernel\Dtype;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
 use Xoops\Core\Kernel\CriteriaElement;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * Extended User Profile
@@ -311,7 +310,7 @@ class ProfileProfileHandler extends XoopsPersistableObjectHandler
 
         $users = array();
         $profiles = array();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $profile = $this->create(false);
             $user = $user_handler->create(false);
 
@@ -328,7 +327,7 @@ class ProfileProfileHandler extends XoopsPersistableObjectHandler
 
         $qb->select('COUNT(*)')->setMaxResults(null)->setFirstResult(null);
         $result = $qb->execute();
-        $count = $result->fetchColumn();
+        $count = $result->fetchOne();
 
         return array($users, $profiles, (int)($count));
     }

@@ -190,8 +190,8 @@ switch ($op) {
                 $eb = $qb->expr();
                 $query = $qb->updatePrefix('system_user')
                     ->set('user_avatar', 'blank.gif')
-                    ->where($eb->eq('user_avatar', ':file '))
-                    ->setParameter(':file', $file);
+                    ->where($eb->eq('user_avatar', ':file'))
+                    ->setParameter('file', $file);
                 $result = $query->execute();
                 $xoops->redirect("avatar_system.php", 2, XoopsLocale::S_ITEM_SAVED);
             } else {

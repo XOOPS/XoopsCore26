@@ -31,17 +31,17 @@ require_once __DIR__ . '/include/common.inc.php';
 $wizard = $_SESSION['wizard'];
 $_SESSION['settings'] = array();
 
-setcookie('xo_install_lang', 'en_US', null, null, null);
+setcookie('xo_install_lang', 'en_US', 0, '', '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['lang'])) {
     $lang = $_REQUEST['lang'];
-    setcookie('xo_install_lang', $lang, null, null, null);
+    setcookie('xo_install_lang', $lang, 0, '', '');
 
     $wizard->redirectToPage('+1');
     exit();
 }
 $_SESSION['settings'] = array();
 
-setcookie('xo_install_user', '', null, null, null);
+setcookie('xo_install_user', '', 0, '', '');
 
 //$title = LANGUAGE_SELECTION;
 $content = '<div class="languages">';

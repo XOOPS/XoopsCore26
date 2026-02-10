@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="xoops_lib/vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="xoops_lib/vendor/autoload.php"
-         colors="true">
+         bootstrap="tests/unit/phpunit_bootstrap.php"
+         colors="true"
+         cacheDirectory=".phpunit.cache"
+         displayDetailsOnTestsThatTriggerDeprecations="true"
+         displayDetailsOnTestsThatTriggerWarnings="true"
+         failOnDeprecation="false"
+         failOnWarning="false">
     <testsuites>
         <testsuite name="legacyclass">
             <directory>./tests/unit/class</directory>
@@ -18,16 +23,12 @@
             <file>./tests/unit/xoopsLib/XoopsTest.php</file>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+    <source>
+        <include>
             <directory suffix=".php">./htdocs/kernel</directory>
             <directory suffix=".php">./xoops_lib/Xmf</directory>
             <directory suffix=".php">./xoops_lib/Xoops</directory>
             <file>./xoops_lib/Xoops.php</file>
-        </whitelist>
-    </filter>
-
-    <logging>
-        <log type="coverage-clover" target="coverage.clover" />
-    </logging>
+        </include>
+    </source>
 </phpunit>

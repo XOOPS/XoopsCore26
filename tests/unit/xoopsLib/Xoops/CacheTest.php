@@ -5,7 +5,7 @@ class Xoops_CacheTest extends \PHPUnit\Framework\TestCase
 {
     protected $myClass = '\Xoops\Cache';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

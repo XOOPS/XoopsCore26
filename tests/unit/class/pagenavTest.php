@@ -8,7 +8,7 @@ class PagenavTest extends \PHPUnit\Framework\TestCase
 {
     protected $myclass = 'XoopsPageNav';
 
-    public function setUp()
+    public function setUp(): void
     {
         $xoops=Xoops::getinstance();
         $tpl=$xoops->tpl();

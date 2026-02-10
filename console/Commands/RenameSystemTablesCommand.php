@@ -22,7 +22,7 @@ EOT
              );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
         $tableNames = [
@@ -72,5 +72,7 @@ EOT
 
         //var_dump($migrate->dumpQueue());
         $migrate->executeQueue(true);
+
+        return Command::SUCCESS;
     }
 }

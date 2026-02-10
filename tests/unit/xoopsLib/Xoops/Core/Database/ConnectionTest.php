@@ -2,9 +2,7 @@
 require_once(__DIR__.'/../../../../init_new.php');
 
 
-use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Configuration;
-use Doctrine\Common\EventManager;
 
 class ConnectionTest extends \PHPUnit\Framework\TestCase
 {
@@ -13,24 +11,22 @@ class ConnectionTest extends \PHPUnit\Framework\TestCase
     /** @var  Xoops\Core\Database\Connection */
     protected $object;
 
-    public function setUp()
+    public function setUp(): void
     {
-        $params = array();
+        $params = array('driver' => 'pdo_mysql');
         $config = new Configuration();
-        $eventManager = new EventManager();
-        $driver = new Doctrine\DBAL\Driver\PDOMySql\Driver();
+        $driver = new Doctrine\DBAL\Driver\PDO\MySQL\Driver();
 
-        $this->object = new $this->myclass($params, $driver, $config, $eventManager);
+        $this->object = new $this->myclass($params, $driver, $config);
     }
 
     public function test___construct()
     {
-        $params = array();
+        $params = array('driver' => 'pdo_mysql');
         $config = new Configuration();
-        $eventManager = new EventManager();
-        $driver = new Doctrine\DBAL\Driver\PDOMySql\Driver();
+        $driver = new Doctrine\DBAL\Driver\PDO\MySQL\Driver();
 
-        $instance = new $this->myclass($params, $driver, $config, $eventManager);
+        $instance = new $this->myclass($params, $driver, $config);
         $this->assertInstanceOf('\Xoops\Core\Database\Connection', $instance);
     }
 
@@ -71,78 +67,55 @@ class ConnectionTest extends \PHPUnit\Framework\TestCase
     public function test_insertPrefix()
     {
         $this->markTestIncomplete('No test yet');
-        //  insertPrefix($tableName, array $data, array $types = array())
     }
 
     public function test_updatePrefix()
     {
         $this->markTestIncomplete('No test yet');
-        //  updatePrefix($tableName, array $data, array $identifier, array $types = array())
     }
 
     public function test_deletePrefix()
     {
         $this->markTestIncomplete('No test yet');
-        //  deletePrefix($tableName, array $identifier)
     }
 
     public function test_executeQuery()
     {
         $this->markTestIncomplete('No test yet');
-        /*
-        executeQuery(
-        $query,
-        array $params = array(),
-        $types = array(),
-        \Doctrine\DBAL\Cache\QueryCacheProfile $qcp = null
-        */
     }
 
-    public function test_executeUpdate()
+    public function test_executeStatement()
     {
         $this->markTestIncomplete('No test yet');
-        //  executeUpdate($query, array $params = array(), array $types = array())
     }
 
     public function test_beginTransaction()
     {
         $this->markTestIncomplete('No test yet');
-        //  beginTransaction()
     }
 
     public function test_commit()
     {
         $this->markTestIncomplete('No test yet');
-        //  commit()
     }
 
     public function test_rollBack()
     {
         $this->markTestIncomplete('No test yet');
-        //  rollBack()
     }
 
     public function test_query()
     {
         $this->markTestIncomplete('No test yet');
-        //  query()
     }
 
     public function test_queryFromFile()
     {
         $this->markTestIncomplete('No test yet');
-        //  queryFromFile($file)
-    }
-
-    public function test_quoteSlash()
-    {
-        $this->markTestIncomplete('No test yet');
-        //  quoteSlash($input)
     }
 
     public function test_createXoopsQueryBuilder()
     {
         $this->markTestIncomplete('No test yet');
-        //  createXoopsQueryBuilder()
     }
 }

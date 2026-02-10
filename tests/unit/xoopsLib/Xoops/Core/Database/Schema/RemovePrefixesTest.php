@@ -2,6 +2,7 @@
 require_once(__DIR__.'/../../../../../init_new.php');
 
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\DBAL\Schema\Table;
 
 class RemovePrefixesTest extends \PHPUnit\Framework\TestCase
@@ -12,7 +13,7 @@ class RemovePrefixesTest extends \PHPUnit\Framework\TestCase
     {
         $instance = new $this->myClass('prefix_');
         $this->assertInstanceOf($this->myClass, $instance);
-        $this->assertInstanceOf('Doctrine\DBAL\Schema\Visitor\Visitor', $instance);
+        $this->assertInstanceOf('Xoops\Core\Database\Schema\SchemaVisitorInterface', $instance);
     }
 
     public function test_getNewSchema()
@@ -59,7 +60,7 @@ class RemovePrefixesTest extends \PHPUnit\Framework\TestCase
         $instance = new $this->myClass('prefix_');
 
         $table = new Doctrine\DBAL\Schema\Table('system_group');
-        $type = Type::getType(Type::INTEGER);
+        $type = Type::getType(Types::INTEGER);
         $col_name = 'groupid';
         $column = new Doctrine\DBAL\Schema\Column($col_name, $type);
         $value = $instance->acceptColumn($table, $column);

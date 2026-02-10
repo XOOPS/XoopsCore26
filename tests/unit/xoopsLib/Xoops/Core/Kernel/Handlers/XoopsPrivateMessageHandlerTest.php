@@ -6,18 +6,21 @@ use Xoops\Core\Kernel\Handlers\XoopsPrivateMessage;
 
 class XoopsPrivateMessageHandlerTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myclass='Xoops\Core\Kernel\Handlers\XoopsPrivateMessageHandler';
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->conn = Xoops::getInstance()->db();
     }
 
     public function test___construct()
     {
         $instance=new $this->myclass($this->conn);
-        $this->assertRegExp('/^.*system_privatemessage$/', $instance->table);
+        $this->assertMatchesRegularExpression('/^.*system_privatemessage$/', $instance->table);
         $this->assertSame('\Xoops\Core\Kernel\Handlers\XoopsPrivateMessage', $instance->className);
         $this->assertSame('msg_id', $instance->keyName);
         $this->assertSame('subject', $instance->identifierName);

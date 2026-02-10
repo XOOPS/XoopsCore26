@@ -12,10 +12,13 @@ class Xoops_Auth_ProvisioningTest_AuthAbstractInstance extends AuthAbstract
 
 class Xoops_Auth_ProvisioningTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $object = null;
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $conn = Factory::getConnection();
         $auth = new Xoops_Auth_ProvisioningTest_AuthAbstractInstance($conn);
         $this->object = new Provisioning($auth);

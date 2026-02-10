@@ -14,7 +14,7 @@ class Kernel_CriteriaElementTestInstance extends Xoops\Core\Kernel\CriteriaEleme
     public function renderLdap()
     {
     }
-    public function renderQb(QueryBuilder $qb = null, $whereMode = '')
+    public function renderQb(?QueryBuilder $qb = null, $whereMode = '')
     {
     }
     public function buildExpressionQb(QueryBuilder $qb)

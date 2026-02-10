@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $content .= "<tr id='" . $module->getInfo('dirname') . "'" . $style . ">\n";
         $content .= "    <td class='img' ><img src='" . XOOPS_URL . "/modules/" . $module->getInfo('dirname') . "/" . $module->getInfo('image') . "' alt='" . $module->getInfo('name') . "'/></td>\n";
         $content .= "    <td>";
-        $content .= "        " . $module->getInfo('name') . "&nbsp;" . number_format(round($module->getInfo('version'), 2), 2) . "&nbsp;(" . $module->getInfo('dirname') . ")";
+        $content .= "        " . $module->getInfo('name') . "&nbsp;" . number_format(round((float)$module->getInfo('version'), 2), 2) . "&nbsp;(" . $module->getInfo('dirname') . ")";
         $content .= "        <br />" . $module->getInfo('description');
         $content .= "    </td>\n";
         $content .= "    <td class='yesno'>";

@@ -13,7 +13,6 @@ namespace Xoops\Core\Kernel\Model;
 
 use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsModelAbstract;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * Object stats handler class.
@@ -33,7 +32,7 @@ class Stats extends XoopsModelAbstract
      *
      * @return int count of objects
      */
-    public function getCount(CriteriaElement $criteria = null)
+    public function getCount(?CriteriaElement $criteria = null)
     {
         $qb = \Xoops::getInstance()->db()->createXoopsQueryBuilder();
 
@@ -66,11 +65,11 @@ class Stats extends XoopsModelAbstract
         }
 
         if ($groupBy == false) {
-            list ($count) = $result->fetch(FetchMode::NUMERIC);
+            list ($count) = $result->fetchNumeric();
             return $count;
         } else {
             $ret = array();
-            while (list ($id, $count) = $result->fetch(FetchMode::NUMERIC)) {
+            while (list ($id, $count) = $result->fetchNumeric()) {
                 $ret[$id] = $count;
             }
             return $ret;
@@ -84,7 +83,7 @@ class Stats extends XoopsModelAbstract
      *
      * @return array of counts
      */
-    public function getCounts(CriteriaElement $criteria = null)
+    public function getCounts(?CriteriaElement $criteria = null)
     {
         $qb = \Xoops::getInstance()->db()->createXoopsQueryBuilder();
 
@@ -109,7 +108,7 @@ class Stats extends XoopsModelAbstract
         if (!$result) {
             return $ret;
         }
-        while (list ($id, $count) = $result->fetch(FetchMode::NUMERIC)) {
+        while (list ($id, $count) = $result->fetchNumeric()) {
             $ret[$id] = $count;
         }
         return $ret;

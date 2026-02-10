@@ -16,7 +16,7 @@ class HttpRequestTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = HttpRequest::getInstance();
         $this->save_SERVER = $_SERVER;
@@ -26,7 +26,7 @@ class HttpRequestTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $_SERVER = $this->save_SERVER;
     }
@@ -113,6 +113,9 @@ class HttpRequestTest extends \PHPUnit\Framework\TestCase
 
     public function testGetDomain()
     {
+        if (!class_exists('Geekwright\RegDom\RegisteredDomain')) {
+            $this->markTestSkipped('geekwright/regdom package not installed');
+        }
         $instance = $this->object;
 
         $_SERVER['HTTP_HOST'] = 'subdomain.example.com';
@@ -122,6 +125,9 @@ class HttpRequestTest extends \PHPUnit\Framework\TestCase
 
     public function testGetSubdomains()
     {
+        if (!class_exists('Geekwright\RegDom\RegisteredDomain')) {
+            $this->markTestSkipped('geekwright/regdom package not installed');
+        }
         $instance = $this->object;
 
         $_SERVER['HTTP_HOST'] = 'subdomain.example.com';
@@ -216,6 +222,9 @@ class HttpRequestTest extends \PHPUnit\Framework\TestCase
 
     public function test_getEnv_http_base()
     {
+        if (!class_exists('Geekwright\RegDom\RegisteredDomain')) {
+            $this->markTestSkipped('geekwright/regdom package not installed');
+        }
         $instance = $this->object;
 
         $_SERVER['HTTP_HOST'] = 'localhost';

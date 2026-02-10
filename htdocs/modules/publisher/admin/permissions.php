@@ -20,7 +20,6 @@
 use Xoops\Core\Text\Sanitizer;
 use Xoops\Form\GroupPermissionForm;
 use XoopsModules\Publisher;
-use Doctrine\DBAL\FetchMode;
 
 require_once __DIR__ . '/admin_header.php';
 
@@ -37,7 +36,7 @@ $block_view = [];
 $qb = $xoops->db()->createXoopsQueryBuilder();
 $qb->select('categoryid', 'name')->fromPrefix('publisher_categories', '')->orderBy('name');
 $result = $qb->execute();
-$catArray = $result->fetchAll(FetchMode::ASSOCIATIVE);
+$catArray = $result->fetchAllAssociative();
 $catCount = count($catArray);
 
 Publisher\Utils::openCollapsableBar('permissionstable_view', 'permissionsicon_view', _AM_PUBLISHER_PERMISSIONSVIEWMAN, _AM_PUBLISHER_VIEW_CATS);

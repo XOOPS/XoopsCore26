@@ -17,9 +17,9 @@ class FormTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->object = $this->getMockForAbstractClass('\Xoops\Form\Form', array('title', 'name', 'action'));
+        $this->object = $this->getMockBuilder('\Xoops\Form\Form')->setConstructorArgs(array('title', 'name', 'action'))->onlyMethods(['render'])->getMock();
 
     }
 
@@ -27,7 +27,7 @@ class FormTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 

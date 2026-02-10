@@ -531,12 +531,16 @@ class Xoops
     public function themeSelect()
     {
         $xoopsThemeSelect = Request::getString('xoops_theme_select', '', 'POST');
-        if (!empty($xoopsThemeSelect) && in_array($xoopsThemeSelect, $this->getConfig('theme_set_allowed'))) {
+        $allowedThemes = $this->getConfig('theme_set_allowed');
+        if (!is_array($allowedThemes)) {
+            $allowedThemes = empty($allowedThemes) ? [] : (array) $allowedThemes;
+        }
+        if (!empty($xoopsThemeSelect) && in_array($xoopsThemeSelect, $allowedThemes)) {
             $this->setConfig('theme_set', $xoopsThemeSelect);
             $_SESSION['xoopsUserTheme'] = $xoopsThemeSelect;
         } else {
             if (!empty($_SESSION['xoopsUserTheme'])
-                && in_array($_SESSION['xoopsUserTheme'], $this->getConfig('theme_set_allowed'))
+                && in_array($_SESSION['xoopsUserTheme'], $allowedThemes)
             ) {
                 $this->setConfig('theme_set', $_SESSION['xoopsUserTheme']);
             }
@@ -1374,7 +1378,7 @@ class Xoops
         if (!isset($userTZ)) {
             $userTZ = $this->getConfig('default_TZ');
         }
-        $timestamp = $timestamp - (($userTZ - $this->getConfig('server_TZ')) * 3600);
+        $timestamp = (float) $timestamp - (((float) $userTZ - (float) $this->getConfig('server_TZ')) * 3600);
         return (int)$timestamp;
     }
 

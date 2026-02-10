@@ -22,7 +22,6 @@ use Xoops\Core\Database\Connection;
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -61,7 +60,7 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'system_module', '\Xoops\Core\Kernel\Handlers\XoopsModule', 'mid', 'dirname');
     }
@@ -172,17 +171,17 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
                 )
             )
             ->andWhere($eb->eq('gperm_itemid', ':itemid'))
-            ->setParameter(':itemid', $mid, ParameterType::INTEGER)
+            ->setParameter('itemid', $mid, ParameterType::INTEGER)
             ->execute();
 
         $qb->resetQueryParts(); // reset
         $qb ->select('block_id')
             ->fromPrefix('system_blockmodule', null)
             ->where($eb->eq('module_id', ':mid'))
-            ->setParameter(':mid', $mid, ParameterType::INTEGER);
+            ->setParameter('mid', $mid, ParameterType::INTEGER);
         $result = $qb->execute();
         $block_id_arr = array();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             array_push($block_id_arr, $myrow['block_id']);
         }
 
@@ -191,20 +190,20 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
             $qb ->select('COUNT(*)')
                 ->fromPrefix('system_blockmodule', null)
                 ->where($eb->neq('module_id', ':mid'))
-                ->setParameter(':mid', $mid, ParameterType::INTEGER)
+                ->setParameter('mid', $mid, ParameterType::INTEGER)
                 ->andWhere($eb->eq('block_id', ':bid'))
-                ->setParameter(':bid', $i, ParameterType::INTEGER);
+                ->setParameter('bid', $i, ParameterType::INTEGER);
             $result = $qb->execute();
-            $count = $result->fetchColumn(0);
+            $count = $result->fetchOne();
 
             if ($count > 0) {
                 // this block has other entries, so delete the entry for this module
                 $qb->resetQueryParts(); // reset
                 $qb ->deletePrefix('system_blockmodule')
                     ->where($eb->eq('module_id', ':mid'))
-                    ->setParameter(':mid', $mid, ParameterType::INTEGER)
+                    ->setParameter('mid', $mid, ParameterType::INTEGER)
                     ->andWhere($eb->eq('block_id', ':bid'))
-                    ->setParameter(':bid', $i, ParameterType::INTEGER)
+                    ->setParameter('bid', $i, ParameterType::INTEGER)
                     ->execute();
             } else {
                 // this block does not have other entries, so disable the block and let it show
@@ -213,16 +212,16 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
                 $qb ->updatePrefix('system_block')
                     ->set('visible', ':notvisible')
                     ->where($eb->eq('bid', ':bid'))
-                    ->setParameter(':bid', $i, ParameterType::INTEGER)
-                    ->setParameter(':notvisible', 0, ParameterType::INTEGER)
+                    ->setParameter('bid', $i, ParameterType::INTEGER)
+                    ->setParameter('notvisible', 0, ParameterType::INTEGER)
                     ->execute();
 
                 $qb->resetQueryParts(); // reset
                 $qb ->updatePrefix('system_blockmodule')
                     ->set('module_id', ':nomid')
                     ->where($eb->eq('module_id', ':mid'))
-                    ->setParameter(':mid', $mid, ParameterType::INTEGER)
-                    ->setParameter(':nomid', -1, ParameterType::INTEGER)
+                    ->setParameter('mid', $mid, ParameterType::INTEGER)
+                    ->setParameter('nomid', -1, ParameterType::INTEGER)
                     ->execute();
             }
         }
@@ -248,7 +247,7 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
      *
      * @return array
      */
-    public function getObjectsArray(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getObjectsArray(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         $ret = array();
         $qb = $this->db2->createXoopsQueryBuilder();
@@ -269,7 +268,7 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
             \Xoops::getInstance()->events()->triggerEvent('core.exception', $e);
             return $ret;
         }
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $module = new XoopsModule();
             $module->assignVars($myrow);
             if (!$id_as_key) {
@@ -291,7 +290,7 @@ class XoopsModuleHandler extends XoopsPersistableObjectHandler
      *
      * @return array
      */
-    public function getNameList(CriteriaElement $criteria = null, $dirname_as_key = false)
+    public function getNameList(?CriteriaElement $criteria = null, $dirname_as_key = false)
     {
         $ret = array();
         $modules = $this->getObjectsArray($criteria, true);

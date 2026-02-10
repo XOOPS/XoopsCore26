@@ -2,8 +2,8 @@
 
 if (defined('XOOPS_TU_ROOT_PATH')) return;
 
-if (version_compare(PHP_VERSION, '7.1.0', '<')) {
-    die("XOOP check: PHP version require 7.1.0 or more");
+if (version_compare(PHP_VERSION, '8.4.0', '<')) {
+    die("XOOPS check: PHP version requires 8.4.0 or higher");
 }
 
 // needed for phpunit => initializing $_SERVER values

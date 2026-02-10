@@ -166,7 +166,7 @@ class XoopsConfigHandler extends XoopsObjectHandler
      *
      * @return XoopsConfigItem[]
      */
-    public function getConfigs(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getConfigs(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         $criteria2 = new CriteriaCompo();
         if ($criteria) {
@@ -189,7 +189,7 @@ class XoopsConfigHandler extends XoopsObjectHandler
      *
      * @return int
      */
-    public function getConfigCount(CriteriaElement $criteria = null)
+    public function getConfigCount(?CriteriaElement $criteria = null)
     {
         return $this->itemHandler->getCount($criteria);
     }
@@ -278,7 +278,7 @@ class XoopsConfigHandler extends XoopsObjectHandler
      *
      * @return XoopsConfigOption[]
      */
-    public function getConfigOptions(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getConfigOptions(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         return $this->optionHandler->getObjects($criteria, $id_as_key);
     }
@@ -290,7 +290,7 @@ class XoopsConfigHandler extends XoopsObjectHandler
      *
      * @return int Count of options matching $criteria
      */
-    public function getConfigOptionsCount(CriteriaElement $criteria = null)
+    public function getConfigOptionsCount(?CriteriaElement $criteria = null)
     {
         return $this->optionHandler->getCount($criteria);
     }

@@ -31,7 +31,7 @@ class GenericHelperTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = GenericHelperTestHelper::getHelper();
     }
@@ -40,7 +40,7 @@ class GenericHelperTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -103,6 +103,14 @@ class GenericHelperTest extends \PHPUnit\Framework\TestCase
     public function testIsUserAdmin()
     {
         include_once XOOPS_ROOT_PATH . '/kernel/user.php';
+
+        // When the module cannot be loaded from the database, getModule()
+        // returns false and getVar() cannot be called on it.
+        $module = $this->object->getModule();
+        if (false === $module) {
+            $this->markTestSkipped('Module object not available (no database connection)');
+        }
+
         $GLOBALS['xoopsUser'] = '';
         $this->assertFalse($this->object->isUserAdmin());
 

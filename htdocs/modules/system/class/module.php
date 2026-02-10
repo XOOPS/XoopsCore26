@@ -18,8 +18,8 @@ use Xoops\Core\Kernel\Handlers\XoopsModule;
 use Xoops\Core\Psr4ClassLoader;
 use Xoops\Module\Plugin\ConfigCollector;
 use Xmf\Yaml;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Schema\Synchronizer\SingleDatabaseSynchronizer;
+use Doctrine\DBAL\Exception as DBALException;
+use Xoops\Core\Database\Schema\SchemaSynchronizer;
 
 /**
  * System Module
@@ -103,7 +103,7 @@ class SystemModule
                     $module->setInfo('can_delete', true);
                     $module->setInfo('can_disable', true);
                 }
-                if (round($module->getInfo('version'), 2) != $module->getVar('version')) {
+                if (round((float)$module->getInfo('version'), 2) != $module->getVar('version')) {
                     $module->setInfo('warning_update', true);
                 }
                 if (XoopsLoad::fileExists(
@@ -176,7 +176,7 @@ class SystemModule
                     $module->loadInfo($file);
                     if (!$module->getInfo('extension')) {
                         $module->setInfo('mid', $i);
-                        $module->setInfo('version', round($module->getInfo('version'), 2));
+                        $module->setInfo('version', round((float)$module->getInfo('version'), 2));
                         $ret[] = $module;
                         unset($module);
                         ++$i;
@@ -244,7 +244,7 @@ class SystemModule
                     }
                     $importer = new ImportSchema(\XoopsBaseConfig::get('db-prefix') . '_');
                     $importSchema = $importer->importSchemaArray(Yaml::read($schema_file_path));
-                    $synchronizer = new SingleDatabaseSynchronizer($xoops->db());
+                    $synchronizer = new SchemaSynchronizer($xoops->db());
                     $synchronizer->updateSchema($importSchema, true);
                 } elseif (is_array($sql_file) && !empty($sql_file[\XoopsBaseConfig::get('db-type')])) {
                     $xoops->deprecated('Install SQL files are deprecated since 2.6.0. Convert to portable Schemas');
@@ -549,7 +549,7 @@ class SystemModule
                             ) . '</span>';
                         }
                     }
-                    $synchronizer = new SingleDatabaseSynchronizer($xoops->db());
+                    $synchronizer = new SchemaSynchronizer($xoops->db());
                     $synchronizer->updateSchema($toSchema, false);
                 }
 
@@ -640,7 +640,7 @@ class SystemModule
                 }
                 $importer = new ImportSchema(\XoopsBaseConfig::get('db-prefix') . '_');
                 $importSchema = $importer->importSchemaArray(Yaml::read($schema_file_path));
-                $synchronizer = new SingleDatabaseSynchronizer($xoops->db());
+                $synchronizer = new SchemaSynchronizer($xoops->db());
                 $synchronizer->updateSchema($importSchema, true);
             }
 

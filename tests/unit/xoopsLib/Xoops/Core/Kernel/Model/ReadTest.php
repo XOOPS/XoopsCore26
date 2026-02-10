@@ -3,13 +3,16 @@ require_once(__DIR__.'/../../../../../init_new.php');
 
 class ReadTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $conn = null;
 
     protected $myClass = 'Xoops\Core\Kernel\Model\Read';
     protected $myAbstractClass = 'Xoops\Core\Kernel\XoopsModelAbstract';
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->conn = \Xoops::getInstance()->db();
     }
 

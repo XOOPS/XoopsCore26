@@ -41,7 +41,7 @@ $xoops->setConfig('locale', $language);
 $xoops->loadLocale();
 
 $dbm = $xoops->db();
-$count = $dbm->fetchColumn('SELECT COUNT(*) FROM ' . $dbm->prefix('system_user'));
+$count = $dbm->fetchOne('SELECT COUNT(*) FROM ' . $dbm->prefix('system_user'));
 $process = $count ? false : true;
 $update = false;
 
@@ -113,14 +113,14 @@ if ($process) {
     $content = "<div class='x2-note confirmMsg'>" . DATA_ALREADY_INSERTED . "</div>";
 }
 
-setcookie('xo_install_user', '', null, null, null);
+setcookie('xo_install_user', '', 0, '', '');
 if (isset( $settings['authorized'] ) && !empty($adminname) && !empty($adminpass)) {
     setcookie(
         'xo_install_user',
         addslashes($adminname) . '-' . md5($temp . XOOPS_DB_NAME . XOOPS_DB_PASS . XOOPS_DB_PREFIX),
-        null,
-        null,
-        null
+        0,
+        '',
+        ''
     );
 }
 
