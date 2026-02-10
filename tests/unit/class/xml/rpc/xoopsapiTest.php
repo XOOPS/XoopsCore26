@@ -5,7 +5,14 @@ use Xoops\Core\Kernel\Handlers\XoopsModule;
 
 class XoopsApiTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myclass = 'XoopsApi';
+
+    public function setUp(): void
+    {
+        $this->requireDatabase();
+    }
 
     public function test___construct()
     {

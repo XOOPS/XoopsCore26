@@ -21,7 +21,7 @@ class XoopsObjectHandlerTest extends \PHPUnit\Framework\TestCase
     protected $classObject = 'XoopsObjectHandlerTest_XoopsObjectInstance';
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->conn = Xoops\Core\Database\Factory::getConnection();
     }

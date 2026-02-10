@@ -6,11 +6,14 @@ use Xoops\Core\Kernel\Handlers\XoopsModule;
 
 class XoopsXmlRpcApiTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myclass = 'XoopsXmlRpcApi';
     protected $object = null;
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $params = array('p1'=>'one');
         $response = new XoopsXmlRpcResponse();
         $module = new XoopsModule();

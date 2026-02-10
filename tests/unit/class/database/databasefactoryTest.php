@@ -5,7 +5,7 @@ class XoopsDatabaseFactoryTest extends \PHPUnit\Framework\TestCase
 {
     protected $myClass = 'XoopsDatabaseFactory';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

@@ -46,6 +46,7 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
 
 		$xoops = \Xoops::getInstance();
 		$xoops->setConfig('auth_method', 'ads');
+		$xoops->setConfig('ldap_users_bypass', array('admin'));
 
 		$uname = 'admin';
 		$instance = $class::getAuthConnection($uname, true);
@@ -78,6 +79,7 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
 		$xoops = \Xoops::getInstance();
 
 		$xoops->setConfig('auth_method', 'ldap');
+		$xoops->setConfig('ldap_users_bypass', array('admin'));
 
 		$uname = 'admin';
 		$instance = $class::getAuthConnection($uname, true);

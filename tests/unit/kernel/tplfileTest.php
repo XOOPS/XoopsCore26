@@ -6,7 +6,7 @@ require_once(XOOPS_TU_ROOT_PATH . '/kernel/tplfile.php');
 class legacy_tplfileTest extends \PHPUnit\Framework\TestCase
 {
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

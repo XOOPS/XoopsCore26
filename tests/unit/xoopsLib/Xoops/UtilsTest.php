@@ -7,7 +7,7 @@ class Xoops_UtilsTest extends \PHPUnit\Framework\TestCase
     protected $save_SERVER = null;
     protected $save_ENV = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->save_SERVER = $_SERVER;
         $this->save_ENV = $_ENV;
@@ -17,7 +17,7 @@ class Xoops_UtilsTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
         $_SERVER = $this->save_SERVER;
         $_ENV = $this->save_ENV;

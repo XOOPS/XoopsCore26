@@ -7,7 +7,7 @@ class XoopsPrivateMessageTest extends \PHPUnit\Framework\TestCase
 {
     public $myclass='Xoops\Core\Kernel\Handlers\XoopsPrivateMessage';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

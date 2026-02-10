@@ -5,7 +5,7 @@ class XoopsDownloaderTest extends \PHPUnit\Framework\TestCase
 {
     public function test___construct()
     {
-        $instance = $this->getMockForAbstractClass('XoopsDownloader');
+        $instance = $this->createMock('XoopsDownloader');
         $this->assertInstanceOf('\XoopsDownloader', $instance);
     }
 }

@@ -6,7 +6,7 @@ class XoopsThemeSetParserTest extends \PHPUnit\Framework\TestCase
     protected $myclass = 'XoopsThemeSetParser';
     protected $object = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $input = 'input';
         $this->object = new $this->myclass($input);

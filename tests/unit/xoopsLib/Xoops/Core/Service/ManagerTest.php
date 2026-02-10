@@ -6,7 +6,7 @@ class Service_ManagerTest extends \PHPUnit\Framework\TestCase
     protected $myClass = '\Xoops\Core\Service\Manager';
     protected $object = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $class = $this->myClass;
         $this->object = $class::getInstance();

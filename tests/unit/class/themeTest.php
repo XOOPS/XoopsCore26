@@ -5,7 +5,7 @@ class ThemeTest extends \PHPUnit\Framework\TestCase
 {
     protected $myclass = 'XoopsTheme';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

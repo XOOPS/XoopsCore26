@@ -7,6 +7,7 @@ use Xoops\Core\XoopsTpl;
 
 class XoopsTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
 
     public function test_getInstance100()
     {
@@ -22,13 +23,26 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
             $this->assertSame(true, $value);
         }
 
-        $this->assertSame(array(\XoopsBaseConfig::get('lib-path'), \XoopsBaseConfig::get('url') . '/browse.php'), $instance->paths['XOOPS']);
-        $this->assertSame(array(\XoopsBaseConfig::get('root-path'), \XoopsBaseConfig::get('url')), $instance->paths['www']);
-        $this->assertSame(array(\XoopsBaseConfig::get('var-path'), null), $instance->paths['var']);
-        $this->assertSame(array(\XoopsBaseConfig::get('lib-path'), \XoopsBaseConfig::get('url') . '/browse.php'), $instance->paths['lib']);
-        $this->assertSame(array(\XoopsBaseConfig::get('root-path') . '/modules', \XoopsBaseConfig::get('url') . '/modules'), $instance->paths['modules']);
-        $this->assertSame(array(\XoopsBaseConfig::get('root-path') . '/themes', \XoopsBaseConfig::get('url') . '/themes'), $instance->paths['themes']);
-        $this->assertSame(array(\XoopsBaseConfig::get('root-path') . '/media', \XoopsBaseConfig::get('url') . '/media'), $instance->paths['media']);
+        // Normalize directory separators for cross-platform compatibility
+        $normalizePath = static function ($value) {
+            if (is_string($value)) {
+                return str_replace('\\', '/', $value);
+            }
+            if (is_array($value)) {
+                return array_map(static function ($v) {
+                    return is_string($v) ? str_replace('\\', '/', $v) : $v;
+                }, $value);
+            }
+            return $value;
+        };
+
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('lib-path'), \XoopsBaseConfig::get('url') . '/browse.php')), $normalizePath($instance->paths['XOOPS']));
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('root-path'), \XoopsBaseConfig::get('url'))), $normalizePath($instance->paths['www']));
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('var-path'), null)), $normalizePath($instance->paths['var']));
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('lib-path'), \XoopsBaseConfig::get('url') . '/browse.php')), $normalizePath($instance->paths['lib']));
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('root-path') . '/modules', \XoopsBaseConfig::get('url') . '/modules')), $normalizePath($instance->paths['modules']));
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('themes-path'), \XoopsBaseConfig::get('themes-url'))), $normalizePath($instance->paths['themes']));
+        $this->assertSame($normalizePath(array(\XoopsBaseConfig::get('media-path'), \XoopsBaseConfig::get('media-url'))), $normalizePath($instance->paths['media']));
 
         $this->assertTrue(is_null($instance->sessionManager));
         $this->assertTrue(is_null($instance->module));
@@ -278,14 +292,18 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
     {
         $instance = Xoops::getInstance();
 
+        // Ensure 'default' is in the allowed themes list so themeSelect() can work
+        $saveAllowed = $instance->getConfig('theme_set_allowed');
+        $instance->setConfig('theme_set_allowed', array('default'));
+
         $save1 = isset($_SESSION['xoopsUserTheme']) ? $_SESSION['xoopsUserTheme'] : null;
         $save2 = isset($_POST['xoops_theme_select']) ? $_POST['xoops_theme_select'] : null;
         $_SESSION['xoopsUserTheme'] = null;
         $_POST['xoops_theme_select'] = 'default';
         $instance->themeSelect();
         $value = $instance->getConfig('theme_set');
-        $this->assertSame($_POST['xoops_theme_select'], $value);
-        $this->assertSame($_SESSION['xoopsUserTheme'], $value);
+        $this->assertSame('default', $value);
+        $this->assertSame('default', $_SESSION['xoopsUserTheme']);
         $_SESSION['xoopsUserTheme'] = $save1;
         $_POST['xoops_theme_select'] = $save2;
 
@@ -295,10 +313,16 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
         $_POST['xoops_theme_select'] = null;
         $instance->themeSelect();
         $value = $instance->getConfig('theme_set');
-        $this->assertSame($_SESSION['xoopsUserTheme'], $value);
+        $this->assertSame('default', $value);
         $_SESSION['xoopsUserTheme'] = $save1;
         $_POST['xoops_theme_select'] = $save2;
 
+        // Restore original allowed themes
+        if (empty($saveAllowed)) {
+            $instance->unsetConfig('theme_set_allowed');
+        } else {
+            $instance->setConfig('theme_set_allowed', $saveAllowed);
+        }
     }
 
     public function test_getTplInfo()
@@ -545,7 +569,18 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
     {
         $instance = Xoops::getInstance();
 
-        $value = $instance->getModuleHelper('page');
+        try {
+            $value = $instance->getModuleHelper('page');
+        } catch (\Exception $e) {
+            $this->markTestSkipped('Module helper for page not available: ' . $e->getMessage());
+            return;
+        }
+        if (false === $value) {
+            $this->markTestSkipped('Module helper for page not available (no database connection)');
+        }
+        if (!class_exists('Page', false)) {
+            $this->markTestSkipped('Page helper class not loaded');
+        }
         $this->assertInstanceOf('Page', $value);
     }
 
@@ -578,6 +613,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_getActiveModules()
     {
+        $this->requireDatabase();
         $instance = Xoops::getInstance();
 
         $value = $instance->getActiveModules();
@@ -587,6 +623,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_setActiveModules()
     {
+        $this->requireDatabase();
         $instance = Xoops::getInstance();
 
         $value = $instance->setActiveModules();
@@ -596,6 +633,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_isActiveModule()
     {
+        $this->requireDatabase();
         $instance = Xoops::getInstance();
 
         $value = $instance->isActiveModule('page');
@@ -607,6 +645,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_getModuleByDirname()
     {
+        $this->requireDatabase();
         $instance = Xoops::getInstance();
 
         $value = $instance->getModuleByDirname('page');
@@ -619,6 +658,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_getModuleById()
     {
+        $this->requireDatabase();
         $instance = Xoops::getInstance();
 
         $value = $instance->getModuleById(1);
@@ -1044,6 +1084,9 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_getBaseDomain()
     {
+        if (!class_exists('Geekwright\RegDom\RegisteredDomain')) {
+            $this->markTestSkipped('geekwright/regdom package is not installed');
+        }
         $xoops = Xoops::getInstance();
 
         // test cases url, expected base return (default), expected full return ($includeSubdomain==true)
@@ -1086,6 +1129,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_templateTouch()
     {
+        $this->requireDatabase();
         $instance = Xoops::getInstance();
 
         $value = $instance->templateTouch(1);

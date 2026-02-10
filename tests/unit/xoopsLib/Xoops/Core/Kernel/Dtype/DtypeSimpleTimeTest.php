@@ -3,6 +3,7 @@ namespace Xoops\Core\Kernel\Dtype;
 
 require_once __DIR__ . '/../../../../../init_new.php';
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use Xoops\Core\Kernel\Dtype;
 use Xoops\Core\Kernel\XoopsObject;
 
@@ -35,7 +36,7 @@ class DtypeSimpleTimeTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = new DtypeSimpleTime();
         $this->xObject = new DtypeSimpleTimeObject();
@@ -45,7 +46,7 @@ class DtypeSimpleTimeTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -55,9 +56,7 @@ class DtypeSimpleTimeTest extends \PHPUnit\Framework\TestCase
         $this->assertInstanceOf('\Xoops\Core\Kernel\Dtype\DtypeSimpleTime', $this->object);
     }
 
-    /**
-     * @dataProvider provider
-     */
+    #[DataProvider('provider')]
     public function testCleanVar($objectKey)
     {
         $testValue = time();
@@ -74,7 +73,7 @@ class DtypeSimpleTimeTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($testValue, $value);
     }
 
-    public function provider()
+    public static function provider()
     {
         return [
             ['stime_test'],

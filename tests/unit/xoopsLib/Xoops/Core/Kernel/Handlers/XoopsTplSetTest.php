@@ -7,7 +7,7 @@ class XoopsTplSetTest extends \PHPUnit\Framework\TestCase
 {
     public $myclass='Xoops\Core\Kernel\Handlers\XoopsTplSet';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

@@ -19,11 +19,14 @@ class XoopsPersistableObjectHandlerTestInstance extends Xoops\Core\Kernel\XoopsP
 
 class XoopsPersistableObjectHandlerTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myClass = 'XoopsPersistableObjectHandlerTestInstance';
     protected $conn = null;
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->conn = \Xoops\Core\Database\Factory::getConnection();
     }
 

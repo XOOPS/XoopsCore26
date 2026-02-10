@@ -5,7 +5,7 @@ class MediaUploaderTest extends \PHPUnit\Framework\TestCase
 {
     protected $myclass = '\Xoops\Core\MediaUploader';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

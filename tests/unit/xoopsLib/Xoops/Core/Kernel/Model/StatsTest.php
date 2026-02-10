@@ -5,13 +5,16 @@ use Xoops\Core\Kernel\Handlers\XoopsGroupHandler;
 
 class StatsTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $conn = null;
 
     protected $myClass = 'Xoops\Core\Kernel\Model\Stats';
     protected $myAbstractClass = 'Xoops\Core\Kernel\XoopsModelAbstract';
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->conn = \Xoops::getInstance()->db();
     }
 

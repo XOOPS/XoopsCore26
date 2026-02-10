@@ -5,7 +5,7 @@ class ThemeFactoryAdminTest extends \PHPUnit\Framework\TestCase
 {
     protected $myclass = 'XoopsAdminThemeFactory';
 
-    public function setUp()
+    public function setUp(): void
     {
     }
 

@@ -51,7 +51,14 @@ class MockBloggerApi extends \BloggerApi
 
 class BloggerApiTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myClass = 'MockBloggerApi';
+
+    public function setUp(): void
+    {
+        $this->requireDatabase();
+    }
 
     public function test___construct()
     {

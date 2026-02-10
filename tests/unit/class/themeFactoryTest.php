@@ -3,10 +3,13 @@ require_once(__DIR__.'/../init_new.php');
 
 class ThemeFactoryTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myclass = 'XoopsThemeFactory';
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
     }
 
     public function testContracts()

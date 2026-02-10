@@ -15,7 +15,7 @@ class RandomTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         // $this->object = new Random();
     }
@@ -24,7 +24,7 @@ class RandomTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -33,7 +33,7 @@ class RandomTest extends \PHPUnit\Framework\TestCase
         $result = Random::generateOneTimeToken();
 
         $this->assertTrue(is_string($result));
-        $this->assertRegExp('/^[0-9a-f]{128}$/', $result);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{128}$/', $result);
     }
 
     public function testGenerateKey()
@@ -41,6 +41,6 @@ class RandomTest extends \PHPUnit\Framework\TestCase
         $result = Random::generateKey();
 
         $this->assertTrue(is_string($result));
-        $this->assertRegExp('/^[0-9a-f]{128}$/', $result);
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{128}$/', $result);
     }
 }

@@ -6,11 +6,14 @@ use Xoops\Core\Kernel\Handlers\XoopsUser;
 
 class XoopsMailerTest extends \PHPUnit\Framework\TestCase
 {
+    use DatabaseTestTrait;
+
     protected $myclass = 'XoopsMailer';
     protected $object = null;
 
-    public function setUp()
+    public function setUp(): void
     {
+        $this->requireDatabase();
         $this->object = new $this->myclass();
     }
 

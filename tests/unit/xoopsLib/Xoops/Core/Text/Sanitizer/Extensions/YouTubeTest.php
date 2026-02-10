@@ -21,7 +21,7 @@ class YouTubeTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->sanitizer = Sanitizer::getInstance();
         $this->object = new YouTube($this->sanitizer);
@@ -31,7 +31,7 @@ class YouTubeTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -61,11 +61,11 @@ class YouTubeTest extends \PHPUnit\Framework\TestCase
         $in = '[youtube=180,100]12345678901[/youtube]';
         $actual = $this->sanitizer->filterForDisplay($in);
         $this->assertStringStartsWith($expected1, $actual);
-        $this->assertContains($expected2, $actual);
+        $this->assertStringContainsString($expected2, $actual);
 
         $in = '[youtube url="12345678901" width="180" height=100 /]';
         $actual = $this->sanitizer->filterForDisplay($in);
         $this->assertStringStartsWith($expected1, $actual);
-        $this->assertContains($expected2, $actual);
+        $this->assertStringContainsString($expected2, $actual);
     }
 }

@@ -15,7 +15,7 @@ class WriteTest extends \PHPUnit\Framework\TestCase
     protected $myClass = 'Xoops\Core\Kernel\Model\Write';
     protected $myAbstractClass = 'Xoops\Core\Kernel\XoopsModelAbstract';
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->conn = \Xoops::getInstance()->db();
     }

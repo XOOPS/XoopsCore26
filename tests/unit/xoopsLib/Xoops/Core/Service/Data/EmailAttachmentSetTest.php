@@ -17,7 +17,7 @@ class EmailAttachmentSetTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->object = new EmailAttachmentSet();
     }
@@ -26,7 +26,7 @@ class EmailAttachmentSetTest extends \PHPUnit\Framework\TestCase
      * Tears down the fixture, for example, closes a network connection.
      * This method is called after a test is executed.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
     }
 
@@ -84,7 +84,7 @@ class EmailAttachmentSetTest extends \PHPUnit\Framework\TestCase
         foreach ($list->getEachAttachment() as $attachment) {
             $this->assertInstanceOf(EmailAttachment::class, $attachment);
             ++$count;
-            $this->assertContains((string) $count, $attachment->getStringBody());
+            $this->assertStringContainsString((string) $count, $attachment->getStringBody());
         }
         $this->assertEquals(3, $count);
     }
