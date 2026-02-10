@@ -421,7 +421,7 @@ class JUpload {
 		$flist = $this->classparams['http_flist_start'];
 		foreach ($this->files as $f) {
 			//$f is an array, that contains all info about the uploaded file.
-			$this->logDebug('defaultAfterUploadManagement', "  Reading file ${f['name']}");
+			$this->logDebug('defaultAfterUploadManagement', "  Reading file {$f['name']}");
 			$flist .= $this->classparams['http_flist_file_before'];
 			$flist .= $f['name'];
 			$flist .= $this->classparams['http_flist_file_between'];
@@ -599,9 +599,9 @@ private function receive_uploaded_files() {
 
 		if (!move_uploaded_file($files_data['tmp_name'], $tmpname)) {
 			if ($classparams['verbose_errors']) {
-				$this->abort("Unable to move uploaded file (from ${files_data['tmp_name']} to $tmpname)");
+				$this->abort("Unable to move uploaded file (from {$files_data['tmp_name']} to $tmpname)");
 		} else {
-			trigger_error("Unable to move uploaded file (from ${files_data['tmp_name']} to $tmpname)",E_USER_WARNING);
+			trigger_error("Unable to move uploaded file (from {$files_data['tmp_name']} to $tmpname)",E_USER_WARNING);
 			$this->abort("Unable to move uploaded file");
 	}
 }

@@ -67,8 +67,8 @@ function synchronize($uid, $type)
                 ->updatePrefix('system_user')
                 ->set('posts', ':posts')
                 ->where('uid = :uid')
-                ->setParameter(':posts', $total_posts)
-                ->setParameter(':uid', $uid);
+                ->setParameter('posts', $total_posts)
+                ->setParameter('uid', $uid);
 
             $result = $query->execute();
             //if (!$result) {
@@ -85,7 +85,7 @@ function synchronize($uid, $type)
             if (!$result) {
                 $xoops->redirect("admin.php?fct=users", 1, XoopsLocale::E_USER_ID_NOT_FETCHED);
             }
-            $rows = $result->fetchAll();
+            $rows = $result->fetchAllAssociative();
             foreach ($rows as $row) {
                 synchronize($row['uid'], "user");
             }

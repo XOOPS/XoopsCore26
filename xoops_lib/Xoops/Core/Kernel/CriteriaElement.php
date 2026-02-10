@@ -92,7 +92,7 @@ abstract class CriteriaElement
      *
      * @return QueryBuilder query builder instance
      */
-    abstract public function renderQb(QueryBuilder $qb = null, $whereMode = '');
+    abstract public function renderQb(?QueryBuilder $qb = null, $whereMode = '');
 
     /**
      * Build an expression to be included in a Doctrine QueryBuilder instance.

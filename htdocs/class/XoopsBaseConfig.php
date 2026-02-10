@@ -35,7 +35,7 @@ class XoopsBaseConfig
      *                                or configuration array
      * @throws Exception
      */
-    final private function __construct($config)
+    private function __construct($config)
     {
         if (!class_exists('XoopsLoad', false)) {
             include __DIR__ . '/xoopsload.php';
@@ -99,7 +99,7 @@ class XoopsBaseConfig
      *
      * @return string the extracted lib-path value
      */
-    final private function extractLibPath($filecontents)
+    private function extractLibPath($filecontents)
     {
         $match = array();
         $matched = preg_match('/[.\v]*^lib-path\h*\:\h*[\']?([^\'\v]*)[\']?\h*$[.\v]*/m', $filecontents, $match);

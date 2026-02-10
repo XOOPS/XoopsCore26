@@ -184,7 +184,7 @@ switch ($op) {
                 $query = $qb->updatePrefix('system_user')
                     ->set('user_avatar', 'blank.gif')
                     ->where($eb->eq('user_avatar', ':file '))
-                    ->setParameter(':file', $file);
+                    ->setParameter('file', $file);
                 $result = $query->execute();
                 $xoops->redirect("avatar_custom.php", 2, XoopsLocale::S_ITEM_SAVED);
             } else {

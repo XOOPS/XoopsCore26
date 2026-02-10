@@ -27,7 +27,7 @@ use Xoops\Core\Database\Schema\ImportSchema;
 use Xoops\Core\Database\Schema\RemovePrefixes;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Comparator;
-use Doctrine\DBAL\Schema\Synchronizer\SingleDatabaseSynchronizer;
+use Xoops\Core\Database\Schema\SchemaSynchronizer;
 
 // from $_POST we use keys: op, mod_dirname
 $op = Request::getCmd('op', 'selectmodule', 'POST');
@@ -215,7 +215,7 @@ if ($op == 'selectmodule') {
     echo '<h2>Imported Schema</h2>';
     Debug::dump($importSchema);
 
-    $synchronizer = new SingleDatabaseSynchronizer($xoops->db());
+    $synchronizer = new SchemaSynchronizer($xoops->db());
     $to_sql = $synchronizer->getUpdateSchema($importSchema, true);
     //$to_sql = $synchronizer->getCreateSchema($importSchema);
 

@@ -55,7 +55,7 @@ abstract class XoopsPersistableObjectHandler extends Xoops\Core\Kernel\XoopsPers
      * @param Connection $db reference to the {@link Connection} object
      */
     protected function __construct(
-        Connection $db = null,
+        ?Connection $db = null,
         $table = '',
         $className = '',
         $keyName = '',

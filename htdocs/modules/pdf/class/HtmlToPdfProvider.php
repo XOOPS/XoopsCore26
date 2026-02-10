@@ -473,14 +473,14 @@ class HtmlToPdfProvider extends AbstractContract implements HtmlToPdfInterface
         $text= preg_replace_callback(
             '/&#(\d+);/m',
             function ($m) {
-                return utf8_encode(chr($m[1]));
+                return mb_convert_encoding(chr($m[1]), 'UTF-8', 'ISO-8859-1');
             },
             $text
         ); // decimal notation
         $text= preg_replace_callback(
             '/&#x([a-f0-9]+);/mi',
             function ($m) {
-                return utf8_encode(chr('0x'.$m[1]));
+                return mb_convert_encoding(chr(hexdec($m[1])), 'UTF-8', 'ISO-8859-1');
             },
             $text
         );  //hex notation

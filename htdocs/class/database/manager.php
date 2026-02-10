@@ -82,7 +82,13 @@ class XoopsDatabaseManager
      */
     public function isConnectable()
     {
-        return ($this->db->connect(false) != false) ? true : false;
+        // DBAL 4: connect() is protected; test connectivity with a lightweight query.
+        // $this->db is XoopsMySQLDatabaseSafe (legacy wrapper), use queryF() not executeQuery().
+        try {
+            return (false !== $this->db->queryF('SELECT 1'));
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -92,7 +98,13 @@ class XoopsDatabaseManager
      */
     public function dbExists()
     {
-        return ($this->db->connect() != false) ? true : false;
+        // DBAL 4: connect() is protected; test connectivity with a lightweight query.
+        // $this->db is XoopsMySQLDatabaseSafe (legacy wrapper), use queryF() not executeQuery().
+        try {
+            return (false !== $this->db->queryF('SELECT 1'));
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -102,8 +114,7 @@ class XoopsDatabaseManager
      */
     public function createDB()
     {
-        $this->db->connect(false);
-
+        // DBAL 4: connect() is protected; connection is established lazily on first query
         $result = $this->db->query("CREATE DATABASE " . \XoopsBaseConfig::get('db-name'));
 
         return ($result != false) ? true : false;
@@ -125,7 +136,7 @@ class XoopsDatabaseManager
         $queryFunc = (bool)$force ? "queryF" : "query";
         $sql_query = trim(fread(fopen($sql_file_path, 'r'), filesize($sql_file_path)));
         SqlUtility::splitMySqlFile($pieces, $sql_query);
-        $this->db->connect();
+        // DBAL 4: connection is established lazily on first query
         foreach ($pieces as $piece) {
             $piece = trim($piece);
             // [0] contains the prefixed query
@@ -233,7 +244,7 @@ class XoopsDatabaseManager
      */
     public function query($sql)
     {
-        $this->db->connect();
+        // DBAL 4: connection is established lazily on first query
         return $this->db->query($sql);
     }
 
@@ -246,7 +257,7 @@ class XoopsDatabaseManager
      */
     public function prefix($table)
     {
-        $this->db->connect();
+        // DBAL 4: connection is established lazily on first query
         return $this->db->prefix($table);
     }
 
@@ -259,7 +270,7 @@ class XoopsDatabaseManager
      */
     public function fetchArray($ret)
     {
-        $this->db->connect();
+        // DBAL 4: connection is established lazily on first query
         return $this->db->fetchArray($ret);
     }
 
@@ -273,7 +284,7 @@ class XoopsDatabaseManager
      */
     public function insert($table, $query)
     {
-        $this->db->connect();
+        // DBAL 4: connection is established lazily on first query
         $table = $this->db->prefix($table);
         $query = 'INSERT INTO ' . $table . ' ' . $query;
         if (!$this->db->queryF($query)) {
@@ -316,7 +327,7 @@ class XoopsDatabaseManager
     public function deleteTables($tables)
     {
         $deleted = array();
-        $this->db->connect();
+        // DBAL 4: connection is established lazily on first query
         foreach ($tables as $key => $val) {
             //was: if (!$this->db->query("DROP TABLE " . $this->db->prefix($key))) {
             if (!$this->db->query("DROP TABLE " . $this->db->prefix($val))) {
@@ -338,7 +349,7 @@ class XoopsDatabaseManager
         $table = trim($table);
         $ret = false;
         if ($table != '') {
-            $this->db->connect();
+            // DBAL 4: connection is established lazily on first query
             $sql = 'SELECT COUNT(*) FROM ' . $this->db->prefix($table);
             $ret = (false != $this->db->query($sql)) ? true : false;
         }

@@ -33,7 +33,7 @@ class Ads extends Ldap
      *
      * @return void
      */
-    public function __construct(Connection $dao = null)
+    public function __construct(?Connection $dao = null)
     {
         parent::__construct($dao);
     }

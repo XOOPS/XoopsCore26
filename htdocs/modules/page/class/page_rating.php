@@ -45,7 +45,7 @@ class PagePage_ratingHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'page_rating', 'pagepage_rating', 'rating_id', 'rating_contentid');
     }

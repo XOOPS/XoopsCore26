@@ -14,7 +14,6 @@ namespace Xoops\Core\Kernel\Handlers;
 use Xoops\Core\Database\Connection;
 use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -35,7 +34,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'system_block', '\Xoops\Core\Kernel\Handlers\XoopsBlock', 'bid', 'name');
     }
@@ -89,7 +88,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
      *
      * @return XoopsBlock[]
      **/
-    public function getDistinctObjects(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getDistinctObjects(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         $ret = array();
 
@@ -108,7 +107,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
         if (!$result) {
             return $ret;
         }
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $block = new XoopsBlock();
             $block->assignVars($myrow);
             if (!$id_as_key) {
@@ -129,7 +128,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
      *
      * @return array array of blocks matching the conditions
      **/
-    public function getNameList(CriteriaElement $criteria = null)
+    public function getNameList(?CriteriaElement $criteria = null)
     {
         $blocks = $this->getObjects($criteria, true);
         $ret = array();
@@ -208,7 +207,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
         $qb->orderBy($orderby);
         $result = $qb->execute();
         $added = array();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             if (!in_array($myrow['bid'], $added)) {
                 if (!$asobject) {
                     $ret[] = $myrow['bid'];
@@ -263,14 +262,14 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
             case "object":
                 $qb->select('*');
                 $result = $qb->execute();
-                while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+                while ($myrow = $result->fetchAssociative()) {
                     $ret[] = new XoopsBlock($myrow);
                 }
                 break;
             case "list":
                 $qb->select('*');
                 $result = $qb->execute();
-                while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+                while ($myrow = $result->fetchAssociative()) {
                     $block = new XoopsBlock($myrow);
                     $title = $block->getVar("title");
                     $title = empty($title) ? $block->getVar("name") : $title;
@@ -280,7 +279,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
             case "id":
                 $qb->select('bid');
                 $result = $qb->execute();
-                while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+                while ($myrow = $result->fetchAssociative()) {
                     $ret[] = $myrow['bid'];
                 }
                 break;
@@ -312,7 +311,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
 
         $ret = array();
         $result = $qb->execute();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             if ($asobject) {
                 $ret[] = new XoopsBlock($myrow);
             } else {
@@ -362,7 +361,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
                 }
             }
             $result = $qb->execute();
-            $blockids = $result->fetchAll(FetchMode::COLUMN);
+            $blockids = $result->fetchFirstColumn();
         }
 
         $qb->resetQueryParts();
@@ -401,7 +400,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
         }
         $qb->orderBy($orderby);
         $result = $qb->execute();
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $block = new XoopsBlock($myrow);
             $ret[$myrow['bid']] = $block;
             unset($block);
@@ -435,7 +434,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
         $qb ->select('DISTINCT(bid)')
             ->fromPrefix('system_block', null);
         $result = $qb->execute();
-        $bids = $result->fetchAll(FetchMode::COLUMN);
+        $bids = $result->fetchFirstColumn();
 
         $qb->resetQueryParts();
 
@@ -445,7 +444,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
             ->where($eb->eq('g.groupid', 'p.gperm_groupid'))
             ->andWhere($eb->eq('p.gperm_name', $eb->literal('block_read')));
         $result = $qb->execute();
-        $grouped = $result->fetchAll(FetchMode::COLUMN);
+        $grouped = $result->fetchFirstColumn();
 
         $non_grouped = array_diff($bids, $grouped);
 
@@ -485,7 +484,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
             $qb->andWhere($eb->in('b.bid', $non_grouped));
             $qb->orderBy($orderby);
             $result = $qb->execute();
-            while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+            while ($myrow = $result->fetchAssociative()) {
                 $block = new XoopsBlock($myrow);
                 $ret[$myrow['bid']] = $block;
                 unset($block);
@@ -527,7 +526,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
         if (!$result = $qb->execute()) {
             return 0;
         }
-        list ($count) = $result->fetch(FetchMode::NUMERIC);
+        list ($count) = $result->fetchNumeric();
         return $count;
     }
 
@@ -604,7 +603,7 @@ class XoopsBlockHandler extends XoopsPersistableObjectHandler
             }
 
             $result = $qb->execute();
-            $blockids = $result->fetchAll(FetchMode::COLUMN);
+            $blockids = $result->fetchFirstColumn();
             return $blockids;
         }
         return $ret;

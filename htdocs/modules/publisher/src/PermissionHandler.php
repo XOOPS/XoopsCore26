@@ -16,7 +16,6 @@ use Xoops;
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaCompo;
 use Xoops\Core\Kernel\XoopsObjectHandler;
-use Doctrine\DBAL\FetchMode;
 
 /**
  *  Publisher class
@@ -75,7 +74,7 @@ class PermissionHandler extends XoopsObjectHandler
         $criteria->renderQb($qb);
         $result = $qb->execute();
 
-        while (false !== ($myrow = $result->fetch(FetchMode::ASSOCIATIVE))) {
+        while (false !== ($myrow = $result->fetchAssociative())) {
             $groups[$myrow['gperm_groupid']] = $myrow['gperm_groupid'];
         }
         $items[$gperm_name][$id] = $groups;
@@ -112,7 +111,7 @@ class PermissionHandler extends XoopsObjectHandler
         $criteria->renderQb($qb);
         $result = $qb->execute();
 
-        while (false !== ($myrow = $result->fetch(FetchMode::ASSOCIATIVE))) {
+        while (false !== ($myrow = $result->fetchAssociative())) {
             $ret[$myrow['gperm_itemid']] = $myrow['gperm_itemid'];
         }
         $items[$gperm_name] = $ret;

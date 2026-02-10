@@ -129,7 +129,7 @@ switch ($op) {
                             ->updatePrefix('system_user')
                             ->set('user_avatar', ':avatar')
                             ->where('uid = :uid')
-                            ->setParameter(':uid', $xoops->user->getVar('uid'), ParameterType::INTEGER)
+                            ->setParameter('uid', $xoops->user->getVar('uid'), ParameterType::INTEGER)
                             ->setParameter(
                                 ':avatar',
                                 'avatars/' . $uploader_avatars_img->getSavedFileName(),

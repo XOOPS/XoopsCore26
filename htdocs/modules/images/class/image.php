@@ -69,7 +69,7 @@ class ImagesImageHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db {@link Connection}
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'image', 'ImagesImage', 'image_id', 'image_name');
     }

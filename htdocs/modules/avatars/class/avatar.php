@@ -15,7 +15,6 @@ use Xoops\Core\Kernel\CriteriaCompo;
 use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -198,7 +197,7 @@ class AvatarsAvatarHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db {@link Connection}
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'avatars_avatar', 'AvatarsAvatar', 'avatar_id', 'avatar_name');
     }
@@ -211,7 +210,7 @@ class AvatarsAvatarHandler extends XoopsPersistableObjectHandler
      *
      * @return array
      */
-    public function getObjectsWithCount(CriteriaElement $criteria = null, $id_as_key = false)
+    public function getObjectsWithCount(?CriteriaElement $criteria = null, $id_as_key = false)
     {
         $ret = array();
         if ($criteria === null) {
@@ -228,7 +227,7 @@ class AvatarsAvatarHandler extends XoopsPersistableObjectHandler
         if (!$result) {
             return $ret;
         }
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $avatar = new AvatarsAvatar();
             $avatar->assignVars($myrow);
             $avatar->setUserCount($myrow['count']);
@@ -261,7 +260,7 @@ class AvatarsAvatarHandler extends XoopsPersistableObjectHandler
         $qb = $this->db2->createXoopsQueryBuilder();
         $qb ->deletePrefix('avatars_user_link', 'l')
             ->where('l.user_id = :uid')
-            ->setParameter(':uid', $user_id, ParameterType::INTEGER);
+            ->setParameter('uid', $user_id, ParameterType::INTEGER);
         $result = $qb->execute();
         if ($result) {
             return false;
@@ -275,8 +274,8 @@ class AvatarsAvatarHandler extends XoopsPersistableObjectHandler
                     'user_id' => ':uid'
                 )
             )
-            ->setParameter(':aid', $avatar_id, ParameterType::INTEGER)
-            ->setParameter(':uid', $user_id, ParameterType::INTEGER);
+            ->setParameter('aid', $avatar_id, ParameterType::INTEGER)
+            ->setParameter('uid', $user_id, ParameterType::INTEGER);
         $result = $qb->execute();
         if ($result) {
             return false;
@@ -299,12 +298,12 @@ class AvatarsAvatarHandler extends XoopsPersistableObjectHandler
         $qb ->select('user_id')
             ->fromPrefix('avatars_user_link', 'l')
             ->where('l.avatar_id = :bid')
-            ->setParameter(':bid', $avatar->getVar('avatar_id'), ParameterType::INTEGER);
+            ->setParameter('bid', $avatar->getVar('avatar_id'), ParameterType::INTEGER);
         $result = $qb->execute();
         if (!$result) {
             return $ret;
         }
-        while ($myrow = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($myrow = $result->fetchAssociative()) {
             $ret[] = $myrow['user_id'];
         }
         return $ret;

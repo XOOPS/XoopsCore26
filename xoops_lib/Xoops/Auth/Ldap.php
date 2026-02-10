@@ -112,7 +112,7 @@ class Ldap extends AuthAbstract
      *
      * @param Connection|null $dao databse
      */
-    public function __construct(Connection $dao = null)
+    public function __construct(?Connection $dao = null)
     {
         if (!extension_loaded('ldap')) {
             trigger_error(sprintf(\XoopsLocale::F_EXTENSION_PHP_NOT_LOADED, 'LDAP'), E_USER_ERROR);

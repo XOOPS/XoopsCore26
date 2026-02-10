@@ -54,8 +54,8 @@ switch ($op) {
         $sql = $qb->updatePrefix('system_user')
             ->set('posts', ':posts')
             ->where('uid = :uid')
-            ->setParameter(':posts', $total_posts)
-            ->setParameter(':uid', $uid);
+            ->setParameter('posts', $total_posts)
+            ->setParameter('uid', $uid);
         $row_count = $sql->execute();
         echo $row_count;
         break;

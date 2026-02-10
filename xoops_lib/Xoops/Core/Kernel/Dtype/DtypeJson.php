@@ -43,8 +43,10 @@ class DtypeJson extends DtypeAbstract
             case 'n':
                 break;
             default:
-                $decoded = json_decode($value, true);
-                $value = (false === $decoded) ? null : $decoded;
+                if (is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value = (false === $decoded) ? null : $decoded;
+                }
                 break;
         }
         return $value;
@@ -62,7 +64,15 @@ class DtypeJson extends DtypeAbstract
     {
         $value = $obj->vars[$key]['value'];
         $value = ($value===null || $value==='' || $value===false) ? null : $value;
-        if ($value!==null && null === json_decode($value, true)) {
+        if ($value!==null && !is_string($value)) {
+            $value = json_encode($value, JSON_FORCE_OBJECT);
+            if ($value===false) {
+                \Xoops::getInstance()->logger()->warning(
+                    sprintf('Failed to encode to JSON - %s', json_last_error_msg())
+                );
+                $value = null;
+            }
+        } elseif ($value!==null && null === json_decode($value, true)) {
             $value = json_encode($value, JSON_FORCE_OBJECT);
             if ($value===false) {
                 \Xoops::getInstance()->logger()->warning(

@@ -21,7 +21,6 @@ use Xoops\Core\Kernel\CriteriaElement;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
 use XoopsModules\Publisher;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -145,7 +144,7 @@ class ItemHandler extends XoopsPersistableObjectHandler
         $this->addNotNullFieldClause($qb, $notNullFields, $whereMode);
         $theObjects = [];
         $result = $qb->execute();
-        while (false !== ($myrow = $result->fetch(FetchMode::ASSOCIATIVE))) {
+        while (false !== ($myrow = $result->fetchAssociative())) {
             $item = new Publisher\Item();
             $item->assignVars($myrow);
             $theObjects[$myrow['itemid']] = $item;
@@ -191,7 +190,7 @@ class ItemHandler extends XoopsPersistableObjectHandler
         if (!$result) {
             return 0;
         }
-        [$count] = $result->fetch(FetchMode::NUMERIC);
+        [$count] = $result->fetchNumeric();
 
         return $count;
     }
@@ -429,7 +428,7 @@ class ItemHandler extends XoopsPersistableObjectHandler
     public function updateCounter($itemid): ?bool
     {
         $qb = $this->db2->createXoopsQueryBuilder();
-        $qb->updatePrefix('publisher_items', 'i')->set('i.counter', 'i.counter+1')->where('i.itemid = :itemid')->setParameter(':itemid', $itemid, ParameterType::INTEGER);
+        $qb->updatePrefix('publisher_items', 'i')->set('i.counter', 'i.counter+1')->where('i.itemid = :itemid')->setParameter('itemid', $itemid, ParameterType::INTEGER);
         $result = $qb->execute();
         if ($result) {
             return true;
@@ -608,7 +607,7 @@ class ItemHandler extends XoopsPersistableObjectHandler
         $qb->from($subquery, 'mo')->joinPrefix('mo', 'publisher_items', 'mi', 'mi.datesub = mo.date');
 
         $result = $qb->execute();
-        while (false !== ($row = $result->fetch(FetchMode::ASSOCIATIVE))) {
+        while (false !== ($row = $result->fetchAssociative())) {
             $item = new Publisher\Item();
             $item->assignVars($row);
             $ret[$row['categoryid']] = $item;
@@ -659,7 +658,7 @@ class ItemHandler extends XoopsPersistableObjectHandler
                                                                                                                                                                                                                                                                               'ASC'
                                                                                                                                                                                                                                                                           );
         if ((int)$cat_id > 0) {
-            $qb->andWhere($qb->expr()->eq('i.categoryid', ':catid'))->setParameter(':catid', $cat_id, ParameterType::INTEGER);
+            $qb->andWhere($qb->expr()->eq('i.categoryid', ':catid'))->setParameter('catid', $cat_id, ParameterType::INTEGER);
         }
 
         //$sql = 'SELECT c.parentid, i.categoryid, COUNT(*) AS count FROM ' . $this->db->prefix('publisher_items')
@@ -678,13 +677,13 @@ class ItemHandler extends XoopsPersistableObjectHandler
             return $ret;
         }
         if (!$inSubCat) {
-            while (false !== ($row = $result->fetch(FetchMode::ASSOCIATIVE))) {
+            while (false !== ($row = $result->fetchAssociative())) {
                 $catsCount[$row['categoryid']] = $row['count'];
             }
 
             return $catsCount;
         }
-        while (false !== ($row = $result->fetch(FetchMode::ASSOCIATIVE))) {
+        while (false !== ($row = $result->fetchAssociative())) {
             $catsCount[$row['parentid']][$row['categoryid']] = $row['count'];
         }
         $resultCatCounts = [];

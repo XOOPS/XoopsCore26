@@ -95,7 +95,7 @@ class TableLoad
      *
      * @return int number of rows
      */
-    public static function countRows($table, CriteriaElement $criteria = null)
+    public static function countRows($table, ?CriteriaElement $criteria = null)
     {
         $db = \Xoops::getInstance()->db();
         $qb = $db->createXoopsQueryBuilder();
@@ -105,7 +105,7 @@ class TableLoad
             $qb = $criteria->renderQb($qb, '');
         }
         $result = $qb->execute();
-        $count = $result->fetchColumn();
+        $count = $result->fetchOne();
         return (int)$count;
     }
 
@@ -118,7 +118,7 @@ class TableLoad
      *
      * @return array of table rows
      */
-    public static function extractRows($table, CriteriaElement $criteria = null, $skipColumns = array())
+    public static function extractRows($table, ?CriteriaElement $criteria = null, $skipColumns = array())
     {
         $db = \Xoops::getInstance()->db();
         $qb = $db->createXoopsQueryBuilder();

@@ -11,7 +11,6 @@
 namespace Xoops\Core\Kernel;
 
 use Xoops\Core\Database\Connection;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -100,7 +99,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *                                         name (title, name ...), used on getList()
      */
     protected function __construct(
-        Connection $db = null,
+        ?Connection $db = null,
         $table = '',
         $className = '',
         $keyName = '',
@@ -255,11 +254,11 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
         }
         $qb->from($this->table, null)
             ->where($eb->eq($this->keyName, ':id'))
-            ->setParameter(':id', $id, ParameterType::INTEGER);
+            ->setParameter('id', $id, ParameterType::INTEGER);
         if (!$result = $qb->execute()) {
             return $object;
         }
-        $row = $result->fetch(FetchMode::ASSOCIATIVE);
+        $row = $result->fetchAssociative();
         if (!$row) {
             return $object;
         }
@@ -358,7 +357,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return array
      */
-    public function getObjects(CriteriaElement $criteria = null, $id_as_key = false, $as_object = true)
+    public function getObjects(?CriteriaElement $criteria = null, $id_as_key = false, $as_object = true)
     {
         /* @var $handler Model\Read */
         $handler = $this->loadHandler('read');
@@ -376,7 +375,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return array of objects/array as requested by $asObject
      */
-    public function getAll(CriteriaElement $criteria = null, $fields = null, $asObject = true, $id_as_key = true)
+    public function getAll(?CriteriaElement $criteria = null, $fields = null, $asObject = true, $id_as_key = true)
     {
         /* @var $handler Model\Read */
         $handler = $this->loadHandler('read');
@@ -393,7 +392,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return array
      */
-    public function getList(CriteriaElement $criteria = null, $limit = 0, $start = 0)
+    public function getList(?CriteriaElement $criteria = null, $limit = 0, $start = 0)
     {
         /* @var $handler Model\Read */
         $handler = $this->loadHandler('read');
@@ -408,7 +407,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return array of object IDs
      */
-    public function getIds(CriteriaElement $criteria = null)
+    public function getIds(?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Read */
         $handler = $this->loadHandler('read');
@@ -427,7 +426,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return int count of objects
      */
-    public function getCount(CriteriaElement $criteria = null)
+    public function getCount(?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Stats */
         $handler = $this->loadHandler('stats');
@@ -441,7 +440,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return array of counts
      */
-    public function getCounts(CriteriaElement $criteria = null)
+    public function getCounts(?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Stats*/
         $handler = $this->loadHandler('stats');
@@ -464,7 +463,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      * @return array as specified by $asObject
      */
     public function getByLink(
-        CriteriaElement $criteria = null,
+        ?CriteriaElement $criteria = null,
         $fields = null,
         $asObject = true,
         $field_link = null,
@@ -483,7 +482,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return int count of objects
      */
-    public function getCountByLink(CriteriaElement $criteria = null)
+    public function getCountByLink(?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Joint */
         $handler = $this->loadHandler('joint');
@@ -498,7 +497,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return int count of objects
      */
-    public function getCountsByLink(CriteriaElement $criteria = null)
+    public function getCountsByLink(?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Joint */
         $handler = $this->loadHandler('joint');
@@ -514,7 +513,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return int count of objects
      */
-    public function updateByLink($data, CriteriaElement $criteria = null)
+    public function updateByLink($data, ?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Joint */
         $handler = $this->loadHandler('joint');
@@ -529,7 +528,7 @@ abstract class XoopsPersistableObjectHandler extends XoopsObjectHandler
      *
      * @return int count of objects
      */
-    public function deleteByLink(CriteriaElement $criteria = null)
+    public function deleteByLink(?CriteriaElement $criteria = null)
     {
         /* @var $handler Model\Joint */
         $handler = $this->loadHandler('joint');

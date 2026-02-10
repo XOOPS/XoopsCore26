@@ -78,17 +78,27 @@ class Embed extends FilterAbstract
             function ($url) {
                 $return = null;
                 try {
-                    $info = \Embed\Embed::create($url);
+                    $embed = new \Embed\Embed();
+                    $info = $embed->get($url);
                 } catch (\Exception $e) {
                     $info = null;
                 }
                 if (is_object($info)) {
-                    $return = $info->code;
-                    if (empty($return)) {
-                        return $this->mediaBox($info->url, $info->image, $info->title, $info->description);
+                    $code = $info->code;
+                    if (!empty($code)) {
+                        $return = (string) $code;
                     }
-                    $height = $info->getHeight();
-                    $width = $info->getWidth();
+                    if (empty($return)) {
+                        $imageUrl = $info->image;
+                        return $this->mediaBox(
+                            (string) ($info->url ?? $url),
+                            $imageUrl ? (string) $imageUrl : '',
+                            $info->title ?? '',
+                            $info->description ?? ''
+                        );
+                    }
+                    $height = $code->height ?? null;
+                    $width = $code->width ?? null;
                     if ($this->enableResponsive($return) && !empty($height) && !empty($width)) {
                         $ratio = (1.5 > ($width/$height)) ? '4by3' : '16by9';
                         $return = '<div class="embed-responsive embed-responsive-' . $ratio . '">' . $return . '</div>';

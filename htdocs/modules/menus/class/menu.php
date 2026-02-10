@@ -9,7 +9,6 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-use Doctrine\DBAL\FetchMode;
 use Xoops\Core\Database\Connection;
 use Xoops\Core\FixedGroups;
 use Xoops\Core\Kernel\XoopsObject;
@@ -52,7 +51,7 @@ class MenusMenuHandler extends XoopsPersistableObjectHandler
     /**
      * @param Connection $db
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'menus_menu', 'MenusMenu', 'id', 'title');
     }
@@ -80,7 +79,7 @@ class MenusMenuHandler extends XoopsPersistableObjectHandler
         ;
         $result = $this->db2->query($sql);
         $i = 1;  //lets start at 1 please!
-        while (false !== (list($id) = $result->fetch(FetchMode::NUMERIC))) {
+        while (false !== (list($id) = $result->fetchNumeric())) {
             $sql = "UPDATE " . $this->table
             . " SET weight = {$i}"
             . " WHERE id = {$id}"

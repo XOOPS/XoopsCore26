@@ -183,7 +183,7 @@ class Write extends XoopsModelAbstract
      *
      * @return bool
      */
-    public function deleteAll(CriteriaElement $criteria = null, $force = false, $asObject = false)
+    public function deleteAll(?CriteriaElement $criteria = null, $force = false, $asObject = false)
     {
         if ($asObject) {
             $objects = $this->handler->getAll($criteria);
@@ -216,7 +216,7 @@ class Write extends XoopsModelAbstract
      *
      * @return bool
      */
-    public function updateAll($fieldName, $fieldValue, CriteriaElement $criteria = null, $force = false)
+    public function updateAll($fieldName, $fieldValue, ?CriteriaElement $criteria = null, $force = false)
     {
         $qb = $this->handler->db2->createXoopsQueryBuilder();
 

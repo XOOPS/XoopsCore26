@@ -23,7 +23,6 @@ use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
 use Xoops\Core\Kernel\Dtype;
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaCompo;
-use Doctrine\DBAL\FetchMode;
 
 class PluginsPlugin extends XoopsObject
 {
@@ -45,7 +44,7 @@ class PluginsPluginHandler extends XoopsPersistableObjectHandler
     /**
      * @param null|Connection $db database
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'plugins_plugin', 'PluginsPlugin', 'plugin_id', 'plugin_caller');
     }
@@ -118,7 +117,7 @@ class PluginsPluginHandler extends XoopsPersistableObjectHandler
             ->fromPrefix('plugins_plugin', '')
             ->groupBy('plugin_listener');
         $result = $qb->execute();
-        while ($row = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($row = $result->fetchAssociative()) {
             $ret[$row['plugin_listener']] = $this->getModuleName($row['plugin_listener']);
         }
         return $ret;
@@ -135,7 +134,7 @@ class PluginsPluginHandler extends XoopsPersistableObjectHandler
             ->fromPrefix('plugins_plugin', '')
             ->groupBy('plugin_caller');
         $result = $qb->execute();
-        while ($row = $result->fetch(FetchMode::ASSOCIATIVE)) {
+        while ($row = $result->fetchAssociative()) {
             $ret[$row['plugin_caller']] = $this->getModuleName($row['plugin_caller']);
         }
         return $ret;

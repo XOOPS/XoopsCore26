@@ -82,7 +82,7 @@ class SystemExtension extends SystemModule
                             XoopsLocale::formatTimestamp($extension->getVar('last_update'), 's')
                         );
                         $module->setInfo('hasconfig', $module->getVar('hasconfig'));
-                        if (round($module->getInfo('version'), 2) != $extension->getVar('version')) {
+                        if (round((float)$module->getInfo('version'), 2) != $extension->getVar('version')) {
                             $module->setInfo('warning_update', true);
                         }
                         $groups = array();
@@ -104,7 +104,7 @@ class SystemExtension extends SystemModule
                     } else {
                         $module->setInfo('install', false);
                     }
-                    $module->setInfo('version', round($module->getInfo('version'), 2));
+                    $module->setInfo('version', round((float)$module->getInfo('version'), 2));
                     if (XoopsLoad::fileExists(
                         \XoopsBaseConfig::get('root-path') . '/modules/' . $module->getInfo('dirname') . '/icons/logo_small.png'
                     )) {
@@ -162,7 +162,7 @@ class SystemExtension extends SystemModule
                     $module->loadInfo($file);
                     if ($module->getInfo('extension')) {
                         $module->setInfo('mid', $i);
-                        $module->setInfo('version', round($module->getInfo('version'), 2));
+                        $module->setInfo('version', round((float)$module->getInfo('version'), 2));
                         $ret[] = $module;
                         unset($module);
                         ++$i;

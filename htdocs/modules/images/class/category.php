@@ -50,7 +50,7 @@ class ImagesCategoryHandler extends XoopsPersistableObjectHandler
      *
      * @param Connection|null $db {@link Xoops\Core\Database\Connection}
      */
-    public function __construct(Connection $db = null)
+    public function __construct(?Connection $db = null)
     {
         parent::__construct($db, 'imagecategory', 'ImagesCategory', 'imgcat_id', 'imgcat_name');
     }

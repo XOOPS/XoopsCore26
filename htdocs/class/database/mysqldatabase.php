@@ -9,7 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-use Doctrine\DBAL\FetchMode;
+// FetchMode removed in Doctrine DBAL 4.x - using Result methods directly
 
 /**
  * connection to a mysql database - legacy support only
@@ -123,7 +123,7 @@ class XoopsMySQLDatabase extends XoopsDatabase
         if (!is_object($result)) {
             return null;
         }
-        return $result->fetch(FetchMode::NUMERIC);
+        return $result->fetchNumeric();
     }
 
     /**
@@ -141,7 +141,7 @@ class XoopsMySQLDatabase extends XoopsDatabase
         if (!is_object($result)) {
             return null;
         }
-        return $result->fetch(FetchMode::ASSOCIATIVE);
+        return $result->fetchAssociative();
     }
 
     /**
@@ -159,7 +159,12 @@ class XoopsMySQLDatabase extends XoopsDatabase
         if (!is_object($result)) {
             return null;
         }
-        return $result->fetch(FetchMode::MIXED);
+        // FetchMode::MIXED removed in DBAL 4. Simulate with both numeric and associative keys.
+        $assoc = $result->fetchAssociative();
+        if ($assoc === false) {
+            return false;
+        }
+        return array_merge(array_values($assoc), $assoc);
     }
 
     /**
@@ -177,7 +182,9 @@ class XoopsMySQLDatabase extends XoopsDatabase
         if (!is_object($result)) {
             return null;
         }
-        return $result->fetch(FetchMode::STANDARD_OBJECT);
+        // FetchMode::STANDARD_OBJECT removed in DBAL 4. Simulate with fetchAssociative + cast.
+        $assoc = $result->fetchAssociative();
+        return ($assoc !== false) ? (object) $assoc : false;
     }
 
     /**
@@ -492,10 +499,11 @@ class XoopsMySQLDatabase extends XoopsDatabase
      */
     public function getServerVersion()
     {
-        $conn = \Xoops::getInstance()->db()->getWrappedConnection();
-        $version = '(not available)';
-        if ($conn instanceof \PDO) {
-            $version = $conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        try {
+            $pdo = \Xoops::getInstance()->db()->getNativeConnection();
+            $version = $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
+        } catch (\Exception $e) {
+            $version = '(not available)';
         }
         return $version;
     }

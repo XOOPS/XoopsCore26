@@ -12,7 +12,6 @@
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaCompo;
 use Xoops\Core\Kernel\Handlers\XoopsModule;
-use Doctrine\DBAL\FetchMode;
 
 /**
  * System update functions
@@ -44,7 +43,7 @@ function xoops_module_update_system(XoopsModule $module)
             ->andWhere($eb->eq('t1.tpl_id', 't2.tpl_id'));
         $result = $sql->execute();
         $tplids = array();
-        while (list($tplid) = $result->fetch(FetchMode::NUMERIC)) {
+        while (list($tplid) = $result->fetchNumeric()) {
             $tplids[] = $tplid;
         }
         if (count($tplids) > 0) {

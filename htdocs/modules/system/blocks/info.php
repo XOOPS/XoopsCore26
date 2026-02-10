@@ -9,7 +9,6 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\ParameterType;
 
 /**
@@ -43,12 +42,12 @@ function b_system_info_show($options)
             ->where($eb->eq('g.group_type', ':gtype'))
             ->orderBy('l.groupid')
             ->addOrderBy('u.uid')
-            ->setParameter(':gtype', 'Admin', ParameterType::STRING);
+            ->setParameter('gtype', 'Admin', ParameterType::STRING);
         $result = $sql->execute();
         if ($result->errorCode() < 2000) { // return 00000 is ok, 01nnn is warning
             $prev_caption = "";
             $i = 0;
-            while ($userinfo = $result->fetch(FetchMode::ASSOCIATIVE)) {
+            while ($userinfo = $result->fetchAssociative()) {
                 $response = $xoops->service("Avatar")->getAvatarUrl($userinfo);
                 $avatar = $response->getValue();
                 $avatar = empty($avatar) ? \XoopsBaseConfig::get('uploads-url') . '/blank.gif' : $avatar;

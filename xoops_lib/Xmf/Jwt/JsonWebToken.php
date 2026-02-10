@@ -12,6 +12,7 @@
 namespace Xmf\Jwt;
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Xmf\Key\KeyAbstract;
 
 /**
@@ -80,9 +81,9 @@ class JsonWebToken
      */
     public function decode($jwtString, $assertClaims = array())
     {
-        $allowedAlgorithms = array($this->algorithm);
         try {
-            $values = JWT::decode($jwtString, $this->key->getVerifying(), $allowedAlgorithms);
+            $jwtKey = new Key($this->key->getVerifying(), $this->algorithm);
+            $values = JWT::decode($jwtString, $jwtKey);
         } catch (\Exception $e) {
             trigger_error($e->getMessage(), E_USER_NOTICE);
             return false;
