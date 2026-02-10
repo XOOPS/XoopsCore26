@@ -114,9 +114,9 @@ EOT;
      *
      * @param InputInterface  $input  input handler
      * @param OutputInterface $output output handler
-     * @return void
+     * @return int
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $XContainer = $this->getApplication()->XContainer;
 
@@ -126,7 +126,7 @@ EOT;
         if (!file_exists($configFile)) {
             if (false === $this->createConfigFile($configFile, $baseDir)) {
                 $output->writeln(sprintf('<error>Could not write file %s!</error>', $configFile));
-                return;
+                return Command::FAILURE;
             }
             $output->writeln(sprintf('<info>Created config file %s.</info>', $configFile));
         } else {
@@ -136,7 +136,7 @@ EOT;
         if (!file_exists($mainfile)) {
             if (false === $this->createMainfile($configFile, $mainfile)) {
                 $output->writeln(sprintf('<error>Could not write %s!</error>', $mainfile));
-                return;
+                return Command::FAILURE;
             }
             $output->writeln(sprintf('<info>Wrote mainfile %s</info>', $mainfile));
         } else {
@@ -148,5 +148,7 @@ EOT;
             \XoopsBaseConfig::getInstance($configFile);
         }
         \Xoops\Core\Cache\CacheManager::createDefaultConfig();
+
+        return Command::SUCCESS;
     }
 }

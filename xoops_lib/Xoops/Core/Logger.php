@@ -121,10 +121,6 @@ class Logger implements LoggerInterface
                     $msg = (class_exists('\XoopsLocale', false) ? \XoopsLocale::E_LOGGER_WARNING : '*Warning:') . $msg;
                     $this->log(LogLevel::WARNING, $msg);
                     break;
-                case E_STRICT:
-                    $msg = (class_exists('\XoopsLocale', false) ? \XoopsLocale::E_LOGGER_STRICT : '*Strict:') . $msg;
-                    $this->log(LogLevel::WARNING, $msg);
-                    break;
                 case E_USER_ERROR:
                     $msg = (class_exists('\XoopsLocale', false) ? \XoopsLocale::E_LOGGER_ERROR : '*Error:') . $msg;
                     @$this->log(LogLevel::CRITICAL, $msg);
@@ -191,7 +187,6 @@ class Logger implements LoggerInterface
             E_USER_ERROR => 'E_USER_ERROR',
             E_USER_WARNING => 'E_USER_WARNING',
             E_USER_NOTICE => 'E_USER_NOTICE',
-            E_STRICT => 'E_STRICT',
             E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
             E_DEPRECATED => 'E_DEPRECATED',
             E_USER_DEPRECATED => 'E_USER_DEPRECATED',
@@ -306,7 +301,7 @@ class Logger implements LoggerInterface
      *
      * @return void
      */
-    public function emergency($message, array $context = array())
+    public function emergency(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::EMERGENCY, $message, $context);
     }
@@ -317,12 +312,12 @@ class Logger implements LoggerInterface
      * Example: Entire website down, database unavailable, etc. This should
      * trigger the SMS alerts and wake you up.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function alert($message, array $context = array())
+    public function alert(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::ALERT, $message, $context);
     }
@@ -332,12 +327,12 @@ class Logger implements LoggerInterface
      *
      * Example: Application component unavailable, unexpected exception.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function critical($message, array $context = array())
+    public function critical(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::CRITICAL, $message, $context);
     }
@@ -346,12 +341,12 @@ class Logger implements LoggerInterface
      * Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function error($message, array $context = array())
+    public function error(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::ERROR, $message, $context);
     }
@@ -362,12 +357,12 @@ class Logger implements LoggerInterface
      * Example: Use of deprecated APIs, poor use of an API, undesirable things
      * that are not necessarily wrong.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function warning($message, array $context = array())
+    public function warning(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::WARNING, $message, $context);
     }
@@ -375,12 +370,12 @@ class Logger implements LoggerInterface
     /**
      * Normal but significant events.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function notice($message, array $context = array())
+    public function notice(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::NOTICE, $message, $context);
     }
@@ -390,12 +385,12 @@ class Logger implements LoggerInterface
      *
      * Example: User logs in, SQL logs.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function info($message, array $context = array())
+    public function info(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::INFO, $message, $context);
     }
@@ -403,12 +398,12 @@ class Logger implements LoggerInterface
     /**
      * Detailed debug information.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function debug($message, array $context = array())
+    public function debug(string|\Stringable $message, array $context = array()): void
     {
         $this->log(LogLevel::DEBUG, $message, $context);
     }
@@ -417,12 +412,12 @@ class Logger implements LoggerInterface
      * Logs with an arbitrary level.
      *
      * @param mixed  $level   PSR-3 LogLevel constant
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of context data for this log entry
      *
      * @return void
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, string|\Stringable $message, array $context = array()): void
     {
         if (!empty($this->loggers)) {
             foreach ($this->loggers as $logger) {

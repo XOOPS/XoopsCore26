@@ -18,7 +18,7 @@ use Xoops\Core\FixedGroups;
 use Xoops\Core\Kernel\Handlers\XoopsUser;
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaCompo;
-use Patchwork\Utf8\Bootup;
+
 
 /**
  * Include XoopsLoad - this should have been done in mainfile.php, but there is
@@ -52,11 +52,12 @@ include_once __DIR__ . '/defines.php';
 // include_once __DIR__ . '/version.php';
 
 /**
- * We now have autoloader, so start Patchwork\UTF8
+ * Configure PHP for UTF-8
+ * Previously used Patchwork\Utf8\Bootup which is abandoned.
+ * PHP 8.x defaults to UTF-8 for most mbstring functions, but we set it explicitly.
  */
-Bootup::initAll(); // Enables the portability layer and configures PHP for UTF-8
-Bootup::filterRequestUri(); // Redirects to an UTF-8 encoded URL if it's not already the case
-Bootup::filterRequestInputs(); // Normalizes HTTP inputs to UTF-8 NFC
+mb_internal_encoding('UTF-8');
+mb_regex_encoding('UTF-8');
 
 /**
  * Create Instance of Xoops Object

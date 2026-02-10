@@ -23,7 +23,7 @@ EOT
             );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $module = $input->getArgument('module');
         $output->writeln(sprintf('Deactivating %s', $module));
@@ -32,7 +32,7 @@ EOT
         $moduleObject = $moduleHandler->getByDirname($module);
         if (false === $moduleObject) {
             $output->writeln(sprintf('<error>%s is not an installed module!</error>', $module));
-            return;
+            return Command::FAILURE;
         }
         $moduleObject->setVar('isactive', false);
         $moduleHandler->insert($moduleObject, true);
@@ -46,5 +46,7 @@ EOT
         }
         $output->writeln(sprintf('<info>Set %s module inactive</info>', $module));
         $xoops->cache()->delete('system');
+
+        return Command::SUCCESS;
     }
 }

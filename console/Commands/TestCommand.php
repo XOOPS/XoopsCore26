@@ -22,10 +22,12 @@ EOT
              );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) {
+    protected function execute(InputInterface $input, OutputInterface $output): int {
         if ($input->getOption('flag')) {
             $output->writeln('<info>flagged</info>');
         }
         $output->writeln(sprintf('Hello, %s!', $input->getArgument('name')));
+
+        return Command::SUCCESS;
     }
 }

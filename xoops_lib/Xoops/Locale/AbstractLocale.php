@@ -11,7 +11,6 @@
 
 namespace Xoops\Locale;
 
-use Patchwork\Utf8;
 use Xoops\Core\Locale\Punic\Calendar;
 use Punic\Misc;
 use \Xoops\Core\Locale\Time;
@@ -175,7 +174,7 @@ abstract class AbstractLocale
     }
 
     /**
-     *  filter to UTF-8, converts invalid $text as CP1252 and forces NFC normalization
+     *  filter to UTF-8, converts invalid encoding and forces NFC normalization
      *
      * @param mixed $text
      *
@@ -183,7 +182,16 @@ abstract class AbstractLocale
      */
     public static function utf8_encode($text)
     {
-        return Utf8::filter($text);
+        $text = (string) $text;
+        // Convert to UTF-8 if not valid, substituting invalid sequences
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            $text = mb_convert_encoding($text, 'UTF-8', 'Windows-1252');
+        }
+        // Normalize to NFC form if intl extension is available
+        if (class_exists('Normalizer', false)) {
+            $text = \Normalizer::normalize($text, \Normalizer::FORM_C) ?: $text;
+        }
+        return $text;
     }
 
     /**
@@ -209,9 +217,7 @@ abstract class AbstractLocale
      */
     public static function trim($text)
     {
-        $ret = Utf8::trim($text);
-
-        return $ret;
+        return mb_trim((string) $text);
     }
 
     /**
@@ -320,13 +326,12 @@ abstract class AbstractLocale
      */
     public static function money_format($format, $number)
     {
-        if (function_exists('money_format')) {
-            $result = money_format($format, $number);
-        } else {
-            $result = sprintf('%01.2f', $number);
+        // money_format() was removed in PHP 8.0; use NumberFormatter if available
+        if (class_exists('NumberFormatter', false)) {
+            $formatter = new \NumberFormatter(self::getLocale(), \NumberFormatter::CURRENCY);
+            return $formatter->formatCurrency((float) $number, 'USD');
         }
-
-        return $result;
+        return sprintf('%01.2f', $number);
     }
 
     /**
@@ -337,12 +342,13 @@ abstract class AbstractLocale
      */
     public static function asort(&$array)
     {
-        //if (class_exists('\Collator')) {
-        //    $col = new \Collator(self::getLocale());
-        //    $col->asort($array);
-        //} else {
-        //    asort($array);
-        //}
-        uasort($array, '\Patchwork\Utf8::strcasecmp');
+        if (class_exists('Collator', false)) {
+            $col = new \Collator(self::getLocale());
+            $col->asort($array);
+        } else {
+            uasort($array, static function ($a, $b) {
+                return strcmp(mb_strtolower($a, 'UTF-8'), mb_strtolower($b, 'UTF-8'));
+            });
+        }
     }
 }

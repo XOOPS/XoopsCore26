@@ -20,6 +20,8 @@ use Assetic\AssetWriter;
 use Assetic\Asset\AssetCollection;
 use Assetic\Asset\FileAsset;
 use Assetic\Asset\GlobAsset;
+use Xoops\Core\Filter\MinifyCssFilter;
+use Xoops\Core\Filter\MinifyJsFilter;
 use Xmf\Yaml;
 
 /**
@@ -45,7 +47,7 @@ class Assets
     /** @var array of default filter strings - may be overridden by prefs */
     private $default_filters = array(
             'css' => 'cssimport,cssembed,?cssmin',
-            'js'  => '?jsqueeze',
+            'js'  => '?jsmin',
     );
 
     /** @var array of output locations in assets directory */
@@ -100,7 +102,7 @@ class Assets
     private $assetsPrefsCacheKey = 'system/assets/prefs';
 
     /** @var string string to identify Assetic filters using instanceof */
-    private $filterInterface = '\Assetic\Filter\FilterInterface';
+    private $filterInterface = '\Assetic\Contracts\Filter\FilterInterface';
 
     /**
      * __construct
@@ -250,12 +252,13 @@ class Assets
                 if (is_object($filter) && $filter instanceof $this->filterInterface) {
                     $filterArray[] = $filter;
                 } else {
-                    switch (ltrim($filter, '?')) {
+                    $filterName = ltrim($filter, '?');
+                    switch ($filterName) {
                         case 'cssembed':
                             $fm->set('cssembed', new Filter\PhpCssEmbedFilter());
                             break;
                         case 'cssmin':
-                            $fm->set('cssmin', new Filter\CssMinFilter());
+                            $fm->set('cssmin', new MinifyCssFilter());
                             break;
                         case 'cssimport':
                             $fm->set('cssimport', new Filter\CssImportFilter());
@@ -270,10 +273,8 @@ class Assets
                             $fm->set('scssphp', new Filter\ScssphpFilter());
                             break;
                         case 'jsmin':
-                            $fm->set('jsmin', new Filter\JSMinFilter());
-                            break;
                         case 'jsqueeze':
-                            $fm->set('jsqueeze', new Filter\JSqueezeFilter());
+                            $fm->set($filterName, new MinifyJsFilter());
                             break;
                         default:
                             throw new \Exception(sprintf('%s filter not implemented.', $filter));
@@ -391,7 +392,7 @@ class Assets
                             $filterArray[] = new Filter\PhpCssEmbedFilter();
                             break;
                         case 'cssmin':
-                            $filterArray[] = new Filter\CssMinFilter();
+                            $filterArray[] = new MinifyCssFilter();
                             break;
                         case 'cssimport':
                             $filterArray[] = new Filter\CssImportFilter();
@@ -406,10 +407,8 @@ class Assets
                             $filterArray[] = new Filter\ScssphpFilter();
                             break;
                         case 'jsmin':
-                            $filterArray[] = new Filter\JSMinFilter();
-                            break;
                         case 'jsqueeze':
-                            $filterArray[] = new Filter\JSqueezeFilter();
+                            $filterArray[] = new MinifyJsFilter();
                             break;
                         default:
                             throw new \Exception(sprintf('%s filter not implemented.', $filter));

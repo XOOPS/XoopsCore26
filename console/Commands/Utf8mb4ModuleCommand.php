@@ -8,6 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\DBAL\Types\Types;
 
 class Utf8mb4ModuleCommand extends Command
 {
@@ -26,7 +27,7 @@ EOT
              );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $dirname = $input->getArgument('module');
 
@@ -41,7 +42,7 @@ EOT
         $module = $xoops->getModuleByDirname($dirname);
         if (false === $module) {
             $output->writeln(sprintf('<error>%s is not an installed module!</error>', $dirname));
-            return;
+            return Command::FAILURE;
         }
         $module->loadInfo($dirname, false);
         $modVersion = $module->modinfo;
@@ -54,7 +55,7 @@ EOT
 
         if ('mysql' !== $platform->getName()) {
             $output->writeln('<error>This command only works on a MySQL platform.</error>');
-            return;
+            return Command::FAILURE;
         }
 
         foreach ($tableList as $tableIn) {
@@ -67,7 +68,7 @@ EOT
             $columns = $manager->listTableColumns($table);
             foreach ($columns as $column) {
                 $type = $column->getType()->getName();
-                if ($type === Type::STRING || $type === Type::TEXT) {
+                if ($type === Types::STRING || $type === Types::TEXT) {
                     //$column->setPlatformOption('collation', 'utf8mb4_unicode_ci');
                     $sql[] = sprintf(
                         'ALTER TABLE %s MODIFY %s %s COLLATE utf8mb4_unicode_ci;',
@@ -93,5 +94,7 @@ EOT
                 }
             }
         }
+
+        return Command::SUCCESS;
     }
 }
