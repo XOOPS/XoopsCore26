@@ -874,7 +874,7 @@ class XoopsTheme
             case 'script':
                 foreach ($this->metas[$type] as $attrs) {
                     $str .= "<script" . $this->renderAttributes($attrs) . ">";
-                    if (@$attrs['_']) {
+                    if (!empty($attrs['_'])) {
                         $str .= "\n//<![CDATA[\n" . $attrs['_'] . "\n//]]>";
                     }
                     $str .= "</script>\n";
@@ -889,7 +889,7 @@ class XoopsTheme
                 break;
             case 'stylesheet':
                 foreach ($this->metas[$type] as $attrs) {
-                    if (@$attrs['_']) {
+                    if (!empty($attrs['_'])) {
                         $str .= '<style' . $this->renderAttributes($attrs)
                             . ">\n/* <![CDATA[ */\n" . $attrs['_'] . "\n/* //]]> */\n</style>";
                     } else {

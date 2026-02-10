@@ -108,11 +108,12 @@ class DebugbarLogger implements LoggerInterface
     {
         error_reporting(-1);
 
-        $this->activated = true;
-
         $this->enableRendering();
 
         if (!$this->debugbar) {
+                if (!class_exists('DebugBar\StandardDebugBar')) {
+                    return;
+                }
                 $this->debugbar = new StandardDebugBar();
                 $this->renderer = $this->debugbar->getJavascriptRenderer();
 
@@ -122,11 +123,13 @@ class DebugbarLogger implements LoggerInterface
                 $this->debugbar->addCollector(new MessagesCollector('Extra'));
                 //$this->debugbar->addCollector(new MessagesCollector('Queries'));
 
-                $xoops = Xoops::getInstance();
-                $debugStack = $xoops->db()->getConfiguration()->getSQLLogger();
-                $this->debugbar->addCollector(new DebugBar\Bridge\DoctrineCollector($debugStack));
+                // In DBAL 4.x, getSQLLogger() is removed. Use XoopsQueryLogger via Factory.
+                // The DoctrineCollector bridge is not compatible with DBAL 4.x.
+                // Query logging is now handled by the XoopsLoggingMiddleware.
                 //$this->debugbar->setStorage(new DebugBar\Storage\FileStorage(\XoopsBaseConfig::get('var-path').'/debugbar'));
         }
+
+        $this->activated = true;
         $this->addToTheme();
     }
 
@@ -165,8 +168,10 @@ class DebugbarLogger implements LoggerInterface
                 // get asset information provided by debugbar
                 // don't include vendors - jquery already available, need workaround for font-awesome
                 $this->renderer->setIncludeVendors(true);
-                $this->renderer->setEnableJqueryNoConflict(false);
-                list($cssAssets, $jsAssets) = $this->renderer->getAssets();
+                // php-debugbar v3.3: getAssets() returns associative array with 'css', 'js' keys
+                $allAssets = $this->renderer->getAssets();
+                $cssAssets = $allAssets['css'] ?? [];
+                $jsAssets = $allAssets['js'] ?? [];
 
                 // font-awesome requires some special handling with cssmin
                 // see: https://code.google.com/p/cssmin/issues/detail?id=52&q=font
@@ -453,7 +458,11 @@ class DebugbarLogger implements LoggerInterface
             $this->addToTheme();
             $this->addExtra(_MD_DEBUGBAR_PHP_VERSION, PHP_VERSION);
             $this->addExtra(_MD_DEBUGBAR_INCLUDED_FILES, (string) count(get_included_files()));
-            $conn = \Xoops::getInstance()->db()->getWrappedConnection();
+            try {
+                $conn = \Xoops::getInstance()->db()->getNativeConnection();
+            } catch (\Exception $e) {
+                $conn = null;
+            }
             if ($conn instanceof \PDO) {
                 $this->addExtra(
                     $conn->getAttribute(\PDO::ATTR_DRIVER_NAME) . ' version',
@@ -483,12 +492,12 @@ class DebugbarLogger implements LoggerInterface
     /**
      * PSR-3 System is unusable.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function emergency($message, array $context = array())
+    public function emergency(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::EMERGENCY, $message, $context);
@@ -501,12 +510,12 @@ class DebugbarLogger implements LoggerInterface
      * Example: Entire website down, database unavailable, etc. This should
      * trigger the SMS alerts and wake you up.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function alert($message, array $context = array())
+    public function alert(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::ALERT, $message, $context);
@@ -518,12 +527,12 @@ class DebugbarLogger implements LoggerInterface
      *
      * Example: Application component unavailable, unexpected exception.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function critical($message, array $context = array())
+    public function critical(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::CRITICAL, $message, $context);
@@ -534,12 +543,12 @@ class DebugbarLogger implements LoggerInterface
      * PSR-3 Runtime errors that do not require immediate action but should typically
      * be logged and monitored.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function error($message, array $context = array())
+    public function error(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::ERROR, $message, $context);
@@ -552,12 +561,12 @@ class DebugbarLogger implements LoggerInterface
      * Example: Use of deprecated APIs, poor use of an API, undesirable things
      * that are not necessarily wrong.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function warning($message, array $context = array())
+    public function warning(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::WARNING, $message, $context);
@@ -567,12 +576,12 @@ class DebugbarLogger implements LoggerInterface
     /**
      * PSR-3 Normal but significant events.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function notice($message, array $context = array())
+    public function notice(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::NOTICE, $message, $context);
@@ -584,12 +593,12 @@ class DebugbarLogger implements LoggerInterface
      *
      * Example: User logs in, SQL logs.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function info($message, array $context = array())
+    public function info(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::INFO, $message, $context);
@@ -599,12 +608,12 @@ class DebugbarLogger implements LoggerInterface
     /**
      * PSR-3 Detailed debug information.
      *
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function debug($message, array $context = array())
+    public function debug(string|\Stringable $message, array $context = array()): void
     {
         if ($this->activated) {
             $this->log(LogLevel::DEBUG, $message, $context);
@@ -615,14 +624,18 @@ class DebugbarLogger implements LoggerInterface
      * PSR-3 Logs with an arbitrary level.
      *
      * @param mixed  $level   logging level
-     * @param string $message message
+     * @param string|\Stringable $message message
      * @param array  $context array of additional context
      *
-     * @return null
+     * @return void
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, string|\Stringable $message, array $context = array()): void
     {
         if (!$this->activated) {
+            return;
+        }
+
+        if (!is_object($this->debugbar)) {
             return;
         }
 
@@ -670,6 +683,9 @@ class DebugbarLogger implements LoggerInterface
                     $msg = $qt . $msg;
                     break;
             }
+        }
+        if (!$this->debugbar->hasCollector($channel)) {
+            $channel = 'messages';
         }
         switch ($level) {
             case LogLevel::EMERGENCY:
