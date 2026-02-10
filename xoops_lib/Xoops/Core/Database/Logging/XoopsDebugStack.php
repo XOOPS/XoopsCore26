@@ -35,7 +35,7 @@ class XoopsDebugStack extends DebugStack
      * @param array $types The SQL parameter types.
      * @return void
      */
-    public function startQuery($sql, array $params = null, array $types = null)
+    public function startQuery($sql, ?array $params = null, ?array $types = null)
     {
         \Xoops::getInstance()->events()->triggerEvent(
             'core.database.query.begin',

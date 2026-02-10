@@ -44,6 +44,9 @@ function install_acceptUser($hash = '')
     /* @var $user XoopsUser */
     $users = $member_handler->getUsers(new Criteria('uname', $uname));
     $user = array_pop($users);
+    if (!($user instanceof \Xoops\Core\Kernel\Handlers\XoopsUser)) {
+        return false;
+    }
     if ($hash_login != md5($user->getVar('pass') . XOOPS_DB_NAME . XOOPS_DB_PASS . XOOPS_DB_PREFIX)) {
         return false;
     }
@@ -156,7 +159,7 @@ function getDirList($dirname)
     $dirlist = array();
     if ($handle = opendir($dirname)) {
         while ($file = readdir($handle)) {
-            if ($file{0} !== '.' && is_dir($dirname . $file)) {
+            if ($file[0] !== '.' && is_dir($dirname . $file)) {
                 $dirlist[] = $file;
             }
         }
@@ -329,7 +332,8 @@ function getDbConnection(&$error)
         return false;
     } else {
         try {
-            $instance->connect();
+            // DBAL 4: connect() is protected; force connection with a lightweight query
+            $instance->executeQuery('SELECT 1');
         } catch (Exception $e) {
             $error = $e->getMessage();
             return false;

@@ -51,7 +51,7 @@ class ImportSchema
      *
      * @return Schema object built from input array
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function importSchemaArray(array $schemaArray)
     {
@@ -78,7 +78,7 @@ class ImportSchema
      *
      * @return array of Table objects
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function importTables(array $tableArray)
     {
@@ -89,11 +89,34 @@ class ImportSchema
             $indexes = array();
             $fkConstraints = array();
             $options = array();
-            $idGeneratorType = 0;
+            // DBAL 4: Column::setOptions() only supports keys that have a matching
+            // setXxx() method. Platform options (collation, charset, etc.) from
+            // toArray() must be extracted and set separately via setPlatformOption().
+            $knownColumnOptions = [
+                'type', 'name', 'length', 'precision', 'scale', 'unsigned',
+                'fixed', 'notnull', 'default', 'columnDefinition',
+                'autoincrement', 'comment', 'values', 'platformOptions',
+            ];
             foreach ($tabledef['columns'] as $colName => $colOptions) {
                 $colType = \Doctrine\DBAL\Types\Type::getType($colOptions['type']);
                 unset($colOptions['type']);
-                $columns[] = new Column($colName, $colType, $colOptions);
+                // Remove 'name' key from options - DBAL 4 setName() expects a Name object
+                unset($colOptions['name']);
+                // DBAL 4: setComment() etc. no longer accept null - filter out null values
+                $colOptions = array_filter($colOptions, static fn($v) => $v !== null);
+                // Separate platform options from standard column options
+                $platformOptions = [];
+                foreach ($colOptions as $key => $value) {
+                    if (!in_array($key, $knownColumnOptions, true)) {
+                        $platformOptions[$key] = $value;
+                        unset($colOptions[$key]);
+                    }
+                }
+                $column = new Column($colName, $colType, $colOptions);
+                if (!empty($platformOptions)) {
+                    $column->setPlatformOptions($platformOptions);
+                }
+                $columns[] = $column;
             }
 
             if (isset($tabledef['indexes'])) {
@@ -113,8 +136,8 @@ class ImportSchema
                         $constraintDef['localcolumns'],
                         $constraintDef['foreigntable'],
                         $constraintDef['foreigncolumns'],
-                        $constraintDef['name'] = null,
-                        $constraintDef['options']
+                        $constraintDef['name'] ?? '',
+                        $constraintDef['options'] ?? []
                     );
                 }
             }
@@ -127,8 +150,8 @@ class ImportSchema
                 $tableName,
                 $columns,
                 $indexes,
+                [],  // uniqueConstraints
                 $fkConstraints,
-                $idGeneratorType,
                 $options
             );
         }

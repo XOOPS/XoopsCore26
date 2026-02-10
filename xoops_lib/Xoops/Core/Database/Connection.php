@@ -14,7 +14,7 @@ namespace Xoops\Core\Database;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Cache\QueryCacheProfile;
-use Doctrine\Common\EventManager;
+use Doctrine\DBAL\Result;
 
 /**
  * Connection wrapper for Doctrine DBAL Connection
@@ -23,7 +23,7 @@ use Doctrine\Common\EventManager;
  * @package   Connection
  * @author    readheadedrod <redheadedrod@hotmail.com>
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2013-2015 XOOPS Project (http://xoops.org)
+ * @copyright 2013-2024 XOOPS Project (http://xoops.org)
  * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
  * @version   Release: 2.6
  * @link      http://xoops.org
@@ -98,23 +98,21 @@ class Connection extends \Doctrine\DBAL\Connection
      *
      * This sets up necessary variables before calling parent constructor
      *
-     * @param array         $params       Parameters for the driver
-     * @param Driver        $driver       The driver to use
-     * @param Configuration $config       The connection configuration
-     * @param EventManager  $eventManager Event manager to use
+     * @param array              $params Parameters for the driver
+     * @param Driver             $driver The driver to use
+     * @param Configuration|null $config The connection configuration
      */
     public function __construct(
         array $params,
         Driver $driver,
-        Configuration $config = null,
-        EventManager $eventManager = null
+        ?Configuration $config = null
     ) {
         $this->safe = false;
         $this->force = false;
         $this->transactionActive = false;
 
         try {
-            parent::__construct($params, $driver, $config, $eventManager);
+            parent::__construct($params, $driver, $config);
         } catch (\Exception $e) {
             // We are dead in the water. This exception may contain very sensitive
             // information and cannot be allowed to be displayed as is.
@@ -142,15 +140,168 @@ class Connection extends \Doctrine\DBAL\Connection
     }
 
     /**
+     * Quote a column name with backticks for MySQL.
+     *
+     * DBAL 4.x does not quote column names in insert/update/delete methods,
+     * which causes failures when column names collide with MySQL reserved words
+     * (e.g. 'rank', 'level', 'order', 'key', 'group').
+     *
+     * @param string $columnName The column name to quote
+     *
+     * @return string The backtick-quoted column name
+     */
+    private function quoteColumnName(string $columnName): string
+    {
+        return '`' . str_replace('`', '``', $columnName) . '`';
+    }
+
+    /**
+     * Re-key a data array so that column names are backtick-quoted.
+     *
+     * @param array $data Associative array of column => value
+     *
+     * @return array Re-keyed array with quoted column names
+     */
+    private function quoteDataKeys(array $data): array
+    {
+        $quoted = [];
+        foreach ($data as $columnName => $value) {
+            $quoted[$this->quoteColumnName($columnName)] = $value;
+        }
+        return $quoted;
+    }
+
+    /**
      * Inserts a table row with specified data.
      *
-     * Adds prefix to the name of the table then passes to normal function.
+     * Overrides DBAL to quote column names with backticks, preventing
+     * MySQL reserved word collisions (e.g. 'rank', 'level').
+     *
+     * @param string $table The name of the table to insert data into.
+     * @param array  $data  An associative array containing column-value pairs.
+     * @param array  $types Types of the inserted data.
+     *
+     * @return int|string The number of affected rows.
+     */
+    public function insert(string $table, array $data, array $types = []): int|string
+    {
+        if (count($data) === 0) {
+            return $this->executeStatement('INSERT INTO ' . $table . ' () VALUES ()');
+        }
+
+        $columns = [];
+        $values  = [];
+        $set     = [];
+
+        foreach ($data as $columnName => $value) {
+            $columns[] = $this->quoteColumnName($columnName);
+            $values[]  = $value;
+            $set[]     = '?';
+        }
+
+        return $this->executeStatement(
+            'INSERT INTO ' . $table . ' (' . implode(', ', $columns) . ')'
+            . ' VALUES (' . implode(', ', $set) . ')',
+            $values,
+            is_string(key($types)) ? $this->extractTypeValues(array_keys($data), $types) : $types,
+        );
+    }
+
+    /**
+     * Executes an SQL UPDATE statement on a table.
+     *
+     * Overrides DBAL to quote column names with backticks, preventing
+     * MySQL reserved word collisions.
+     *
+     * @param string $table    The name of the table to update.
+     * @param array  $data     An associative array containing column-value pairs.
+     * @param array  $criteria The update criteria (column-value pairs for WHERE).
+     * @param array  $types    Types of the merged $data and $criteria arrays.
+     *
+     * @return int|string The number of affected rows.
+     */
+    public function update(string $table, array $data, array $criteria = [], array $types = []): int|string
+    {
+        $columns = $values = $conditions = $set = [];
+
+        foreach ($data as $columnName => $value) {
+            $columns[] = $columnName;
+            $values[]  = $value;
+            $set[]     = $this->quoteColumnName($columnName) . ' = ?';
+        }
+
+        foreach ($criteria as $columnName => $value) {
+            if ($value === null) {
+                $conditions[] = $this->quoteColumnName($columnName) . ' IS NULL';
+                continue;
+            }
+            $columns[]    = $columnName;
+            $values[]     = $value;
+            $conditions[] = $this->quoteColumnName($columnName) . ' = ?';
+        }
+
+        if (is_string(key($types))) {
+            $types = $this->extractTypeValues($columns, $types);
+        }
+
+        $sql = 'UPDATE ' . $table . ' SET ' . implode(', ', $set);
+
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        return $this->executeStatement($sql, $values, $types);
+    }
+
+    /**
+     * Executes an SQL DELETE statement on a table.
+     *
+     * Overrides DBAL to quote column names with backticks, preventing
+     * MySQL reserved word collisions.
+     *
+     * @param string $table    The name of the table on which to delete.
+     * @param array  $criteria The deletion criteria (column-value pairs for WHERE).
+     * @param array  $types    The parameter types.
+     *
+     * @return int|string The number of affected rows.
+     */
+    public function delete(string $table, array $criteria = [], array $types = []): int|string
+    {
+        $columns = $values = $conditions = [];
+
+        foreach ($criteria as $columnName => $value) {
+            if ($value === null) {
+                $conditions[] = $this->quoteColumnName($columnName) . ' IS NULL';
+                continue;
+            }
+            $columns[]    = $columnName;
+            $values[]     = $value;
+            $conditions[] = $this->quoteColumnName($columnName) . ' = ?';
+        }
+
+        $sql = 'DELETE FROM ' . $table;
+
+        if ($conditions !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
+        }
+
+        return $this->executeStatement(
+            $sql,
+            $values,
+            is_string(key($types)) ? $this->extractTypeValues($columns, $types) : $types,
+        );
+    }
+
+    /**
+     * Inserts a table row with specified data.
+     *
+     * Adds prefix to the name of the table then passes to insert().
      *
      * @param string $tableName The name of the table to insert data into.
      * @param array  $data      An associative array containing column-value pairs.
      * @param array  $types     Types of the inserted data.
      *
-     * @return integer The number of affected rows.
+     * @return int|string The number of affected rows.
      */
     public function insertPrefix($tableName, array $data, array $types = array())
     {
@@ -158,11 +309,10 @@ class Connection extends \Doctrine\DBAL\Connection
         return $this->insert($tableName, $data, $types);
     }
 
-
     /**
      * Executes an SQL UPDATE statement on a table.
      *
-     * Adds prefix to the name of the table then passes to normal function.
+     * Adds prefix to the name of the table then passes to update().
      *
      * @param string $tableName  The name of the table to update.
      * @param array  $data       The data to update
@@ -171,7 +321,7 @@ class Connection extends \Doctrine\DBAL\Connection
      * @param array  $types      Types of the merged $data and
      * $identifier arrays in that order.
      *
-     * @return integer The number of affected rows.
+     * @return int|string The number of affected rows.
      */
     public function updatePrefix($tableName, array $data, array $identifier, array $types = array())
     {
@@ -182,43 +332,18 @@ class Connection extends \Doctrine\DBAL\Connection
     /**
      * Executes an SQL DELETE statement on a table.
      *
-     * Adds prefix to the name of the table then passes to delete function.
+     * Adds prefix to the name of the table then passes to delete().
      *
      * @param string $tableName  The name of the table on which to delete.
      * @param array  $identifier The deletion criteria.
      * An associative array containing column-value pairs.
      *
-     * @return integer The number of affected rows.
-     *
+     * @return int|string The number of affected rows.
      */
     public function deletePrefix($tableName, array $identifier)
     {
         $tableName = $this->prefix($tableName);
         return $this->delete($tableName, $identifier);
-    }
-
-    /**
-     * Executes an, optionally parametrized, SQL query.
-     *
-     * If the query is parametrized, a prepared statement is used.
-     * If an SQLLogger is configured, the execution is logged.
-     *
-     * @param string            $query  The SQL query to execute.
-     * @param array             $params The parameters to bind to the query, if any.
-     * @param array             $types  The types the previous parameters are in.
-     * @param QueryCacheProfile $qcp    The query Cache profile
-     *
-     * @return \Doctrine\DBAL\Driver\Statement The executed statement.
-     *
-     * @internal PERF: Directly prepares a driver statement, not a wrapper.
-     */
-    public function executeQuery(
-        $query,
-        array $params = array(),
-        $types = array(),
-        QueryCacheProfile $qcp = null
-    ) {
-        return parent::executeQuery($query, $params, $types, $qcp);
     }
 
     /**
@@ -230,17 +355,17 @@ class Connection extends \Doctrine\DBAL\Connection
      * This over ridding process checks to make sure it is safe to do these.
      * If force is active then it will over ride the safe setting.
      *
-     * @param string $query  The SQL query.
+     * @param string $sql    The SQL query.
      * @param array  $params The query parameters.
      * @param array  $types  The parameter types.
      *
-     * @return integer The number of affected rows.
+     * @return int|string The number of affected rows.
      *
      * @internal PERF: Directly prepares a driver statement, not a wrapper.
      *
      * @todo build a better exception catching system.
      */
-    public function executeUpdate($query, array $params = array(), array $types = array())
+    public function executeStatement(string $sql, array $params = [], array $types = []): int|string
     {
         $events = \Xoops::getInstance()->events();
         if ($this->safe || $this->force) {
@@ -249,7 +374,7 @@ class Connection extends \Doctrine\DBAL\Connection
             };
             $events->triggerEvent('core.database.query.start');
             try {
-                $result = parent::executeUpdate($query, $params, $types);
+                $result = parent::executeStatement($sql, $params, $types);
             } catch (\Exception $e) {
                 $events->triggerEvent('core.exception', $e);
                 $result = 0;
@@ -257,14 +382,14 @@ class Connection extends \Doctrine\DBAL\Connection
             $events->triggerEvent('core.database.query.end');
         } else {
             //$events->triggerEvent('core.database.query.failure', (array('Not safe:')));
-            return (int) 0;
+            return 0;
         }
         if ($result != 0) {
-            //$events->triggerEvent('core.database.query.success', (array($query)));
+            //$events->triggerEvent('core.database.query.success', (array($sql)));
             return (int) $result;
         } else {
-            //$events->triggerEvent('core.database.query.failure', (array($query)));
-            return (int) 0;
+            //$events->triggerEvent('core.database.query.failure', (array($sql)));
+            return 0;
         }
     }
 
@@ -273,7 +398,7 @@ class Connection extends \Doctrine\DBAL\Connection
      *
      * @return void
      */
-    public function beginTransaction()
+    public function beginTransaction(): void
     {
         $this->transactionActive = true;
         parent::beginTransaction();
@@ -284,7 +409,7 @@ class Connection extends \Doctrine\DBAL\Connection
      *
      * @return void
      */
-    public function commit()
+    public function commit(): void
     {
         $this->transactionActive = false;
         $this->force = false;
@@ -296,7 +421,7 @@ class Connection extends \Doctrine\DBAL\Connection
      *
      * @return void
      */
-    public function rollBack()
+    public function rollBack(): void
     {
         $this->transactionActive = false;
         $this->force = false;
@@ -304,43 +429,59 @@ class Connection extends \Doctrine\DBAL\Connection
     }
 
     /**
-     * perform a safe query if allowed
-     * can receive variable number of arguments
+     * Perform a safe query - routes to executeQuery for SELECT or executeStatement for DML.
      *
-     * @return mixed returns the value received or null if nothing received.
+     * This is a XOOPS-specific wrapper that provides safe query checking.
+     * In DBAL 4.x, the generic query() method was removed from Connection.
      *
-     * @todo add error report for using non select while not safe.
-     * @todo need to check if doctrine allows more than one query to be sent.
-     * This code assumes only one query is sent and anything else sent is not
-     * a query. This will have to be readdressed if this is wrong.
+     * @param string $sql    The SQL to execute
+     * @param array  $params The query parameters
+     * @param array  $types  The parameter types
      *
+     * @return Result|int|string|null Result for SELECT, affected rows for DML, null on failure
      */
-    public function query()
+    public function query(string $sql, array $params = [], array $types = [])
+    {
+        return $this->safeQuery($sql, $params, $types);
+    }
+
+    /**
+     * Perform a safe query - routes to executeQuery for SELECT or executeStatement for DML.
+     *
+     * This is a XOOPS-specific wrapper that provides safe query checking.
+     * In DBAL 4.x, the generic query() method was removed from Connection.
+     *
+     * @param string $sql    The SQL to execute
+     * @param array  $params The query parameters
+     * @param array  $types  The parameter types
+     *
+     * @return Result|int|string|null Result for SELECT, affected rows for DML, null on failure
+     */
+    public function safeQuery(string $sql, array $params = [], array $types = [])
     {
         $events = \Xoops::getInstance()->events();
+        $trimmedSql = ltrim($sql);
+        $isSelect = strtolower(substr($trimmedSql, 0, 6)) === 'select';
+
         if (!$this->safe && !$this->force) {
-            $sql = ltrim(func_get_arg(0));
-            if (!$this->safe && strtolower(substr($sql, 0, 6)) !== 'select') {
-                // $events->triggerEvent('core.database.query.failure', (array('Not safe:')));
+            if (!$isSelect) {
                 return null;
             }
         }
-        $this->force = false; // resets $force back to false
+        $this->force = false;
         $events->triggerEvent('core.database.query.start');
         try {
-            $result = call_user_func_array(array('parent', 'query'), func_get_args());
+            if ($isSelect) {
+                $result = parent::executeQuery($sql, $params, $types);
+            } else {
+                $result = parent::executeStatement($sql, $params, $types);
+            }
         } catch (\Exception $e) {
             $events->triggerEvent('core.exception', $e);
-            $result=null;
+            $result = null;
         }
         $events->triggerEvent('core.database.query.end');
-        if ($result) {
-            //$events->triggerEvent('core.database.query.success', (array('')));
-            return $result;
-        } else {
-            //$events->triggerEvent('core.database.query.failure', (array('')));
-            return null;
-        }
+        return $result ?: null;
     }
 
     /**
@@ -359,12 +500,52 @@ class Connection extends \Doctrine\DBAL\Connection
             foreach ($pieces as $query) {
                 $prefixed_query = \SqlUtility::prefixQuery(trim($query), $this->prefix());
                 if ($prefixed_query != false) {
-                    $this->query($prefixed_query[0]);
+                    $this->safeQuery($prefixed_query[0]);
                 }
             }
             return true;
         }
         return false;
+    }
+
+    /**
+     * Backward-compatible errorInfo() for DBAL 4.x.
+     *
+     * In DBAL 4.x, errorInfo() was removed. Errors are thrown as exceptions.
+     * This provides a fallback via the native PDO connection.
+     *
+     * @return array PDO errorInfo array or empty array
+     */
+    public function errorInfo(): array
+    {
+        try {
+            $pdo = $this->getNativeConnection();
+            if ($pdo instanceof \PDO) {
+                return $pdo->errorInfo();
+            }
+        } catch (\Throwable $e) {
+        }
+        return ['', '', ''];
+    }
+
+    /**
+     * Backward-compatible errorCode() for DBAL 4.x.
+     *
+     * In DBAL 4.x, errorCode() was removed. Errors are thrown as exceptions.
+     * This provides a fallback via the native PDO connection.
+     *
+     * @return string|int|null SQLSTATE error code or null
+     */
+    public function errorCode(): string|int|null
+    {
+        try {
+            $pdo = $this->getNativeConnection();
+            if ($pdo instanceof \PDO) {
+                return $pdo->errorCode();
+            }
+        } catch (\Throwable $e) {
+        }
+        return null;
     }
 
     /**

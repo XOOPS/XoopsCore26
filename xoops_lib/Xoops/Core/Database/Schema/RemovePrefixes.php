@@ -17,7 +17,6 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Index;
-use Doctrine\DBAL\Schema\Visitor\Visitor;
 
 /**
  * RemovePrefixes is a Schema Visitor that builds an new Schema object
@@ -29,10 +28,10 @@ use Doctrine\DBAL\Schema\Visitor\Visitor;
  * @category  Xoops\Core\Database\Schema\RemovePrefixes
  * @package   Xoops\Core
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2013-2019 XOOPS Project (https://xoops.org)
+ * @copyright 2013-2024 XOOPS Project (https://xoops.org)
  * @license   GNU GPL 2 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  */
-class RemovePrefixes implements Visitor
+class RemovePrefixes implements SchemaVisitorInterface
 {
 
     protected $newSchema;
@@ -77,7 +76,7 @@ class RemovePrefixes implements Visitor
      *
      * @return void
      *
-     * @throws \Doctrine\DBAL\DBALException
+     * @throws \Doctrine\DBAL\Exception
      */
     public function acceptTable(Table $table)
     {

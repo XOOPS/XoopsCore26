@@ -43,6 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (array_key_exists('conf_ids', $_REQUEST)) {
         foreach ($_REQUEST['conf_ids'] as $key => $conf_id) {
             $config = $config_handler->getConfig($conf_id);
+            if ($config === null) {
+                continue;
+            }
             $new_value = $_REQUEST[$config->getVar('conf_name')];
             $config->setConfValueForInput($new_value);
             $config_handler->insertConfig($config);

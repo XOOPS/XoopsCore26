@@ -17,7 +17,7 @@ use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ForeignKeyConstraint;
 use Doctrine\DBAL\Schema\Sequence;
 use Doctrine\DBAL\Schema\Index;
-use Doctrine\DBAL\Schema\Visitor\Visitor;
+use Doctrine\DBAL\Types\Type;
 
 /**
  * ExportVisitor is a Schema Visitor that builds an exportable array
@@ -26,10 +26,10 @@ use Doctrine\DBAL\Schema\Visitor\Visitor;
  * @category  Xoops\Core\Database\Schema\ExportVisitor
  * @package   Xoops\Core
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2013-2019 XOOPS Project (https//xoops.org)
+ * @copyright 2013-2024 XOOPS Project (https//xoops.org)
  * @license   GNU GPL 2 or later (https//www.gnu.org/licenses/gpl-2.0.html)
  */
-class ExportVisitor implements Visitor
+class ExportVisitor implements SchemaVisitorInterface
 {
 
     protected $schemaArray;
@@ -85,9 +85,10 @@ class ExportVisitor implements Visitor
      */
     public function acceptColumn(Table $table, Column $column)
     {
-        $this->schemaArray['tables'][$table->getName()]['columns'][$column->getName()] = $column->toArray();
-        $this->schemaArray['tables'][$table->getName()]['columns'][$column->getName()]['type'] =
-            $column->getType()->getName();
+        // DBAL 4: filter out null values to prevent errors on re-import (e.g. setComment(null))
+        $colArray = array_filter($column->toArray(), static fn($v) => $v !== null);
+        $colArray['type'] = Type::lookupName($column->getType());
+        $this->schemaArray['tables'][$table->getName()]['columns'][$column->getName()] = $colArray;
     }
 
     /**

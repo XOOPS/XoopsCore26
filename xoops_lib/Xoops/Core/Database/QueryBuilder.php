@@ -11,6 +11,7 @@
 
 namespace Xoops\Core\Database;
 
+use Doctrine\DBAL\Query\QueryType;
 use Xoops\Core\Database\Connection;
 
 /**
@@ -53,7 +54,7 @@ class QueryBuilder extends \Doctrine\DBAL\Query\QueryBuilder
      *     $qb = $conn->createQueryBuilder()
      *         ->delete('users', 'u')
      *         ->where('u.id = :user_id');
-     *         ->setParameter(':user_id', 1);
+     *         ->setParameter('user_id', 1);
      * </code>
      *
      * @param string $delete The table whose rows are subject to the deletion.
@@ -229,5 +230,80 @@ class QueryBuilder extends \Doctrine\DBAL\Query\QueryBuilder
     {
         $join = $this->connection->prefix($join);
         return $this->rightJoin($fromAlias, $join, $alias, $condition);
+    }
+
+    /**
+     * Backward-compatible resetQueryParts() for DBAL 4.x.
+     *
+     * In DBAL 3.x, QueryBuilder had a resetQueryParts() method to clear all
+     * query state so the builder could be reused for a different query.
+     * DBAL 4.x removed this method (QueryBuilder is intended to be single-use).
+     * This restores that capability using reflection to reset the parent's
+     * private properties to their constructor defaults.
+     *
+     * @return $this
+     */
+    public function resetQueryParts(): self
+    {
+        static $reflectionProps = null;
+
+        if ($reflectionProps === null) {
+            $parentClass = new \ReflectionClass(\Doctrine\DBAL\Query\QueryBuilder::class);
+            $defaults = [
+                'sql'                     => null,
+                'params'                  => [],
+                'types'                   => [],
+                'type'                    => QueryType::SELECT,
+                'firstResult'             => 0,
+                'maxResults'              => null,
+                'boundCounter'            => 0,
+                'select'                  => [],
+                'distinct'                => false,
+                'from'                    => [],
+                'table'                   => null,
+                'join'                    => [],
+                'set'                     => [],
+                'where'                   => null,
+                'groupBy'                 => [],
+                'having'                  => null,
+                'orderBy'                 => [],
+                'forUpdate'               => null,
+                'values'                  => [],
+                'unionParts'              => [],
+                'commonTableExpressions'  => [],
+                'resultCacheProfile'      => null,
+            ];
+            $reflectionProps = [];
+            foreach ($defaults as $propName => $defaultValue) {
+                if ($parentClass->hasProperty($propName)) {
+                    $prop = $parentClass->getProperty($propName);
+                    $reflectionProps[] = [$prop, $defaultValue];
+                }
+            }
+        }
+
+        foreach ($reflectionProps as [$prop, $defaultValue]) {
+            $prop->setValue($this, $defaultValue);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Backward-compatible execute() method for DBAL 4.x.
+     *
+     * In DBAL 3.x, QueryBuilder had an execute() method. In DBAL 4.x it was
+     * removed in favor of executeQuery() and executeStatement(). This method
+     * detects the query type from the SQL and dispatches accordingly.
+     *
+     * @return \Doctrine\DBAL\Result|int|string
+     */
+    public function execute()
+    {
+        $sql = ltrim($this->getSQL());
+        if (stripos($sql, 'SELECT') === 0 || stripos($sql, 'WITH') === 0) {
+            return $this->executeQuery();
+        }
+        return $this->executeStatement();
     }
 }
