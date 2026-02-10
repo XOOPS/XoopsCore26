@@ -56,8 +56,10 @@ include_once __DIR__ . '/defines.php';
  * Previously used Patchwork\Utf8\Bootup which is abandoned.
  * PHP 8.x defaults to UTF-8 for most mbstring functions, but we set it explicitly.
  */
-mb_internal_encoding('UTF-8');
-mb_regex_encoding('UTF-8');
+if (extension_loaded('mbstring')) {
+    mb_internal_encoding('UTF-8');
+    mb_regex_encoding('UTF-8');
+}
 
 /**
  * Create Instance of Xoops Object

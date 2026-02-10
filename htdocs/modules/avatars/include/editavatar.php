@@ -131,7 +131,7 @@ switch ($op) {
                             ->where('uid = :uid')
                             ->setParameter('uid', $xoops->user->getVar('uid'), ParameterType::INTEGER)
                             ->setParameter(
-                                ':avatar',
+                                'avatar',
                                 'avatars/' . $uploader_avatars_img->getSavedFileName(),
                                 ParameterType::STRING
                             )

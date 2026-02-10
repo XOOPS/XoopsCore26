@@ -13,8 +13,8 @@ trait DatabaseTestTrait
                 $this->markTestSkipped('Database connection not available');
             }
             // Try a simple query to verify actual connectivity
-            $db->fetchAssociative('SELECT 1');
-        } catch (\Exception $e) {
+            $db->fetchOne('SELECT 1');
+        } catch (\Throwable $e) {
             $this->markTestSkipped('Database not available: ' . $e->getMessage());
         }
     }

@@ -72,7 +72,7 @@ class ProfileVisibilityHandler extends XoopsPersistableObjectHandler
         $result = $sql->execute();
         $field_ids = array();
         while (list($field_id) = $result->fetchNumeric()) {
-            $field_ids[] = $field_ids;
+            $field_ids[] = $field_id;
         }
 
         return $field_ids;
