@@ -22,13 +22,21 @@ class ProxyCheckTest extends \PHPUnit\Framework\TestCase
      */
     protected $object;
 
+    /** @var array{0: bool, 1: bool, 2: mixed} whether xoopsConfig and proxy_env existed, and proxy_env's value */
+    private $savedProxyEnv;
+
     /**
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
     protected function setUp(): void
     {
-        // the real constructor reads these globals; keep earlier tests from leaking into testGet()
+        // the real constructor reads this global; keep other tests' settings out of testGet()
+        $this->savedProxyEnv = [
+            \array_key_exists('xoopsConfig', $GLOBALS),
+            isset($GLOBALS['xoopsConfig']) && \array_key_exists('proxy_env', $GLOBALS['xoopsConfig']),
+            $GLOBALS['xoopsConfig']['proxy_env'] ?? null,
+        ];
         unset($GLOBALS['xoopsConfig']['proxy_env']);
         $this->object = new ProxyCheck();
     }
@@ -39,6 +47,12 @@ class ProxyCheckTest extends \PHPUnit\Framework\TestCase
      */
     protected function tearDown(): void
     {
+        // ProxyCheck's `global $xoopsConfig` creates the global, so drop it if it was not there before
+        if (!$this->savedProxyEnv[0]) {
+            unset($GLOBALS['xoopsConfig']);
+        } elseif ($this->savedProxyEnv[1]) {
+            $GLOBALS['xoopsConfig']['proxy_env'] = $this->savedProxyEnv[2];
+        }
     }
 
     public function testGet()
