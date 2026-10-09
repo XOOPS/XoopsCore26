@@ -37,7 +37,7 @@ Composer vendors install to `xoops_lib/vendor/` (non-standard path). PHPUnit con
 
 ## PHP Compatibility
 
-Code must run on PHP 7.2 through 8.5. Do not use language features introduced after PHP 7.2, including but not limited to PHP 7.3+ (trailing commas in function calls, flexible heredoc/nowdoc), PHP 7.4+ (typed properties, arrow functions, null coalescing assignment `??=`, numeric literal separators, spread operator in arrays), and PHP 8.0+ (named arguments, match expressions, union type hints in signatures, enums, fibers, readonly properties, intersection types, `never` return type, first-class callable syntax, constructor promotion). CI tests all versions in the matrix.
+Code must run on PHP 8.4 and later, the minimum in `composer.json.dist`. PHP 8.x language features are allowed; do not flag PHP 7.x or 8.0-8.3 compatibility. CI tests PHP 8.4.
 
 ## Coding Conventions
 
@@ -79,7 +79,7 @@ XOOPS 2.6 uses `\Xoops::getInstance()` for core access. Libraries check `class_e
 
 1. Code follows PSR-12 and passes code style checks.
 2. Static analysis passes with no new errors beyond the baseline.
-3. Tests pass on all supported PHP versions (7.2-8.5).
+3. Tests pass on PHP 8.4.
 4. New public methods have PHPDoc with `@param`, `@return`, and `@throws` tags.
 5. New functionality has corresponding unit tests in `tests/unit/`.
 6. Changes are documented in the changelog.
