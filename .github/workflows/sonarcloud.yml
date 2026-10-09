@@ -24,7 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
         with:
           php-version: "8.4"
           extensions: intl, mbstring, mysqli
@@ -36,6 +36,9 @@ jobs:
 
       - name: Install dependencies
         run: composer update --prefer-stable --no-interaction --prefer-dist --no-progress
+
+      - name: Generate test configuration
+        run: php console/console.php ci-bootstrap
 
       - name: Ensure build directory exists
         run: mkdir -p build/logs
