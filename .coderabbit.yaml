@@ -2,9 +2,9 @@
 language: "en-US"
 early_access: false
 tone_instructions: >-
-  Expert PHP reviewer. Focus on type safety, PSR-12, PHP 7.2
-  compatibility, and security. XOOPS Core supports PHP 7.2-8.5;
-  avoid PHP 8.0+ language features.
+  Expert PHP reviewer. Focus on type safety, PSR-12, and security.
+  XOOPS Core 2.6 requires PHP 8.4 or later (composer.json.dist), so
+  PHP 8.x language features are allowed.
 
 reviews:
   profile: "assertive"
@@ -19,14 +19,12 @@ reviews:
   path_instructions:
     - path: "xoops_lib/**/*.php"
       instructions: >-
-        Review for PHP 7.2 compatibility (no union types, named arguments,
-        match expressions, enums, readonly, constructor promotion, fibers,
-        intersection types, never return type, or first-class callable syntax).
+        Code targets PHP 8.4+; do not flag PHP 7.x or 8.0-8.3 compatibility.
         Check for proper use of declare(strict_types=1), self:: for class
         constants, and PSR-12 code style.
     - path: "htdocs/kernel/**/*.php"
       instructions: >-
-        Review legacy kernel code for PHP 7.2 compatibility and security.
+        Review legacy kernel code for security.
         Check for SQL injection, XSS, and proper input sanitization.
     - path: "tests/**/*.php"
       instructions: >-
