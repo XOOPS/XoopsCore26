@@ -11,7 +11,7 @@ class TranslatorTest extends \PHPUnit\Framework\TestCase
     public function testTReturnsConstantValueWhenDefined(): void
     {
         if (!\defined('_TEST_TRANSLATOR_LABEL')) {
-            \define('_TEST_TRANSLATOR_LABEL', 'Translated Value');
+            \define('_TEST_TRANSLATOR_LABEL', 'Translated Value'); // NOSONAR Translator only accepts _UPPER names
         }
         $this->assertSame('Translated Value', Translator::t('_TEST_TRANSLATOR_LABEL'));
     }
@@ -39,7 +39,7 @@ class TranslatorTest extends \PHPUnit\Framework\TestCase
     public function testTReturnsLabelForNonStringConstant(): void
     {
         if (!\defined('_TEST_TRANSLATOR_INT')) {
-            \define('_TEST_TRANSLATOR_INT', 42);
+            \define('_TEST_TRANSLATOR_INT', 42); // NOSONAR Translator only accepts _UPPER names
         }
         $this->assertSame('_TEST_TRANSLATOR_INT', Translator::t('_TEST_TRANSLATOR_INT'));
     }
@@ -47,7 +47,7 @@ class TranslatorTest extends \PHPUnit\Framework\TestCase
     public function testTHandlesValidPatternFormats(): void
     {
         if (!\defined('_MI_XMFTEST_TRANSLATOR_NAME')) {
-            \define('_MI_XMFTEST_TRANSLATOR_NAME', 'My Module');
+            \define('_MI_XMFTEST_TRANSLATOR_NAME', 'My Module'); // NOSONAR Translator only accepts _UPPER names
         }
         $this->assertSame('My Module', Translator::t('_MI_XMFTEST_TRANSLATOR_NAME'));
     }

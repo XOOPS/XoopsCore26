@@ -230,11 +230,7 @@ EOT;
         $method = new \ReflectionMethod('Xmf\Metagen', 'purifyText');
         $method->setAccessible(true);
         $actual = $method->invokeArgs(null, array("line one\nline two\rline three"));
-        $this->assertStringNotContainsString("\n", $actual);
-        $this->assertStringNotContainsString("\r", $actual);
-        $this->assertStringContainsString('line one', $actual);
-        $this->assertStringContainsString('line two', $actual);
-        $this->assertStringContainsString('line three', $actual);
+        $this->assertSame('line one line two line three', $actual);
     }
 
     public function testPurifyTextDecodesEntitiesWithEncoding()

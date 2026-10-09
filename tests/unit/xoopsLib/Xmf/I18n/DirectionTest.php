@@ -62,7 +62,7 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
     #[PreserveGlobalState(false)]
     public function testLegacyLangcodeSetsGlobalDirection(): void
     {
-        \define('_LANGCODE', 'ar');
+        \define('_LANGCODE', 'ar'); // NOSONAR XOOPS language constant names start with an underscore
 
         $this->assertSame(Direction::RTL, Direction::dir());
         $this->assertSame(Direction::RTL, Direction::dir(Direction::AUTO));
@@ -72,8 +72,8 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
     #[PreserveGlobalState(false)]
     public function testLegacyTextDirectionOverridesLocale(): void
     {
-        \define('_LANGCODE', 'en');
-        \define('_TEXT_DIRECTION', ' RTL ');
+        \define('_LANGCODE', 'en'); // NOSONAR XOOPS language constant names start with an underscore
+        \define('_TEXT_DIRECTION', ' RTL '); // NOSONAR XOOPS language constant names start with an underscore
 
         $this->assertSame(Direction::RTL, Direction::dir());
         $this->assertSame(Direction::LTR, Direction::dir('en'));
@@ -83,15 +83,15 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
     #[PreserveGlobalState(false)]
     public function testLegacyInvalidTextDirectionWarnsAndFallsBack(): void
     {
-        \define('_LANGCODE', 'he');
-        \define('_TEXT_DIRECTION', 'sideways');
+        \define('_LANGCODE', 'he'); // NOSONAR XOOPS language constant names start with an underscore
+        \define('_TEXT_DIRECTION', 'sideways'); // NOSONAR XOOPS language constant names start with an underscore
 
         $result = null;
         $errors = self::userErrors(static function () use (&$result): void {
             $result = Direction::dir();
         });
 
-        $this->assertSame(Direction::RTL, $result);
+        $this->assertSame(Direction::RTL, $result); // NOSONAR expected value is first
         $this->assertSame(E_USER_WARNING, $errors[0][0]);
         $this->assertStringContainsString('sideways', $errors[0][1]);
     }
@@ -100,7 +100,7 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
     #[PreserveGlobalState(false)]
     public function testLegacyRtlConstantIsDeprecatedButHonoured(): void
     {
-        \define('_RTL', true);
+        \define('_RTL', true); // NOSONAR XOOPS language constant names start with an underscore
 
         $result = null;
         $errors = self::userErrors(static function () use (&$result): void {
@@ -108,7 +108,7 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
             Direction::dir();
         });
 
-        $this->assertSame(Direction::RTL, $result);
+        $this->assertSame(Direction::RTL, $result); // NOSONAR expected value is first
         $this->assertCount(1, $errors, 'the cached result does not warn again');
         $this->assertSame(E_USER_DEPRECATED, $errors[0][0]);
 

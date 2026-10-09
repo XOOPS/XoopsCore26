@@ -191,21 +191,22 @@ class SchemaFakeConnection
         // non-SELECT returns its affected-row count, or null when that is 0
         $this->force = false;
         if ($this->fail) {
-            return false;
-        }
-        if (stripos(ltrim($sql), 'select') !== 0) {
-            return $this->affectedRows ?: null;
-        }
-        // only x_items exists; every other table comes back empty
-        if (strpos($sql, "TABLE_NAME = 'x_items'") === false) {
-            return new SchemaFakeResult([]);
-        }
-        foreach ($this->results as $schemaTable => $rows) {
-            if (strpos($sql, '`INFORMATION_SCHEMA`.`' . $schemaTable . '`') !== false) {
-                return new SchemaFakeResult($rows);
+            $result = false;
+        } elseif (stripos(ltrim($sql), 'select') !== 0) {
+            $result = $this->affectedRows ?: null;
+        } else {
+            // only x_items exists; every other table comes back empty
+            $rows = [];
+            if (strpos($sql, "TABLE_NAME = 'x_items'") !== false) {
+                foreach ($this->results as $schemaTable => $tableRows) {
+                    if (strpos($sql, '`INFORMATION_SCHEMA`.`' . $schemaTable . '`') !== false) {
+                        $rows = $tableRows;
+                    }
+                }
             }
+            $result = new SchemaFakeResult($rows);
         }
-        return new SchemaFakeResult([]);
+        return $result;
     }
 
     public function errorInfo()

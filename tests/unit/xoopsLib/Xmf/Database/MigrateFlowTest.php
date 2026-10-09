@@ -205,6 +205,7 @@ class FlowMigrate extends Migrate
 
     public function __construct()
     {
+        // skip the parent constructor: it needs a database connection
     }
 }
 
@@ -236,7 +237,7 @@ class RecordingTableHandler
         return in_array($table, $this->existingTables, true);
     }
 
-    public function getColumnAttributes($table, $column)
+    public function getColumnAttributes($table, $column) // NOSONAR $table mirrors the Tables API
     {
         return $this->existingColumns[$column] ?? false;
     }
@@ -246,7 +247,7 @@ class RecordingTableHandler
         return $this->dumpTables;
     }
 
-    public function getTableIndexes($table)
+    public function getTableIndexes($table) // NOSONAR $table mirrors the Tables API
     {
         return $this->existingIndexes;
     }

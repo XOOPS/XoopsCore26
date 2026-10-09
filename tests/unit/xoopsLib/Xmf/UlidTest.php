@@ -453,7 +453,7 @@ class UlidTest extends TestCase
         $ulid1 = Ulid::generateMonotonic();
         $ulid2 = Ulid::generateMonotonic();
 
-        $this->assertSame(1, Ulid::compare($ulid2, $ulid1));
+        $this->assertSame(1, Ulid::compare($ulid2, $ulid1)); // NOSONAR order reversed on purpose
     }
 
     public function testCompareReturnZeroForSameUlid(): void

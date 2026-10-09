@@ -11,11 +11,15 @@ class ImageResolverTest extends \PHPUnit\Framework\TestCase
 {
     protected function setUp(): void
     {
-        Direction::clearCache();
-        ImageResolver::clearCache();
+        self::clearCaches();
     }
 
     protected function tearDown(): void
+    {
+        self::clearCaches();
+    }
+
+    private static function clearCaches(): void
     {
         Direction::clearCache();
         ImageResolver::clearCache();

@@ -543,6 +543,10 @@ final class Serializer
      */
     public static function jsonOnly(string $payload)
     {
+        // same limit as every other deserialization entry point
+        if (\strlen($payload) > self::MAX_SIZE) {
+            return null;
+        }
         if ($payload === '' || !isset(ltrim($payload)[0])) {
             return null;
         }

@@ -72,6 +72,12 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         $this->assertNull(Serializer::jsonOnly('a:1:{i:0;i:1;}'));
     }
 
+    public function testJsonOnlyRejectsOversizedPayload(): void
+    {
+        // assertTrue keeps a failure from printing the 5 MB value
+        $this->assertTrue(null === Serializer::jsonOnly('"' . str_repeat('a', self::MAX_SIZE) . '"'));
+    }
+
     // ----------------------------------------------------------------- PHP
 
     public static function phpValues(): array
@@ -108,6 +114,7 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         Serializer::toPhp(static function () {
+            // body irrelevant: closures cannot be serialized
         });
     }
 
@@ -115,6 +122,7 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         Serializer::toPhp(['callback' => static function () {
+            // body irrelevant: closures cannot be serialized
         }]);
     }
 
@@ -204,7 +212,7 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         $line = __LINE__ + 1;
         Serializer::fromLegacy(serialize([1, 2]));
 
-        $this->assertSame([__FILE__, $line], $location);
+        $this->assertSame([__FILE__, $line], $location); // NOSONAR expected value is first
     }
 
     public function testLegacyLoggerTruncatesLongPreviews(): void

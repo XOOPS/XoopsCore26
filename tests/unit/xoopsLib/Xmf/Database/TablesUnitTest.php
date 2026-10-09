@@ -190,6 +190,7 @@ class TestableTables extends Tables
 {
     public function __construct()
     {
+        // skip the parent constructor: it needs a database connection
     }
 
     public function setDb(object $db): void

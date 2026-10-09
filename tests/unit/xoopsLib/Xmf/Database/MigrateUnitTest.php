@@ -133,6 +133,7 @@ class TestableMigrate extends Migrate
 {
     public function __construct()
     {
+        // skip the parent constructor: it needs a database connection
     }
 
     public function setTargetDefinitions(array $targetDefinitions): void
@@ -193,7 +194,7 @@ class FakeMigrateTableHandler
         return true;
     }
 
-    public function getColumnAttributes(string $tableName, string $name): string|false
+    public function getColumnAttributes(string $tableName, string $name): string|false // NOSONAR mirrors Tables
     {
         return $this->existingColumns[$name] ?? false;
     }
@@ -209,7 +210,7 @@ class FakeMigrateTableHandler
         return $this->dumpTables;
     }
 
-    public function getTableIndexes(string $tableName): array|false
+    public function getTableIndexes(string $tableName): array|false // NOSONAR mirrors Tables
     {
         return $this->existingIndexes;
     }
