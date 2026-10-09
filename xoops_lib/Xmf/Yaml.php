@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -29,14 +30,13 @@ use Symfony\Component\Yaml\Yaml as VendorYaml;
  * @category  Xmf\Yaml
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2013-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  * @see       http://www.yaml.org/
  */
 class Yaml
 {
-
     /**
      * Dump an PHP array as a YAML string
      *
@@ -50,7 +50,7 @@ class Yaml
     {
         try {
             $ret = VendorYaml::dump($var, $inline, $indent);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -68,7 +68,7 @@ class Yaml
     {
         try {
             $ret = VendorYaml::parse($yamlString);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -80,14 +80,35 @@ class Yaml
      *
      * @param string $yamlFile filename of YAML file
      *
-     * @return array|boolean PHP array or false on error
+     * @return array|false PHP array or false on error
      */
     public static function read($yamlFile)
     {
+        if (!file_exists($yamlFile)) {
+            return false;
+        }
+        $maxSize = 2 * 1024 * 1024; // 2 MB
+        $fileSize = @filesize($yamlFile);
+        if ($fileSize === false) {
+            trigger_error("Unable to determine YAML file size", E_USER_WARNING);
+            return false;
+        }
+        if ($fileSize > $maxSize) {
+            trigger_error("YAML file exceeds maximum size of 2MB", E_USER_WARNING);
+            return false;
+        }
+        if (!is_readable($yamlFile)) {
+            trigger_error("Failed to read YAML file (not readable): " . basename($yamlFile), E_USER_WARNING);
+            return false;
+        }
         try {
-            $yamlString = file_get_contents($yamlFile);
+            $yamlString = @file_get_contents($yamlFile);
+            if ($yamlString === false) {
+                trigger_error("Failed to read YAML file: " . basename($yamlFile), E_USER_WARNING);
+                return false;
+            }
             $ret = VendorYaml::parse($yamlString);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -109,7 +130,7 @@ class Yaml
         try {
             $yamlString = VendorYaml::dump($var, $inline, $indent);
             $ret = file_put_contents($yamlFile, $yamlString);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -119,10 +140,10 @@ class Yaml
     /**
      * Dump an PHP array as a YAML string with a php wrapper
      *
-     * The wrap is a php header that surrounds the yaml with section markers,
-     * '---' and '...' along with php comment markers. The php wrapper keeps the
-     * yaml file contents from being revealed by serving the file directly from
-     * a poorly configured server.
+     * The wrap is a php __halt_compiler() guard followed by YAML section markers
+     * '---' and '...'. The guard stops the PHP lexer entirely, preventing the
+     * file contents from being parsed or revealed by serving the file directly
+     * from a poorly configured server.
      *
      * @param mixed   $var    Variable which will be dumped
      * @param integer $inline Nesting level where you switch to inline YAML
@@ -134,8 +155,8 @@ class Yaml
     {
         try {
             $yamlString = VendorYaml::dump($var, $inline, $indent);
-            $ret = empty($yamlString) ? false : "<?php\n/*\n---\n" . $yamlString . "\n...\n*/\n";
-        } catch (\Exception $e) {
+            $ret = empty($yamlString) ? false : "<?php __halt_compiler(); ?>\n---\n" . $yamlString . "\n...\n";
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -145,10 +166,9 @@ class Yaml
     /**
      * Load a YAML string with a php wrapper into a PHP array
      *
-     * The wrap is a php header that surrounds the yaml with section markers,
-     * '---' and '...' along with php comment markers. The php wrapper keeps the
-     * yaml file contents from being revealed by serving the file directly from
-     * a poorly configured server.
+     * Supports both the current __halt_compiler() guard format and the legacy
+     * PHP block comment format. Content between '---' and '...' markers is
+     * extracted regardless of wrapper style.
      *
      * @param string $yamlString YAML dump string
      *
@@ -158,6 +178,10 @@ class Yaml
     {
         try {
             $lines = preg_split('/\R/', $yamlString);
+            if ($lines === false) {
+                trigger_error('Failed to split wrapped YAML content', E_USER_WARNING);
+                return false;
+            }
             $count = count($lines);
             for ($index = $count; --$index > 0;) {
                 if ('...' === $lines[$index]) {
@@ -174,7 +198,7 @@ class Yaml
             }
             $unwrapped = implode("\n", $lines);
             $ret = VendorYaml::parse($unwrapped);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -184,21 +208,41 @@ class Yaml
     /**
      * Read a file containing YAML with a php wrapper into a PHP array
      *
-     * The wrap is a php header that surrounds the yaml with section markers,
-     * '---' and '...' along with php comment markers. The php wrapper keeps the
-     * yaml file contents from being revealed by serving the file directly from
-     * a poorly configured server.
+     * Supports both the current __halt_compiler() guard format and the legacy
+     * PHP block comment format. Content between '---' and '...' markers is
+     * extracted regardless of wrapper style.
      *
      * @param string $yamlFile filename of YAML file
      *
-     * @return array|boolean PHP array or false on error
+     * @return array|false PHP array or false on error
      */
     public static function readWrapped($yamlFile)
     {
+        if (!file_exists($yamlFile)) {
+            return false;
+        }
+        $maxSize = 2 * 1024 * 1024; // 2 MB
+        $fileSize = @filesize($yamlFile);
+        if ($fileSize === false) {
+            trigger_error("Unable to determine YAML file size", E_USER_WARNING);
+            return false;
+        }
+        if ($fileSize > $maxSize) {
+            trigger_error("YAML file exceeds maximum size of 2MB", E_USER_WARNING);
+            return false;
+        }
+        if (!is_readable($yamlFile)) {
+            trigger_error("Failed to read YAML file (not readable): " . basename($yamlFile), E_USER_WARNING);
+            return false;
+        }
+        $yamlString = @file_get_contents($yamlFile);
+        if ($yamlString === false) {
+            trigger_error("Failed to read YAML file: " . basename($yamlFile), E_USER_WARNING);
+            return false;
+        }
         try {
-            $yamlString = file_get_contents($yamlFile);
             $ret = static::loadWrapped($yamlString);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -225,7 +269,7 @@ class Yaml
         try {
             $yamlString = static::dumpWrapped($var, $inline, $indent);
             $ret = file_put_contents($yamlFile, $yamlString);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             static::logError($e);
             $ret = false;
         }
@@ -233,7 +277,7 @@ class Yaml
     }
 
     /**
-     * @param \Exception $e throwable to log
+     * @param \Throwable $e throwable to log
      */
     protected static function logError($e)
     {

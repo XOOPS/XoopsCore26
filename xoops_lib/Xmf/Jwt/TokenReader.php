@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -21,8 +22,8 @@ use Xmf\Key\KeyAbstract;
  * @category  Xmf\Jwt\TokenReader
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2016-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class TokenReader
@@ -103,11 +104,15 @@ class TokenReader
             return false;
         }
         $header = trim($header);
-        $space = strpos($header, ' '); // expecting "Bearer base64-token-string"
-        if (false !== $space) {
-            $header = substr($header, $space);
+        if (strcasecmp($headerName, 'Authorization') === 0) {
+            $parts = explode(' ', $header, 2);
+            if (count($parts) !== 2 || strcasecmp($parts[0], 'Bearer') !== 0) {
+                return false;
+            }
+            $token = trim($parts[1]);
+        } else {
+            $token = $header;
         }
-        $token = trim($header);
         return static::fromString($key, $token, $assertClaims);
     }
 }

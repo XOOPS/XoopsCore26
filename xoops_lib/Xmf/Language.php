@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -17,8 +18,8 @@ namespace Xmf;
  * @category  Xmf\Language
  * @package   Xmf
  * @author    trabis <lusopoemas@gmail.com>
- * @copyright 2011-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class Language
@@ -79,10 +80,18 @@ class Language
         if (preg_match('/[[:cntrl:]]/i', $filename)) {
             throw new \InvalidArgumentException('Security check: Illegal character in filename');
         }
-        if (file_exists($filename)) {
-            include_once $filename;
-            return true;
+        $realPath = realpath($filename);
+        if ($realPath === false) {
+            return false;
         }
-        return false;
+        $allowedDir = realpath((string) \XoopsBaseConfig::get('root-path'));
+        if ($allowedDir !== false) {
+            $allowedDirWithSep = rtrim($allowedDir, '/\\') . DIRECTORY_SEPARATOR;
+            if (strpos($realPath, $allowedDirWithSep) !== 0 && $realPath !== $allowedDir) {
+                return false;
+            }
+        }
+        include_once $realPath;
+        return true;
     }
 }

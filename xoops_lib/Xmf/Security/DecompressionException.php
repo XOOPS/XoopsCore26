@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -10,20 +12,18 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-namespace Xmf;
-
-use Webmozart\Assert\Assert as BaseAssertion;
+namespace Xmf\Security;
 
 /**
- * Assertions to validate input or output
+ * Thrown when gzip decompression fails or produces unsafe output.
  *
- * @category  Xmf\Assert
+ * @category  Xmf\Security
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
  * @copyright 2000-2026 XOOPS Project (https://xoops.org)
  * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
-class Assert extends BaseAssertion
+class DecompressionException extends \RuntimeException
 {
 }

@@ -8,6 +8,7 @@ Updated:
  - jQuery to 3.7.0  (mamba)
  - jQueryUI to 1.13.2 (mamba)
  - jQuery Form to 4.3.0 (mamba)
+ - XMF to 1.3.2, keeping the 2.6 Doctrine/Xoops adapters (mamba)
 
 ==================================
 2013/04/15: Version 2.6.0 Alpha 3

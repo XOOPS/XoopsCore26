@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -25,8 +26,8 @@ use Xoops\Core\Locale\Time;
  * @author    Richard Griffith <richard@geekwright.com>
  * @author    trabis <lusopoemas@gmail.com>
  * @author    Joomla!
- * @copyright 2011-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class Request
@@ -34,9 +35,9 @@ class Request
     /**
      * Available masks for cleaning variables
      */
-    const MASK_NO_TRIM    = 1;
-    const MASK_ALLOW_RAW  = 2;
-    const MASK_ALLOW_HTML = 4;
+    public const MASK_NO_TRIM    = 1;
+    public const MASK_ALLOW_RAW  = 2;
+    public const MASK_ALLOW_HTML = 4;
 
     /**
      * Gets the request method
@@ -66,12 +67,13 @@ class Request
      *  - cookie     $_COOKIE
      *  - env        $_ENV
      *  - server     $_SERVER
+     *  - session    $_SESSION (returns default if no active session)
      *  - method     via current $_SERVER['REQUEST_METHOD']
      *  - default    $_REQUEST
      *
      * @param string $name    Variable name
      * @param mixed  $default Default value if the variable does not exist
-     * @param string $hash    Source of variable value (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Source of variable value (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      * @param string $type    Return type for the variable (INT, FLOAT, BOOLEAN, WORD,
      *                         ALPHANUM, CMD, BASE64, STRING, ARRAY, PATH, NONE) For more
      *                         information see FilterInput::clean().
@@ -83,7 +85,7 @@ class Request
     {
         // Ensure hash and type are uppercase
         $hash = strtoupper($hash);
-        if ($hash === 'METHOD') {
+        if ('METHOD' === $hash) {
             $hash = static::getMethod();
         }
         $type = strtoupper($type);
@@ -108,21 +110,26 @@ class Request
             case 'SERVER':
                 $input = &$_SERVER;
                 break;
+            case 'SESSION':
+                if (session_status() !== PHP_SESSION_ACTIVE) {
+                    $input = [];
+                    break;
+                }
+                $input = $_SESSION;
+                break;
             default:
                 $input = &$_REQUEST;
                 break;
         }
 
-        if (isset($input[$name]) && $input[$name] !== null) {
+        if (isset($input[$name]) && null !== $input[$name]) {
             // Get the variable from the input hash and clean it
             $var = static::cleanVar($input[$name], $mask, $type);
+        } elseif (null !== $default) {
+            // Clean the default value
+            $var = static::cleanVar($default, $mask, $type);
         } else {
-            if ($default !== null) {
-                // Clean the default value
-                $var = static::cleanVar($default, $mask, $type);
-            } else {
-                $var = $default;
-            }
+            $var = $default;
         }
 
         return $var;
@@ -137,13 +144,13 @@ class Request
      *
      * @param string $name    Variable name
      * @param int    $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return int Requested variable
      */
     public static function getInt($name, $default = 0, $hash = 'default')
     {
-        return static::getVar($name, $default, $hash, 'int');
+        return (int) static::getVar($name, $default, $hash, 'int');
     }
 
     /**
@@ -155,13 +162,13 @@ class Request
      *
      * @param string $name    Variable name
      * @param float  $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return float Requested variable
      */
     public static function getFloat($name, $default = 0.0, $hash = 'default')
     {
-        return static::getVar($name, $default, $hash, 'float');
+        return (float) static::getVar($name, $default, $hash, 'float');
     }
 
     /**
@@ -173,13 +180,13 @@ class Request
      *
      * @param string $name    Variable name
      * @param bool   $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return bool Requested variable
      */
     public static function getBool($name, $default = false, $hash = 'default')
     {
-        return static::getVar($name, $default, $hash, 'bool');
+        return (bool) static::getVar($name, $default, $hash, 'bool');
     }
 
     /**
@@ -191,7 +198,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string Requested variable
      */
@@ -208,7 +215,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string Requested variable
      */
@@ -226,7 +233,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      * @param int    $mask    Filter mask for the variable
      *
      * @return string Requested variable
@@ -242,7 +249,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param mixed  $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return array
      */
@@ -256,7 +263,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string Requested variable
      */
@@ -270,7 +277,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string Requested variable
      */
@@ -284,7 +291,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string Requested variable
      */
@@ -298,7 +305,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string email address or default if invalid
      */
@@ -313,7 +320,7 @@ class Request
      *
      * @param string $name    Variable name
      * @param string $default Default value if the variable does not exist
-     * @param string $hash    Where the var should come from (POST, GET, FILES, COOKIE, METHOD)
+     * @param string $hash    Where the var should come from (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      *
      * @return string IP address or default if invalid
      */
@@ -350,13 +357,14 @@ class Request
     /**
      * get request header
      *
-     * @param string      $headerName name of header to retrieve, case insensitive
+     * @param string      $headerName name of header to retrieve, case-insensitive
      * @param string|null $default    default to return if named header is not found
      *
      * @return string header value or default if header was not found
      */
     public static function getHeader($headerName, $default = '')
     {
+        /** @var string[] $headers */
         static $headers = null;
 
         if (null === $headers) {
@@ -367,10 +375,10 @@ class Request
                     $headers[strtolower($name)] = $value;
                 }
             } else {
-                // From joyview - http://php.net/manual/en/function.getallheaders.php
+                // From joyview - https://php.net/manual/en/function.getallheaders.php
                 foreach ($_SERVER as $name => $value) {
-                    if (substr($name, 0, 5) === 'HTTP_') {
-                        $translatedName = str_replace(' ', '-', strtolower(str_replace('_', ' ', substr($name, 5))));
+                    if ('HTTP_' === substr($name, 0, 5)) {
+                        $translatedName = (string)str_replace(' ', '-', strtolower(str_replace('_', ' ', substr($name, 5))));
                         $headers[$translatedName] = $value;
                     }
                 }
@@ -379,7 +387,13 @@ class Request
 
         $name = strtolower($headerName);
         if (isset($headers[$name])) {
-            return static::cleanVar($headers[$name]);
+            $headerValue = $headers[$name];
+            if (is_string($headerValue)) {
+                $cleanedHeader = static::cleanVar($headerValue);
+                if (is_string($cleanedHeader)) {
+                    return $cleanedHeader;
+                }
+            }
         }
         return $default;
     }
@@ -390,12 +404,12 @@ class Request
      * @param string $name variable to look for
      * @param string $hash hash to check
      *
-     * @return boolean True if hash has an element 'name', otherwise false
+     * @return bool True if hash has an element 'name', otherwise false
      */
     public static function hasVar($name, $hash = 'default')
     {
         $hash = strtoupper($hash);
-        if ($hash === 'METHOD') {
+        if ('METHOD' === $hash) {
             $hash = strtoupper($_SERVER['REQUEST_METHOD']);
         }
 
@@ -410,17 +424,19 @@ class Request
     /**
      * Set a variable in one of the request variables
      *
-     * @param string  $name      Name
-     * @param string  $value     Value
-     * @param string  $hash      Hash
-     * @param boolean $overwrite Boolean
+     * For SESSION, the write is silently skipped if no session is active.
      *
-     * @return string Previous value
+     * @param string $name      Name
+     * @param mixed  $value     Value
+     * @param string $hash      Hash (GET, POST, REQUEST, COOKIE, FILES, ENV, SERVER, SESSION, METHOD)
+     * @param bool   $overwrite Boolean
+     *
+     * @return mixed Previous value
      */
     public static function setVar($name, $value = null, $hash = 'method', $overwrite = true)
     {
         $hash = strtoupper($hash);
-        if ($hash === 'METHOD') {
+        if ('METHOD' === $hash) {
             $hash = strtoupper($_SERVER['REQUEST_METHOD']);
         }
 
@@ -457,10 +473,15 @@ class Request
                 $_FILES[$name] = $value;
                 break;
             case 'ENV':
-                $_ENV['name'] = $value;
+                $_ENV[$name] = $value;
                 break;
             case 'SERVER':
-                $_SERVER['name'] = $value;
+                $_SERVER[$name] = $value;
+                break;
+            case 'SESSION':
+                if (session_status() === PHP_SESSION_ACTIVE) {
+                    $_SESSION[$name] = $value;
+                }
                 break;
         }
 
@@ -482,10 +503,11 @@ class Request
      *  - cookie      $_COOKIE
      *  - env         $_ENV
      *  - server      $_SERVER
+     *  - session     $_SESSION (returns empty if no active session)
      *  - method      via current $_SERVER['REQUEST_METHOD']
      *  - default     $_REQUEST
      *
-     * @param string $hash to get (POST, GET, FILES, METHOD)
+     * @param string $hash to get (GET, POST, FILES, COOKIE, ENV, SERVER, SESSION, METHOD, DEFAULT/REQUEST)
      * @param int    $mask Filter mask for the variable
      *
      * @return mixed Request hash
@@ -494,7 +516,7 @@ class Request
     {
         $hash = strtoupper($hash);
 
-        if ($hash === 'METHOD') {
+        if ('METHOD' === $hash) {
             $hash = strtoupper($_SERVER['REQUEST_METHOD']);
         }
 
@@ -517,6 +539,13 @@ class Request
             case 'SERVER':
                 $input = &$_SERVER;
                 break;
+            case 'SESSION':
+                if (session_status() !== PHP_SESSION_ACTIVE) {
+                    $input = [];
+                    break;
+                }
+                $input = &$_SESSION;
+                break;
             default:
                 $input = $_REQUEST;
                 break;
@@ -530,9 +559,9 @@ class Request
     /**
      * Sets a request variable
      *
-     * @param array   $array     An associative array of key-value pairs
-     * @param string  $hash      The request variable to set (POST, GET, FILES, METHOD)
-     * @param boolean $overwrite If true and an existing key is found, the value is overwritten,
+     * @param array  $array       An associative array of key-value pairs
+     * @param string $hash        The request variable to set (GET, POST, REQUEST, COOKIE, FILES, ENV, SERVER, SESSION, METHOD)
+     * @param bool   $overwrite   If true and an existing key is found, the value is overwritten,
      *                            otherwise it is ignored
      *
      * @return void
@@ -557,7 +586,7 @@ class Request
      *                      - If no bits other than the 1 bit is set, a strict filter is applied.
      * @param string $type The variable type. See {@link FilterInput::clean()}.
      *
-     * @return string
+     * @return mixed
      */
     protected static function cleanVar($var, $mask = 0, $type = null)
     {
@@ -566,7 +595,7 @@ class Request
         static $safeHtmlFilter = null;
 
         // convert $var in array if $type is ARRAY
-        if (strtolower($type) === 'array' && !is_array($var)) {
+        if ('array' === strtolower((string)$type) && !is_array($var)) {
             $var = array($var);
         }
 
@@ -576,7 +605,7 @@ class Request
         }
 
         // Now we handle input filtering
-        // If the allow raw flag is set, do not modify the variable
+        // If the 'allow raw' flag is set, do not modify the variable
         if (!($mask & static::MASK_ALLOW_RAW)) {
             if ($mask & static::MASK_ALLOW_HTML) {
                 // If the allow html flag is set, apply a safe html filter to the variable
@@ -589,7 +618,7 @@ class Request
                 if (null === $noHtmlFilter) {
                     $noHtmlFilter = FilterInput::getInstance();
                 }
-                $var = $noHtmlFilter->clean($var, $type);
+                $var = $noHtmlFilter::clean($var, $type);
             }
         }
 
@@ -603,7 +632,7 @@ class Request
      * @param int    $mask Filter bit mask. See {@link Request::cleanVar()}
      * @param string $type The variable type. See {@link FilterInput::clean()}.
      *
-     * @return string
+     * @return mixed
      */
     protected static function cleanVars($var, $mask = 0, $type = null)
     {
@@ -616,5 +645,21 @@ class Request
         }
 
         return $var;
+    }
+
+    /**
+     * Strips slashes recursively on an array
+     *
+     * @param string|array $value string of Array of (nested arrays of) strings
+     *
+     * @return array The input array with stripslashes applied to it
+     */
+    protected static function stripSlashesRecursive($value)
+    {
+        $value = is_array($value)
+            ? array_map(array(get_called_class(), 'stripSlashesRecursive'), $value)
+            : stripslashes($value);
+
+        return $value;
     }
 }

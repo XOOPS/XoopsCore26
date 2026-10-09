@@ -10,20 +10,31 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-namespace Xmf;
+declare(strict_types=1);
 
-use Webmozart\Assert\Assert as BaseAssertion;
+namespace Xmf\Security;
 
 /**
- * Assertions to validate input or output
+ * Format types for serialization (PHP 7.4+ compatible)
  *
- * @category  Xmf\Assert
+ * @category  Xmf\Security
  * @package   Xmf
- * @author    Richard Griffith <richard@geekwright.com>
+ * @author    MAMBA <mambax7@gmail.com>
  * @copyright 2000-2026 XOOPS Project (https://xoops.org)
  * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
-class Assert extends BaseAssertion
+final class Format
 {
+    public const JSON = 'json';
+    public const PHP = 'php';
+    public const LEGACY = 'legacy';  // base64-encoded PHP serialize
+    public const AUTO = 'auto';      // auto-detect format
+
+    /**
+     * Prevent instantiation
+     */
+    private function __construct()
+    {
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -18,23 +19,22 @@ namespace Xmf;
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
  * @author    trabis <lusopoemas@gmail.com>
- * @copyright 2011-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class Metagen
 {
-
     /**
      * mbstring encoding
      */
-    const ENCODING = 'UTF-8';
+    public const ENCODING = 'UTF-8';
 
     /**
      * horizontal ellipsis
      * This will be used to replace omitted text.
      */
-    const ELLIPSIS = "…"; // unicode horizontal ellipsis U+2026
+    public const ELLIPSIS = "...";
 
     /**
      * assignTitle set the page title
@@ -59,7 +59,7 @@ class Metagen
      */
     public static function assignKeywords($keywords)
     {
-        if (!empty($keywords) && is_array($keywords)) {
+        if (!empty($keywords) && \is_array($keywords)) {
             $keyword_tag = implode(', ', $keywords);
             static::assignThemeMeta('keywords', $keyword_tag);
         }
@@ -151,7 +151,8 @@ class Metagen
             if (static::stopWordsObject()->check($originalKeyword)) {
                 $secondRoundKeywords = explode("'", $originalKeyword);
                 foreach ($secondRoundKeywords as $secondRoundKeyword) {
-                    if (static::stopWordsObject()->check($secondRoundKeyword)
+                    if (
+                        static::stopWordsObject()->check($secondRoundKeyword)
                         && strlen($secondRoundKeyword) >= $minLength
                     ) {
                         $keyCount[$secondRoundKeyword] =
@@ -269,10 +270,9 @@ class Metagen
     public static function generateSeoTitle($title = '', $extension = '')
     {
         $title = preg_replace("/[^\p{N}\p{L}]/u", "-", $title);
-        $title = \Normalizer::normalize($title, \Normalizer::FORM_C);
 
         $tableau = explode("-", $title);
-        $tableau = array_filter($tableau, 'static::nonEmptyString');
+        $tableau = array_filter($tableau, static::nonEmptyString(...));
         $tableau = array_filter($tableau, array(static::stopWordsObject(), 'check'));
         $title = implode("-", $tableau);
 
@@ -352,7 +352,7 @@ class Metagen
      */
     protected static function asPlainText($rawText)
     {
-        $text = $rawText;
+        $text = static::normalizeMultilingual($rawText);
         $text = static::html2text($text);
         $text = static::purifyText($text);
 
@@ -360,6 +360,51 @@ class Metagen
         $text = preg_replace('/[ ]* [ ]*/', ' ', $text);
 
         return trim($text);
+    }
+
+    /** @var callable|null normalizer applied to reduce multilingual markup */
+    protected static $multilingualNormalizer;
+
+    /**
+     * Register a callback that reduces multilingual markup to a single language
+     * before description/keyword extraction — for example selecting the active
+     * language from markup such as [en]...[/en].
+     *
+     * A module such as xlanguage can register its processor (e.g.
+     * Xlanguage\Utility::cleanMultiLang) from a preload, so XMF needs no hard
+     * dependency on it. Pass null to clear.
+     *
+     * @param callable|null $normalizer signature: function (string $text): string
+     *
+     * @return void
+     */
+    public static function setMultilingualNormalizer(?callable $normalizer)
+    {
+        static::$multilingualNormalizer = $normalizer;
+    }
+
+    /**
+     * Apply the registered multilingual normalizer, if any, before plain-text
+     * extraction. No-op when none is registered — which avoids both the crash
+     * reported when xlanguage markup reached Metagen (issue #86) and the data
+     * loss of a blanket bracket strip (which would mash every language together
+     * and remove legitimate bracketed content). Override in a subclass for a
+     * different strategy.
+     *
+     * @param string $text raw text possibly containing multilingual markup
+     *
+     * @return string text reduced to the active language, or unchanged
+     */
+    protected static function normalizeMultilingual($text)
+    {
+        if (is_string($text) && null !== static::$multilingualNormalizer) {
+            $result = call_user_func(static::$multilingualNormalizer, $text);
+            if (is_string($result)) {
+                $text = $result;
+            }
+        }
+
+        return $text;
     }
 
     /**
@@ -404,7 +449,7 @@ class Metagen
         $text = str_replace('<br/>', ' ', $text);
         $text = str_replace('<br', ' ', $text);
         $text = strip_tags($text);
-        $text = html_entity_decode($text);
+        $text = html_entity_decode($text, ENT_QUOTES, self::ENCODING);
         $text = htmlspecialchars_decode($text, ENT_QUOTES);
         $text = str_replace(')', ' ', $text);
         $text = str_replace('(', ' ', $text);
@@ -416,7 +461,7 @@ class Metagen
         $text = str_replace('?', ' ', $text);
         $text = str_replace('"', ' ', $text);
         $text = str_replace('-', ' ', $text);
-        $text = str_replace('\n', ' ', $text);
+        $text = str_replace(["\r", "\n"], ' ', $text);
         $text = str_replace('&#8213;', ' ', $text);
 
         if ($keyword) {
@@ -474,12 +519,12 @@ class Metagen
 
         $text = preg_replace($search, $replace, $document);
 
-        preg_replace_callback(
+        $text = preg_replace_callback(
             '/&#(\d+);/',
             function ($matches) {
-                return chr($matches[1]);
+                return html_entity_decode('&#' . $matches[1] . ';', ENT_NOQUOTES, self::ENCODING);
             },
-            $document
+            $text
         );
 
         return $text;

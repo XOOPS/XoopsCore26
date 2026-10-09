@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -15,7 +16,7 @@ use Xmf\Language;
 
 /**
  * GenericHelper implements a Xoops 2.6 Xoops\Module\Helper\HelperAbstract.
- * We use it pre 2.6 systems so we can encapsulate many of the changes
+ * We use it pre 2.6 systems, so we can encapsulate many of the changes
  * needed to make modules more compatible with 2.6 in these methods.
  * The most common deprecated warnings can be avoided by using module
  * helper methods.
@@ -24,12 +25,15 @@ use Xmf\Language;
  * @package   Xmf
  * @author    trabis <lusopoemas@gmail.com>
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2016-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 abstract class GenericHelper extends AbstractHelper
 {
+    /** Path segment for the modules directory, relative to the site root. */
+    private const MODULE_PATH = '/modules/';
+
     /**
      * @var \XoopsModule
      * @deprecated - use $module -- will be removed
@@ -136,12 +140,13 @@ abstract class GenericHelper extends AbstractHelper
     protected function initObject()
     {
         global $xoopsModule;
-        if (isset($xoopsModule) && is_object($xoopsModule)
+        if (
+            isset($xoopsModule) && is_object($xoopsModule)
             && $xoopsModule->getVar('dirname') === $this->dirname
         ) {
             $this->module = $xoopsModule;
         } else {
-            /* @var \XoopsModuleHandler $module_handler */
+            /** @var \XoopsModuleHandler $module_handler */
             $module_handler = xoops_getHandler('module');
             $this->module = $module_handler->getByDirname($this->dirname);
         }
@@ -157,13 +162,14 @@ abstract class GenericHelper extends AbstractHelper
     {
         $this->addLog('INIT CONFIG');
         global $xoopsModule;
-        if (isset($xoopsModule) && is_object($xoopsModule)
+        if (
+            isset($xoopsModule) && is_object($xoopsModule)
             && $xoopsModule->getVar('dirname') === $this->dirname
         ) {
             global $xoopsModuleConfig;
             $this->configs = $xoopsModuleConfig;
         } else {
-            /* @var \XoopsConfigHandler $config_handler */
+            /** @var \XoopsConfigHandler $config_handler */
             $config_handler = xoops_getHandler('config');
             $this->configs = $config_handler->getConfigsByCat(0, $this->getModule()->getVar('mid'));
         }
@@ -249,7 +255,34 @@ abstract class GenericHelper extends AbstractHelper
      */
     public function url($url = '')
     {
-        return XOOPS_URL . '/modules/' . $this->dirname . '/' . $url;
+        return XOOPS_URL . self::MODULE_PATH . $this->dirname . '/' . $url;
+    }
+
+    /**
+     * Return a root relative URL for a module relative URL.
+     *
+     * Unlike url(), this omits the XOOPS_URL scheme and host and returns a path
+     * rooted at the web server root - the form expected by APIs such as
+     * $xoTheme->addScript(). The site's base path is taken from XOOPS_URL, so it
+     * is correct for a sub-directory install too:
+     *   root install    -> /modules/mymodule/assets/app.js
+     *   /xoops subfolder -> /xoops/modules/mymodule/assets/app.js
+     *
+     * @param string $url module relative URL
+     *
+     * @return string
+     */
+    public function relativeUrl($url = '')
+    {
+        $basePath = '';
+        if (defined('XOOPS_URL')) {
+            $urlPath = parse_url((string) XOOPS_URL, PHP_URL_PATH);
+            if (is_string($urlPath)) {
+                $basePath = rtrim($urlPath, '/');
+            }
+        }
+
+        return $basePath . self::MODULE_PATH . $this->dirname . '/' . ltrim($url, '/');
     }
 
     /**
@@ -261,7 +294,7 @@ abstract class GenericHelper extends AbstractHelper
      */
     public function path($path = '')
     {
-        return XOOPS_ROOT_PATH . '/modules/' . $this->dirname . '/' . $path;
+        return XOOPS_ROOT_PATH . self::MODULE_PATH . $this->dirname . '/' . $path;
     }
 
     /**
@@ -276,5 +309,39 @@ abstract class GenericHelper extends AbstractHelper
     public function redirect($url, $time = 3, $message = '')
     {
         redirect_header($this->url($url), $time, $message);
+    }
+
+    /**
+     * Return absolute URL for a module relative upload file
+     *
+     * Uploads may be stored in special directories for many reasons,
+     * such as permissions, security, replication and directory balancing
+     * Rather than build their own URL's, modules should use this method
+     * which will know how to reference the upload now and in the future.
+     *
+     * @param string $url module relative upload URL
+     *
+     * @return string
+     */
+    public function uploadUrl($url = '')
+    {
+        return XOOPS_UPLOAD_URL . '/' . $this->dirname . '/' . $url;
+    }
+
+    /**
+     * Return absolute filesystem path for a module relative upload file
+     *
+     * Uploads may be stored in special directories for many reasons,
+     * such as permissions, security, replication and directory balancing
+     * Rather than build their own URL's, modules should use this method
+     * which will know how to reference the upload now and in the future.
+     *
+     * @param string $path module relative upload file path
+     *
+     * @return string
+     */
+    public function uploadPath($path = '')
+    {
+        return XOOPS_UPLOAD_PATH . '/' . $this->dirname . '/' . $path;
     }
 }
