@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -19,8 +20,8 @@ namespace Xmf\Module\Helper;
  * @package   Xmf
  * @author    trabis <lusopoemas@gmail.com>
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2016-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 abstract class AbstractHelper
@@ -67,7 +68,7 @@ abstract class AbstractHelper
             if (isset($xoops)) {
                 $moduleHandler = $xoops->getHandlerModule();
             } else {
-                /* @var \XoopsModuleHandler $moduleHandler */
+                /** @var \XoopsModuleHandler $moduleHandler */
                 $moduleHandler = xoops_getHandler('module');
             }
             $this->module = $moduleHandler->getByDirname($dirname);
@@ -121,7 +122,7 @@ abstract class AbstractHelper
         if ($this->debug) {
             $message = $this->serializeForHelperLog($log);
             if (class_exists('Xoops', false)) {
-                \Xoops::getInstance()->logger()->debug($message, array('channel'=>'Extra'));
+                \Xoops::getInstance()->logger()->debug($message, array('channel' => 'Extra'));
             } elseif (is_object($GLOBALS['xoopsLogger'])) {
                 $GLOBALS['xoopsLogger']->addExtra(get_called_class(), $message);
             }
@@ -137,8 +138,8 @@ abstract class AbstractHelper
      */
     protected function serializeForHelperLog($value)
     {
-        if (is_resource($value) || !is_null(@get_resource_type($value))) {
-            $value = '(resource)';
+        if (is_resource($value)) {
+            $value = '(resource:' . get_resource_type($value) . ')';
         }
         if (!is_string($value)) {
             $value = json_encode($value);

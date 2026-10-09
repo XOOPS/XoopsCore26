@@ -1,6 +1,8 @@
 <?php
 namespace Xmf\Test;
 
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Xmf\IPAddress;
 
 class IPAddressTest extends \PHPUnit\Framework\TestCase
@@ -99,5 +101,53 @@ class IPAddressTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($instanceV4->sameSubnet($addressV4, 24, 96));
         $this->assertFalse($instanceV4->sameSubnet($addressV6, 25, 98));
         $this->assertTrue($instanceV4->sameSubnet($instanceV4->asReadable(), 32, 128));
+    }
+
+    // ported from XMF 1.3.2 tests/unit
+    public function testFromRequestFallsBackWhenRemoteAddrIsNotString()
+    {
+        $hadRemoteAddr = array_key_exists('REMOTE_ADDR', $_SERVER);
+        $originalRemoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+
+        try {
+            $_SERVER['REMOTE_ADDR'] = array('invalid');
+
+            $instance = IPAddress::fromRequest();
+
+            $this->assertSame('0.0.0.0', $instance->asReadable());
+        } finally {
+            if ($hadRemoteAddr) {
+                $_SERVER['REMOTE_ADDR'] = $originalRemoteAddr;
+            } else {
+                unset($_SERVER['REMOTE_ADDR']);
+            }
+        }
+    }
+
+    // sets REMOTE_ADDR, a proxy header and xoopsConfig, so keep it out of the shared process
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testFromRequestProxy()
+    {
+        global $xoopsConfig;
+        $xoopsConfig['proxy_env'] = 'HTTP_CLIENT_IP';
+        $testAddress = '203.0.113.195';
+        $_SERVER['HTTP_CLIENT_IP'] = $testAddress;
+        $_SERVER['REMOTE_ADDR'] = '10.1.1.1';
+        $instance = IPAddress::fromRequest();
+        $actual = $instance->asReadable();
+        $this->assertEquals($testAddress, $actual);
+        unset($xoopsConfig['proxy_env']);
+        unset($_SERVER['HTTP_CLIENT_IP']);
+    }
+
+    public function testNormalizeInvalidIp()
+    {
+        $method = new \ReflectionMethod('Xmf\IPAddress', 'normalize');
+        $method->setAccessible(true);
+        $instance = new IPAddress('127.0.0.1');
+        // Invalid IP should return false without warnings
+        $result = @$method->invoke($instance, 'not-an-ip');
+        $this->assertFalse($result);
     }
 }

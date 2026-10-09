@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -23,8 +24,8 @@ use Xmf\Module\Helper\GenericHelper;
  * @package   Xmf
  * @author    trabis <lusopoemas@gmail.com>
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2011-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class Helper extends GenericHelper
@@ -47,7 +48,7 @@ class Helper extends GenericHelper
             if (class_exists('Xoops', false)) {
                 $instance[$dirname] = \Xoops\Module\Helper::getHelper($dirname);
             } else {
-                // otherwise get a GenericHelper instance for dirname
+                // otherwise, get a GenericHelper instance for dirname
                 if (xoops_isActiveModule($dirname)) {
                     $instance[$dirname] = new static($dirname);
                 }

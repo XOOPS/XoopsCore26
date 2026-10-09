@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -21,8 +22,8 @@ use Xmf\Key\KeyAbstract;
  * @category  Xmf\Jwt\JsonWebToken
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class JsonWebToken
@@ -82,16 +83,16 @@ class JsonWebToken
     public function decode($jwtString, $assertClaims = array())
     {
         try {
-            $jwtKey = new Key($this->key->getVerifying(), $this->algorithm);
-            $values = JWT::decode($jwtString, $jwtKey);
+            $values = JWT::decode($jwtString, new Key($this->key->getVerifying(), $this->algorithm));
         } catch (\Exception $e) {
-            trigger_error($e->getMessage(), E_USER_NOTICE);
             return false;
         }
         foreach ($assertClaims as $claim => $assert) {
             if (!property_exists($values, $claim)) {
                 return false;
-            } elseif ($values->$claim != $assert) {
+            }
+
+            if ($values->$claim !== $assert) {
                 return false;
             }
         }
@@ -107,16 +108,16 @@ class JsonWebToken
      *
      * @return string encoded and signed jwt string
      *
-     * @throws \DomainException;
-     * @throws \InvalidArgumentException;
-     * @throws \UnexpectedValueException;
+     * @throws \DomainException
+     * @throws \InvalidArgumentException
+     * @throws \UnexpectedValueException
      */
     public function create($payload, $expirationOffset = 0)
     {
         if ((int) $expirationOffset > 0) {
             $payload['exp'] = time() + (int) $expirationOffset;
         }
-        $value = JWT::encode($payload, $this->key->getSigning(), $this->algorithm);
+        $value = JWT::encode((array) $payload, $this->key->getSigning(), $this->algorithm);
         return $value;
     }
 }

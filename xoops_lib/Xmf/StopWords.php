@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -18,20 +19,19 @@ namespace Xmf;
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
  * @author    trabis <lusopoemas@gmail.com>
- * @copyright 2011-2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  * @see       https://en.wikipedia.org/wiki/Stop_words
  */
 class StopWords
 {
-
     /**
      * mbstring encoding
      */
-    const ENCODING = 'UTF-8';
+    public const ENCODING = 'UTF-8';
 
-    /** @var string[] */
+    /** @var array<string, true> */
     protected $stopwordList = array();
 
     /**

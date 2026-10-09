@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -17,18 +18,18 @@ namespace Xmf;
  * @category  Xmf\Uuid
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2017-2019 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  */
 class Uuid
 {
     // match spec for version 4 UUID as per rfc4122
-    protected const UUID_REGEX = '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/';
+    public const UUID_REGEX = '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/';
 
     /**
      * generate - generate a version 4 (random) UUID
      *
-     * Based on comment by pavel.volyntsev(at)gmail at http://php.net/manual/en/function.com-create-guid.php
+     * Based on comment by pavel.volyntsev(at)gmail at https://php.net/manual/en/function.com-create-guid.php
      *
      * @return string UUID
      *

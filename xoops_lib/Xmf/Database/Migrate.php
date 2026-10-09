@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -21,20 +22,19 @@ use Xmf\Yaml;
  * and build a work queue of DDL/SQL to transform the existing tables to the
  * target definitions.
  *
- * Typically Migrate will be extended by a module specific class that will supply custom
+ * Typically, Migrate will be extended by a module specific class that will supply custom
  * logic (see preSyncActions() method.)
  *
  * @category  Xmf\Database\Migrate
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2018 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (http://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
  * @link      https://xoops.org
  */
 class Migrate
 {
-
-    /** @var false|\Xmf\Module\Helper|\Xoops\Module\Helper\HelperAbstract  */
+    /** @var false|\Xmf\Module\Helper|\Xoops\Module\Helper|\Xoops\Module\Helper\HelperAbstract */
     protected $helper;
 
     /** @var string[] table names used by module */
@@ -46,8 +46,8 @@ class Migrate
     /** @var string yaml definition file */
     protected $tableDefinitionFile;
 
-    /** @var array target table definitions in Xmf\Database\Tables::dumpTables() format */
-    protected $targetDefinitions;
+    /** @var array|null target table definitions in Xmf\Database\Tables::dumpTables() format */
+    protected $targetDefinitions = null;
 
     /**
      * Migrate constructor
@@ -68,7 +68,19 @@ class Migrate
         if (empty($this->moduleTables)) {
             throw new \RuntimeException("No tables established in module");
         }
-        $version = $module->getInfo('version');
+
+        $version = preg_replace_callback(
+            '/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/',
+            function ($match) {
+                $semver = $match[1] . '_' . $match[2] . '_' . $match[3];
+                if (!empty($match[4])) {
+                    $semver .= '_' . substr($match[4], 0, 8);
+                }
+                return $semver;
+            },
+            $module->getInfo('version')
+        );
+
         $this->tableDefinitionFile = $this->helper->path("sql/{$dirname}_{$version}_migrate.yml");
         $this->tableHandler = new Tables();
     }
@@ -103,7 +115,9 @@ class Migrate
     public function getCurrentSchema()
     {
         foreach ($this->moduleTables as $tableName) {
-            $this->tableHandler->useTable($tableName);
+            if (false === $this->tableHandler->useTable($tableName)) {
+                $this->tableHandler->addTable($tableName);
+            }
         }
 
         return $this->tableHandler->dumpTables();
@@ -112,18 +126,20 @@ class Migrate
     /**
      * Return the target database condition
      *
-     * @return array|bool table structure or false on error
+     * @return array table structure
      *
-     * @throws \RuntimeException
+     * @throws SchemaDefinitionException
      */
     public function getTargetDefinitions()
     {
-        if (!isset($this->targetDefinitions)) {
-            $this->targetDefinitions = Yaml::read($this->tableDefinitionFile);
-            if (null === $this->targetDefinitions) {
-                throw new \RuntimeException("No schema definition " . $this->tableDefinitionFile);
+        if ($this->targetDefinitions === null) {
+            $definitions = Yaml::read($this->tableDefinitionFile);
+            if (!is_array($definitions) || $definitions === []) {
+                throw SchemaDefinitionException::forFile($this->tableDefinitionFile);
             }
+            $this->targetDefinitions = $definitions;
         }
+
         return $this->targetDefinitions;
     }
 
@@ -187,19 +203,43 @@ class Migrate
      * @param string $tableName table to add
      *
      * @return void
+     *
+     * @throws SchemaDefinitionException
      */
     protected function addMissingTable($tableName)
     {
-        $this->tableHandler->addTable($tableName);
-        $this->tableHandler->setTableOptions($tableName, $this->targetDefinitions[$tableName]['options']);
-        foreach ($this->targetDefinitions[$tableName]['columns'] as $column) {
-            $this->tableHandler->addColumn($tableName, $column['name'], $column['attributes']);
+        $targetTable = $this->targetDefinitions[$tableName] ?? null;
+        if (
+            !is_array($targetTable)
+            || !isset($targetTable['options'], $targetTable['columns'])
+            || !is_string($targetTable['options'])
+            || !is_array($targetTable['columns'])
+        ) {
+            throw SchemaDefinitionException::forTable($tableName);
         }
-        foreach ($this->targetDefinitions[$tableName]['keys'] as $key => $keyData) {
-            if ($key === 'PRIMARY') {
-                $this->tableHandler->addPrimaryKey($tableName, $keyData['columns']);
-            } else {
-                $this->tableHandler->addIndex($key, $tableName, $keyData['columns'], $keyData['unique']);
+
+        $this->tableHandler->addTable($tableName);
+        $this->tableHandler->setTableOptions($tableName, $targetTable['options']);
+        foreach ($targetTable['columns'] as $column) {
+            $validatedColumn = $this->validatedTargetColumn($tableName, $column);
+            $this->tableHandler->addColumn($tableName, $validatedColumn['name'], $validatedColumn['attributes']);
+        }
+        if (isset($targetTable['keys']) && is_array($targetTable['keys'])) {
+            foreach ($targetTable['keys'] as $key => $keyData) {
+                if (!is_string($key)) {
+                    continue;
+                }
+                $validatedKey = $this->validatedTargetKey($tableName, $key, $keyData);
+                if ($key === 'PRIMARY') {
+                    $this->tableHandler->addPrimaryKey($tableName, $validatedKey['columns']);
+                } else {
+                    $this->tableHandler->addIndex(
+                        $key,
+                        $tableName,
+                        $validatedKey['columns'],
+                        $validatedKey['unique']
+                    );
+                }
             }
         }
     }
@@ -210,15 +250,23 @@ class Migrate
      * @param string $tableName table to synchronize
      *
      * @return void
+     *
+     * @throws SchemaDefinitionException
      */
     protected function synchronizeTable($tableName)
     {
-        foreach ($this->targetDefinitions[$tableName]['columns'] as $column) {
-            $attributes = $this->tableHandler->getColumnAttributes($tableName, $column['name']);
+        $targetTable = $this->targetDefinitions[$tableName] ?? null;
+        if (!is_array($targetTable) || !isset($targetTable['columns']) || !is_array($targetTable['columns'])) {
+            throw SchemaDefinitionException::forTable($tableName);
+        }
+
+        foreach ($targetTable['columns'] as $column) {
+            $validatedColumn = $this->validatedTargetColumn($tableName, $column);
+            $attributes = $this->tableHandler->getColumnAttributes($tableName, $validatedColumn['name']);
             if ($attributes === false) {
-                $this->tableHandler->addColumn($tableName, $column['name'], $column['attributes']);
-            } elseif ($column['attributes'] !== $attributes) {
-                $this->tableHandler->alterColumn($tableName, $column['name'], $column['attributes']);
+                $this->tableHandler->addColumn($tableName, $validatedColumn['name'], $validatedColumn['attributes']);
+            } elseif ($validatedColumn['attributes'] !== $attributes) {
+                $this->tableHandler->alterColumn($tableName, $validatedColumn['name'], $validatedColumn['attributes']);
             }
         }
 
@@ -232,34 +280,114 @@ class Migrate
         }
 
         $existingIndexes = $this->tableHandler->getTableIndexes($tableName);
-        if (isset($this->targetDefinitions[$tableName]['keys'])) {
-            foreach ($this->targetDefinitions[$tableName]['keys'] as $key => $keyData) {
+        if (isset($targetTable['keys']) && is_array($targetTable['keys'])) {
+            foreach ($targetTable['keys'] as $key => $keyData) {
+                if (!is_string($key)) {
+                    continue;
+                }
+                $validatedKey = $this->validatedTargetKey($tableName, $key, $keyData);
                 if ($key === 'PRIMARY') {
                     if (!isset($existingIndexes[$key])) {
-                        $this->tableHandler->addPrimaryKey($tableName, $keyData['columns']);
-                    } elseif ($existingIndexes[$key]['columns'] !== $keyData['columns']) {
+                        $this->tableHandler->addPrimaryKey($tableName, $validatedKey['columns']);
+                    } elseif ($existingIndexes[$key]['columns'] !== $validatedKey['columns']) {
                         $this->tableHandler->dropPrimaryKey($tableName);
-                        $this->tableHandler->addPrimaryKey($tableName, $keyData['columns']);
+                        $this->tableHandler->addPrimaryKey($tableName, $validatedKey['columns']);
                     }
                 } else {
                     if (!isset($existingIndexes[$key])) {
-                        $this->tableHandler->addIndex($key, $tableName, $keyData['columns'], $keyData['unique']);
-                    } elseif ($existingIndexes[$key]['unique'] !== $keyData['unique']
-                        || $existingIndexes[$key]['columns'] !== $keyData['columns']
+                        $this->tableHandler->addIndex(
+                            $key,
+                            $tableName,
+                            $validatedKey['columns'],
+                            $validatedKey['unique']
+                        );
+                    } elseif (
+                        $existingIndexes[$key]['unique'] !== $validatedKey['unique']
+                        || $existingIndexes[$key]['columns'] !== $validatedKey['columns']
                     ) {
                         $this->tableHandler->dropIndex($key, $tableName);
-                        $this->tableHandler->addIndex($key, $tableName, $keyData['columns'], $keyData['unique']);
+                        $this->tableHandler->addIndex(
+                            $key,
+                            $tableName,
+                            $validatedKey['columns'],
+                            $validatedKey['unique']
+                        );
                     }
                 }
             }
         }
         if (false !== $existingIndexes) {
             foreach ($existingIndexes as $key => $keyData) {
-                if (!isset($this->targetDefinitions[$tableName]['keys'][$key])) {
-                    $this->tableHandler->dropIndex($key, $tableName);
+                if (!isset($targetTable['keys'][$key])) {
+                    if ($key === 'PRIMARY') {
+                        $this->tableHandler->dropPrimaryKey($tableName);
+                    } else {
+                        $this->tableHandler->dropIndex($key, $tableName);
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * @param mixed $column
+     *
+     * @return array{name: string, attributes: string}
+     *
+     * @throws SchemaDefinitionException
+     */
+    private function validatedTargetColumn(string $tableName, mixed $column): array
+    {
+        if (
+            !is_array($column)
+            || !isset($column['name'], $column['attributes'])
+            || !is_string($column['name'])
+            || $column['name'] === ''
+            || !is_string($column['attributes'])
+            || $column['attributes'] === ''
+        ) {
+            throw SchemaDefinitionException::forTable($tableName);
+        }
+
+        return [
+            'name' => $column['name'],
+            'attributes' => $column['attributes'],
+        ];
+    }
+
+    /**
+     * @param mixed $keyData
+     *
+     * @return array{columns: string, unique: bool}
+     *
+     * @throws SchemaDefinitionException
+     */
+    private function validatedTargetKey(string $tableName, string $keyName, mixed $keyData): array
+    {
+        if (
+            !is_array($keyData)
+            || !isset($keyData['columns'])
+            || !is_string($keyData['columns'])
+            || $keyData['columns'] === ''
+        ) {
+            throw SchemaDefinitionException::forTable($tableName);
+        }
+
+        if ($keyName === 'PRIMARY') {
+            return [
+                'columns' => $keyData['columns'],
+                'unique' => true,
+            ];
+        }
+
+        if (!array_key_exists('unique', $keyData) || !is_bool($keyData['unique'])) {
+            throw SchemaDefinitionException::forTable($tableName);
+        }
+
+        return [
+            'columns' => $keyData['columns'],
+            'unique' => $keyData['unique'],
+        ];
     }
 
     /**

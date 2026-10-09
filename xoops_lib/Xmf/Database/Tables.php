@@ -1,4 +1,5 @@
 <?php
+
 /*
  You may not change or alter any portion of this comment or credits
  of supporting developers from this source code or any supporting source code
@@ -30,8 +31,9 @@ use Xoops\Core\Database\Factory;
  * @category  Xmf\Database\Tables
  * @package   Xmf
  * @author    Richard Griffith <richard@geekwright.com>
- * @copyright 2011-2019 XOOPS Project (https://xoops.org)
- * @license   GNU GPL 2 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @copyright 2000-2026 XOOPS Project (https://xoops.org)
+ * @license   GNU GPL 2.0 or later (https://www.gnu.org/licenses/gpl-2.0.html)
+ * @link      https://xoops.org
  */
 class Tables
 {
@@ -114,7 +116,7 @@ class Tables
                 array_push($tableDef['columns'], $columnDef);
             } else {
                 foreach ($tableDef['columns'] as $col) {
-                    if (strcasecmp($col['name'], $column) == 0) {
+                    if (strcasecmp($col['name'], $column) === 0) {
                         return true;
                     }
                 }
@@ -140,7 +142,7 @@ class Tables
      */
     public function addPrimaryKey($table, $column)
     {
-        $columns = str_getcsv(str_replace(' ', '', $column));
+        $columns = str_getcsv(str_replace(' ', '', $column), ',', '"', '\\');
         $columnList = '';
         $firstComma = '';
         foreach ($columns as $col) {
@@ -173,7 +175,7 @@ class Tables
      */
     public function addIndex($name, $table, $column, $unique = false)
     {
-        $columns = str_getcsv($column);
+        $columns = str_getcsv($column, ',', '"', '\\');
         $columnList = '';
         $firstComma = '';
         foreach ($columns as $col) {
@@ -181,12 +183,19 @@ class Tables
             $firstComma = ', ';
         }
         if (isset($this->tables[$table])) {
-            if (isset($this->tables[$table]['create']) && $this->tables[$table]['create']) {
-                $this->tables[$table]['keys'][$name]['columns'] = $columnList;
-                $this->tables[$table]['keys'][$name]['unique'] = (bool) $unique;
+            $tableDef = &$this->tables[$table];
+            if (isset($tableDef['create']) && $tableDef['create']) {
+                if (!isset($tableDef['keys']) || !is_array($tableDef['keys'])) {
+                    $tableDef['keys'] = [];
+                }
+                $tableDef['keys'][$name] = [
+                    'columns' => $columnList,
+                    'unique' => (bool) $unique,
+                ];
             } else {
                 $add = ($unique ? 'ADD UNIQUE INDEX' : 'ADD INDEX');
-                $this->queue[] = "ALTER TABLE `{$this->tables[$table]['name']}` {$add} `{$name}` ({$columnList})";
+                $tableName = isset($tableDef['name']) && is_string($tableDef['name']) ? $tableDef['name'] : $table;
+                $this->queue[] = "ALTER TABLE `{$tableName}` {$add} `{$name}` ({$columnList})";
             }
         } else {
             return $this->tableNotEstablished();
@@ -283,14 +292,14 @@ class Tables
      * @param string $table  table containing the column
      * @param string $column column to alter
      *
-     * @return string|bool attribute string, or false if error encountered
+     * @return string|false attribute string, or false if error encountered
      */
     public function getColumnAttributes($table, $column)
     {
         // Find table def.
         if (isset($this->tables[$table])) {
             $tableDef = $this->tables[$table];
-            // loop thru and find the column
+            // loop through and find the column
             foreach ($tableDef['columns'] as $col) {
                 if (strcasecmp($col['name'], $column) === 0) {
                     return $col['attributes'];
@@ -306,7 +315,7 @@ class Tables
      *
      * @param string $table get indexes for this named table
      *
-     * @return array|bool array of indexes, or false if error encountered
+     * @return array|false array of indexes, or false if error encountered
      */
     public function getTableIndexes($table)
     {
@@ -338,9 +347,9 @@ class Tables
             $tableDef = &$this->tables[$table];
             // Is this on a table we are adding?
             if (isset($tableDef['create']) && $tableDef['create']) {
-                // loop thru and find the column
+                // loop through and find the column
                 foreach ($tableDef['columns'] as &$col) {
-                    if (strcasecmp($col['name'], $column) == 0) {
+                    if (strcasecmp($col['name'], $column) === 0) {
                         $col['name'] = $newName;
                         $col['attributes'] = $attributes;
                         break;
@@ -351,9 +360,9 @@ class Tables
             } else {
                 $this->queue[] = "ALTER TABLE `{$tableDef['name']}` " .
                     "CHANGE COLUMN `{$column}` `{$newName}` {$attributes} ";
-                // loop thru and find the column
+                // loop through and find the column
                 foreach ($tableDef['columns'] as &$col) {
-                    if (strcasecmp($col['name'], $column) == 0) {
+                    if (strcasecmp($col['name'], $column) === 0) {
                         $col['name'] = $newName;
                         $col['attributes'] = $attributes;
                         break;
@@ -597,6 +606,11 @@ class Tables
                     $ddl = $this->renderTableCreate($ddl['createtable']);
                 }
             }
+            if (!is_string($ddl)) {
+                $this->lastError = 'Failed to render DDL';
+                $this->lastErrNo = -1;
+                return false;
+            }
             $result = $this->execSql($ddl, $force);
             if (!$result) {
                 $this->lastError = $this->db->errorInfo();
@@ -614,7 +628,7 @@ class Tables
      * Create a DELETE statement and add it to the work queue
      *
      * @param string                 $table    table
-     * @param string|CriteriaElement $criteria string where clause or object criteria
+     * @param string|\CriteriaElement $criteria string where clause or object criteria
      *
      * @return bool true if no errors, false if errors encountered
      */
@@ -626,6 +640,7 @@ class Tables
             if (is_scalar($criteria)) {
                 $where = $criteria;
             } elseif (is_object($criteria)) {
+                /** @var  \CriteriaCompo $criteria */
                 $where = $criteria->renderWhere();
             }
             $this->queue[] = "DELETE FROM `{$tableDef['name']}` {$where}";
@@ -652,12 +667,26 @@ class Tables
             $colSql = '';
             $valSql = '';
             foreach ($tableDef['columns'] as $col) {
-                $comma = empty($colSql) ? '' : ', ';
-                if (isset($columns[$col['name']])) {
-                    $colSql .= "{$comma}`{$col['name']}`";
-                    $valSql .= $comma
-                        . ($quoteValue ? $this->db->quote($columns[$col['name']]) : $columns[$col['name']]);
+                if (!isset($col['name']) || !is_string($col['name'])) {
+                    trigger_error(
+                        'Skipping malformed column definition in ' . __METHOD__ . ': ' . var_export($col, true),
+                        E_USER_WARNING
+                    );
+                    continue;
                 }
+
+                $columnName = $col['name'];
+                $comma = empty($colSql) ? '' : ', ';
+                if (isset($columns[$columnName])) {
+                    $colSql .= "{$comma}`{$columnName}`";
+                    $valSql .= $comma
+                        . ($quoteValue ? $this->db->quote($columns[$columnName]) : $columns[$columnName]);
+                }
+            }
+            if ($colSql === '' || $valSql === '') {
+                $this->lastError = 'No valid columns supplied for insert';
+                $this->lastErrNo = -1;
+                return false;
             }
             $sql = "INSERT INTO `{$tableDef['name']}` ({$colSql}) VALUES({$valSql})";
             $this->queue[] = $sql;
@@ -673,7 +702,7 @@ class Tables
      *
      * @param string                 $table      table
      * @param array                  $columns    array of 'column'=>'value' entries
-     * @param string|CriteriaElement $criteria   string where clause or object criteria
+     * @param string|\CriteriaElement $criteria   string where clause or object criteria
      * @param boolean                $quoteValue true to quote values, false if caller handles quoting
      *
      * @return boolean true if no errors, false if errors encountered
@@ -686,15 +715,30 @@ class Tables
             if (is_scalar($criteria)) {
                 $where = $criteria;
             } elseif (is_object($criteria)) {
+                /** @var  \CriteriaCompo $criteria */
                 $where = $criteria->renderWhere();
             }
             $colSql = '';
             foreach ($tableDef['columns'] as $col) {
-                $comma = empty($colSql) ? '' : ', ';
-                if (isset($columns[$col['name']])) {
-                    $colSql .= "{$comma}`{$col['name']}` = "
-                        . ($quoteValue ? $this->db->quote($columns[$col['name']]) : $columns[$col['name']]);
+                if (!isset($col['name']) || !is_string($col['name'])) {
+                    trigger_error(
+                        'Skipping malformed column definition in ' . __METHOD__ . ': ' . var_export($col, true),
+                        E_USER_WARNING
+                    );
+                    continue;
                 }
+
+                $columnName = $col['name'];
+                $comma = empty($colSql) ? '' : ', ';
+                if (isset($columns[$columnName])) {
+                    $colSql .= "{$comma}`{$columnName}` = "
+                        . ($quoteValue ? $this->db->quote($columns[$columnName]) : $columns[$columnName]);
+                }
+            }
+            if ($colSql === '') {
+                $this->lastError = 'No valid columns supplied for update';
+                $this->lastErrNo = -1;
+                return false;
             }
             $sql = "UPDATE `{$tableDef['name']}` SET {$colSql} {$where}";
             $this->queue[] = $sql;
@@ -740,19 +784,46 @@ class Tables
     {
         if (isset($this->tables[$table])) {
             $tableDef = $this->tables[$table];
-            $tableName = ($prefixed ? $tableDef['name'] : $table);
+            if (
+                !is_array($tableDef)
+                || !isset($tableDef['columns'], $tableDef['options'])
+                || !is_array($tableDef['columns'])
+                || !is_string($tableDef['options'])
+            ) {
+                return false;
+            }
+
+            $tableName = $table;
+            if ($prefixed && isset($tableDef['name']) && is_string($tableDef['name'])) {
+                $tableName = $tableDef['name'];
+            }
             $sql = "CREATE TABLE `{$tableName}` (";
             $firstComma = '';
             foreach ($tableDef['columns'] as $col) {
+                if (
+                    !is_array($col)
+                    || !isset($col['name'], $col['attributes'])
+                    || !is_string($col['name'])
+                    || $col['name'] === ''
+                    || !is_string($col['attributes'])
+                    || $col['attributes'] === ''
+                ) {
+                    return false;
+                }
+
                 $sql .= "{$firstComma}\n    `{$col['name']}`  {$col['attributes']}";
                 $firstComma = ',';
             }
             $keySql = '';
-            foreach ($tableDef['keys'] as $keyName => $key) {
+            $keys = isset($tableDef['keys']) && is_array($tableDef['keys']) ? $tableDef['keys'] : [];
+            foreach ($keys as $keyName => $key) {
+                if (!is_string($keyName) || !is_array($key) || !isset($key['columns']) || !is_string($key['columns'])) {
+                    continue;
+                }
                 if ($keyName === 'PRIMARY') {
                     $keySql .= ",\n  PRIMARY KEY ({$key['columns']})";
                 } else {
-                    $unique = $key['unique'] ? 'UNIQUE ' : '';
+                    $unique = !empty($key['unique']) ? 'UNIQUE ' : '';
                     $keySql .= ",\n  {$unique}KEY {$keyName} ({$key['columns']})";
                 }
             }
@@ -802,6 +873,33 @@ class Tables
     }
 
     /**
+     * create default value clause for DDL
+     *
+     * @param string|null $default the default value to be quoted
+     *
+     * @return string the correctly quoted default value
+     */
+    protected function quoteDefaultClause($default)
+    {
+        // . (($column['COLUMN_DEFAULT'] === null) ? '' : " DEFAULT '" . $column['COLUMN_DEFAULT'] . "' ")
+        // no default specified
+        if (null === $default) {
+            return '';
+        }
+
+        // functions should not be quoted
+        // this section will need expanded when XOOPS minimum is no longer a mysql 5 version
+        // Until mysql 8, only allowed function is CURRENT_TIMESTAMP
+        // MariaDB reports it as current_timestamp(), and either may carry a precision
+        if (preg_match('/^current_timestamp(\(\d*\))?\z/i', $default, $matches)) {
+            return ' DEFAULT CURRENT_TIMESTAMP' . ($matches[1] ?? '') . ' ';
+        }
+
+        // surround default with quotes — escape embedded single quotes for valid DDL
+        return " DEFAULT '" . str_replace("'", "''", $default) . "' ";
+    }
+
+    /**
      * get table definition from INFORMATION_SCHEMA
      *
      * @param string $table table
@@ -839,12 +937,16 @@ class Tables
         $sql .= ' ORDER BY `ORDINAL_POSITION` ';
 
         $result = $this->execSql($sql);
+        if (!$result) {
+            return false;
+        }
 
         while ($column = $this->fetch($result)) {
             $attributes = ' ' . $column['COLUMN_TYPE'] . ' '
                 . (($column['IS_NULLABLE'] === 'NO') ? ' NOT NULL ' : '')
-                . (($column['COLUMN_DEFAULT'] === null) ? '' : " DEFAULT '" . $column['COLUMN_DEFAULT'] . "' ")
-                . $column['EXTRA'];
+                . $this->quoteDefaultClause($column['COLUMN_DEFAULT'])
+                //. $column['EXTRA'];
+                . str_replace('DEFAULT_GENERATED ', '', $column['EXTRA']);
 
             $columnDef = array(
                 'name' => $column['COLUMN_NAME'],
@@ -862,17 +964,28 @@ class Tables
         $sql .= ' ORDER BY `INDEX_NAME`, `SEQ_IN_INDEX` ';
 
         $result = $this->execSql($sql);
+        if (!$result) {
+            return false;
+        }
 
         $lastKey = '';
         $keyCols = '';
         $keyUnique = false;
+        $tableDef['keys'] = [];
         while ($key = $this->fetch($result)) {
-            if ($lastKey != $key['INDEX_NAME']) {
+            $currentKey = $key['INDEX_NAME'];
+            if (!is_string($currentKey) || !is_string($key['COLUMN_NAME'])) {
+                continue;
+            }
+
+            if ($lastKey != $currentKey) {
                 if (!empty($lastKey)) {
-                    $tableDef['keys'][$lastKey]['columns'] = $keyCols;
-                    $tableDef['keys'][$lastKey]['unique'] = $keyUnique;
+                    $tableDef['keys'][$lastKey] = [
+                        'columns' => $keyCols,
+                        'unique' => $keyUnique,
+                    ];
                 }
-                $lastKey = $key['INDEX_NAME'];
+                $lastKey = $currentKey;
                 $keyCols = $key['COLUMN_NAME'];
                 if (!empty($key['SUB_PART'])) {
                     $keyCols .= ' (' . $key['SUB_PART'] . ')';
@@ -886,8 +999,10 @@ class Tables
             }
         };
         if (!empty($lastKey)) {
-            $tableDef['keys'][$lastKey]['columns'] = $keyCols;
-            $tableDef['keys'][$lastKey]['unique'] = $keyUnique;
+            $tableDef['keys'][$lastKey] = [
+                'columns' => $keyCols,
+                'unique' => $keyUnique,
+            ];
         }
 
         return $tableDef;
