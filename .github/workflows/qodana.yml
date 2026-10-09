@@ -24,4 +24,4 @@ jobs:
 
       - name: Qodana Scan
         if: env.QODANA_TOKEN != ''
-        uses: JetBrains/qodana-action@42dad391966aca8ca344ca2340a7f43a5507e9b2 # v2025.3.1
+        uses: JetBrains/qodana-action@3e8d76ff0e0241618abd808682f426afe84bab3f # v2026.2.2
