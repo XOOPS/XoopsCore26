@@ -93,6 +93,9 @@ final class Direction
                 $resolved = $langCode;
             }
         }
+        if ($resolved === null && !$isLegacy && \class_exists('Xoops\Locale')) {
+            $resolved = (string) \Xoops\Locale::getCurrent();
+        }
         if ($resolved === null) {
             $resolved = 'en';
         }

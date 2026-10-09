@@ -890,8 +890,9 @@ class Tables
         // functions should not be quoted
         // this section will need expanded when XOOPS minimum is no longer a mysql 5 version
         // Until mysql 8, only allowed function is CURRENT_TIMESTAMP
-        if ($default === 'CURRENT_TIMESTAMP') {
-            return ' DEFAULT CURRENT_TIMESTAMP ';
+        // MariaDB reports it as current_timestamp(), and either may carry a precision
+        if (preg_match('/^current_timestamp(\(\d*\))?\z/i', $default, $matches)) {
+            return ' DEFAULT CURRENT_TIMESTAMP' . ($matches[1] ?? '') . ' ';
         }
 
         // surround default with quotes — escape embedded single quotes for valid DDL

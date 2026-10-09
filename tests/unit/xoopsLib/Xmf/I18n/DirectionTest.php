@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Xmf\Test\I18n;
 
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Xmf\I18n\Direction;
 
 class DirectionTest extends \PHPUnit\Framework\TestCase
@@ -26,6 +28,16 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
     public function testDirDetectsRtlFromArabic(): void
     {
         $this->assertSame(Direction::RTL, Direction::dir('ar'));
+    }
+
+    // loading the 2.6 \Xoops class would switch every later test off the legacy path
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testDirUsesXoops26CurrentLocale(): void
+    {
+        require_once \dirname(__DIR__, 5) . '/xoops_lib/Xoops.php';
+        \Xoops\Locale::setCurrent('ar_SA');
+        $this->assertSame(Direction::RTL, Direction::dir());
     }
 
     public function testDirDetectsRtlFromHebrew(): void

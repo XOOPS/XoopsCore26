@@ -21,12 +21,12 @@ class BlockPositionTest extends \PHPUnit\Framework\TestCase
 
     public function testToLogicalLeftReturnsStart(): void
     {
-        $this->assertSame('start', BlockPosition::toLogical(1));
+        $this->assertSame('start', BlockPosition::toLogical(0));
     }
 
     public function testToLogicalRightReturnsEnd(): void
     {
-        $this->assertSame('end', BlockPosition::toLogical(0));
+        $this->assertSame('end', BlockPosition::toLogical(1));
     }
 
     public function testToLogicalCenterForUnknownValue(): void
@@ -43,12 +43,12 @@ class BlockPositionTest extends \PHPUnit\Framework\TestCase
 
     public function testToCssClassLeft(): void
     {
-        $this->assertSame('block-start', BlockPosition::toCssClass(1));
+        $this->assertSame('block-start', BlockPosition::toCssClass(0));
     }
 
     public function testToCssClassRight(): void
     {
-        $this->assertSame('block-end', BlockPosition::toCssClass(0));
+        $this->assertSame('block-end', BlockPosition::toCssClass(1));
     }
 
     public function testToCssClassCenter(): void
@@ -58,22 +58,22 @@ class BlockPositionTest extends \PHPUnit\Framework\TestCase
 
     public function testGetStartValueLtr(): void
     {
-        $this->assertSame(1, BlockPosition::getStartValue(Direction::LTR));
+        $this->assertSame(0, BlockPosition::getStartValue(Direction::LTR));
     }
 
     public function testGetStartValueRtl(): void
     {
-        $this->assertSame(0, BlockPosition::getStartValue(Direction::RTL));
+        $this->assertSame(1, BlockPosition::getStartValue(Direction::RTL));
     }
 
     public function testGetEndValueLtr(): void
     {
-        $this->assertSame(0, BlockPosition::getEndValue(Direction::LTR));
+        $this->assertSame(1, BlockPosition::getEndValue(Direction::LTR));
     }
 
     public function testGetEndValueRtl(): void
     {
-        $this->assertSame(1, BlockPosition::getEndValue(Direction::RTL));
+        $this->assertSame(0, BlockPosition::getEndValue(Direction::RTL));
     }
 
     public function testGetStartValueWithCustomValues(): void
@@ -90,7 +90,7 @@ class BlockPositionTest extends \PHPUnit\Framework\TestCase
 
     public function testDefaultConstants(): void
     {
-        $this->assertSame(1, BlockPosition::DEFAULT_LEFT);
-        $this->assertSame(0, BlockPosition::DEFAULT_RIGHT);
+        $this->assertSame(0, BlockPosition::DEFAULT_LEFT);
+        $this->assertSame(1, BlockPosition::DEFAULT_RIGHT);
     }
 }

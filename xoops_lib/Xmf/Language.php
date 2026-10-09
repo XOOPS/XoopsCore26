@@ -85,11 +85,12 @@ class Language
             return false;
         }
         $allowedDir = realpath((string) \XoopsBaseConfig::get('root-path'));
-        if ($allowedDir !== false) {
-            $allowedDirWithSep = rtrim($allowedDir, '/\\') . DIRECTORY_SEPARATOR;
-            if (strpos($realPath, $allowedDirWithSep) !== 0 && $realPath !== $allowedDir) {
-                return false;
-            }
+        if ($allowedDir === false) {
+            return false;
+        }
+        $allowedDirWithSep = rtrim($allowedDir, '/\\') . DIRECTORY_SEPARATOR;
+        if (strpos($realPath, $allowedDirWithSep) !== 0 && $realPath !== $allowedDir) {
+            return false;
         }
         include_once $realPath;
         return true;

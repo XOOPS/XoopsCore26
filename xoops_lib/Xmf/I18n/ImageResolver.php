@@ -72,6 +72,9 @@ final class ImageResolver
                 $lang = $langCode;
             }
         }
+        if ($lang === null && !$isLegacy && \class_exists('Xoops\Locale')) {
+            $lang = (string) \Xoops\Locale::getCurrent();
+        }
         if ($lang === null) {
             $lang = 'en';
         }

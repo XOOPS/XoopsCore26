@@ -5,7 +5,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Xmf\ProxyCheck;
 
-class localProxyCheck extends ProxyCheck
+class LocalProxyCheck extends ProxyCheck
 {
     public function __construct($name, $header)
     {
@@ -28,6 +28,8 @@ class ProxyCheckTest extends \PHPUnit\Framework\TestCase
      */
     protected function setUp(): void
     {
+        // the real constructor reads these globals; keep earlier tests from leaking into testGet()
+        unset($GLOBALS['xoopsConfig']['proxy_env']);
         $this->object = new ProxyCheck();
     }
 
@@ -61,7 +63,7 @@ class ProxyCheckTest extends \PHPUnit\Framework\TestCase
     #[DataProvider('getProxyCheckTestData')]
     public function testProxyCheck($name, $header, $expected)
     {
-        $obj = new localProxyCheck($name, $header);
+        $obj = new LocalProxyCheck($name, $header);
         $this->assertSame($expected, $obj->get());
     }
 

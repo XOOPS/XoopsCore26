@@ -28,15 +28,15 @@ namespace Xmf\I18n;
 final class BlockPosition
 {
     /** XOOPS convention: integer representing the left/start side */
-    public const DEFAULT_LEFT  = 1;
+    public const DEFAULT_LEFT  = 0;
 
     /** XOOPS convention: integer representing the right/end side */
-    public const DEFAULT_RIGHT = 0;
+    public const DEFAULT_RIGHT = 1;
 
     /**
      * Map a side integer to logical class based on convention.
      *
-     * @param int $side       Physical side (convention: 1=left, 0=right in LTR context)
+     * @param int $side       Physical side (XOOPS convention: 0=left, 1=right)
      * @param int $leftValue  What integer represents "left" in your CMS
      * @param int $rightValue What integer represents "right" in your CMS
      *

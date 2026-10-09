@@ -46,9 +46,9 @@ class TranslatorTest extends \PHPUnit\Framework\TestCase
 
     public function testTHandlesValidPatternFormats(): void
     {
-        if (!\defined('_MI_MYMODULE_NAME')) {
-            \define('_MI_MYMODULE_NAME', 'My Module');
+        if (!\defined('_MI_XMFTEST_TRANSLATOR_NAME')) {
+            \define('_MI_XMFTEST_TRANSLATOR_NAME', 'My Module');
         }
-        $this->assertSame('My Module', Translator::t('_MI_MYMODULE_NAME'));
+        $this->assertSame('My Module', Translator::t('_MI_XMFTEST_TRANSLATOR_NAME'));
     }
 }
