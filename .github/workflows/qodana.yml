@@ -14,6 +14,8 @@ jobs:
       contents: read
       pull-requests: write
       checks: write
+    env:
+      QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -21,6 +23,5 @@ jobs:
           fetch-depth: 0
 
       - name: Qodana Scan
+        if: env.QODANA_TOKEN != ''
         uses: JetBrains/qodana-action@42dad391966aca8ca344ca2340a7f43a5507e9b2 # v2025.3.1
-        env:
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
