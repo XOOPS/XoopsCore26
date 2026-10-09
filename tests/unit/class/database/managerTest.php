@@ -25,4 +25,27 @@ class XoopsDatabaseManagerTest extends \PHPUnit\Framework\TestCase
             $this->assertTrue($prop->isPublic());
         }
     }
+
+    public function test_deleteTablesReturnsOnlyDroppedTables()
+    {
+        $manager = (new ReflectionClass($this->myclass))->newInstanceWithoutConstructor();
+        // DROP TABLE succeeds (true, no rows affected) for one table and fails (null) for the other
+        $manager->db = new class {
+            public $dropped = array();
+
+            public function prefix($table)
+            {
+                return 'x_' . $table;
+            }
+
+            public function query($sql)
+            {
+                $this->dropped[] = $sql;
+                return (false !== strpos($sql, 'x_missing')) ? null : true;
+            }
+        };
+
+        $this->assertSame(array('items'), $manager->deleteTables(array('items', 'missing')));
+        $this->assertSame(array('DROP TABLE x_items', 'DROP TABLE x_missing'), $manager->db->dropped);
+    }
 }
