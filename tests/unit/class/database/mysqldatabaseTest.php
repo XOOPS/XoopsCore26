@@ -34,7 +34,7 @@ class XoopsMySQLDatabaseTest extends \PHPUnit\Framework\TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\RequiresPhpExtension('pdo_sqlite')]
-    public function test_getAffectedRowsFollowsConnectionQuery()
+    public function testGetAffectedRowsFollowsConnectionQuery()
     {
         $instance = new $this->myclass();
         $instance->conn = new \Xoops\Core\Database\Connection(

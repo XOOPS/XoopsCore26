@@ -26,7 +26,7 @@ class XoopsDatabaseManagerTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    public function test_deleteTablesReturnsOnlyDroppedTables()
+    public function testDeleteTablesReturnsOnlyDroppedTables()
     {
         $manager = (new ReflectionClass($this->myclass))->newInstanceWithoutConstructor();
         // DROP TABLE succeeds (true, no rows affected) for one table and fails (null) for the other

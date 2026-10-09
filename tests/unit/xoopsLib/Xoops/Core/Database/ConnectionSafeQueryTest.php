@@ -61,6 +61,32 @@ class ConnectionSafeQueryTest extends \PHPUnit\Framework\TestCase
         $this->assertNull($this->db->query('SELECT * FROM missing_table'));
     }
 
+    public function testTablesExecuteQueueCreatesTableThroughConnection(): void
+    {
+        // SQLite has no INFORMATION_SCHEMA, so seed the definition addTable() would have built
+        $tables = (new \ReflectionClass(\Xmf\Database\Tables::class))->newInstanceWithoutConstructor();
+        $state = [
+            'db'     => $this->db,
+            'tables' => ['fresh' => [
+                'name'    => 'x_fresh',
+                'options' => '',
+                'columns' => [['name' => 'id', 'attributes' => 'INTEGER NOT NULL']],
+                'keys'    => ['PRIMARY' => ['columns' => '`id`', 'unique' => true]],
+                'create'  => true,
+            ]],
+            'queue'  => [['createtable' => 'fresh']],
+        ];
+        foreach ($state as $name => $value) {
+            (new \ReflectionProperty(\Xmf\Database\Tables::class, $name))->setValue($tables, $value);
+        }
+
+        $this->assertTrue($tables->executeQueue(true));
+        $this->assertSame(
+            'x_fresh',
+            $this->db->query("SELECT name FROM sqlite_master WHERE name = 'x_fresh'")->fetchOne()
+        );
+    }
+
     public function testWriteIsRefusedWhenNotSafe(): void
     {
         $this->db->query('CREATE TABLE items (id INTEGER)');
