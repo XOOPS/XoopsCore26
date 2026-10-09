@@ -347,7 +347,7 @@ class Admin
      * Check for installed module and version and do addConfigBoxLine()
      *
      * @param string  $moddir     - module directory name
-     * @param integer $minversion - minimum acceptable module version
+     * @param integer $minversion - minimum acceptable module version (100 = V1.00)
      *
      * @return bool true if requested version of the module is available
      */
@@ -357,15 +357,15 @@ class Admin
         $helper = Helper::getHelper($moddir);
         if (is_object($helper) && is_object($helper->getModule())) {
             $mod_modversion = $helper->getModule()->getVar('version');
-            $mod_version_f = $mod_modversion;
-            $min_version_f = $minversion;
+            $mod_version_f = $mod_modversion / 100;
+            $min_version_f = $minversion / 100;
             $value = sprintf(
                 _AM_XMF_MODULE_VERSION,
                 strtoupper($moddir),
                 $min_version_f,
                 $mod_version_f
             );
-            if ($helper->getModule()->versionCompare($min_version_f, $mod_version_f, '<=')) {
+            if ($mod_modversion >= $minversion) {
                 $this->addConfigAccept($value);
                 $return = true;
             } else {
@@ -375,7 +375,7 @@ class Admin
             $value = sprintf(
                 _AM_XMF_MODULE_NOTFOUND,
                 strtoupper($moddir),
-                $minversion
+                $minversion / 100
             );
             $this->addConfigError($value);
         }

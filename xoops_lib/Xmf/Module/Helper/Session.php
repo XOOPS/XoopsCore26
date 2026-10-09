@@ -60,6 +60,9 @@ class Session extends AbstractHelper
     /**
      * Sets a named session variable respecting our module prefix
      *
+     * Store scalars and arrays only: get() does not restore objects, which
+     * come back as __PHP_Incomplete_Class.
+     *
      * @param string $name  name of variable
      * @param mixed  $value value of variable
      *
