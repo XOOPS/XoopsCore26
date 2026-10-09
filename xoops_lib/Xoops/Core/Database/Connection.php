@@ -438,7 +438,9 @@ class Connection extends \Doctrine\DBAL\Connection
      * @param array  $params The query parameters
      * @param array  $types  The parameter types
      *
-     * @return Result|int|string|null Result for SELECT, affected rows for DML, null on failure
+     * @return Result|int|string|true|null Result for SELECT; the affected row count for other
+     *                                    statements, or true when one succeeded without changing
+     *                                    rows (CREATE TABLE, an UPDATE matching nothing); null on failure
      */
     public function query(string $sql, array $params = [], array $types = [])
     {
@@ -455,7 +457,9 @@ class Connection extends \Doctrine\DBAL\Connection
      * @param array  $params The query parameters
      * @param array  $types  The parameter types
      *
-     * @return Result|int|string|null Result for SELECT, affected rows for DML, null on failure
+     * @return Result|int|string|true|null Result for SELECT; the affected row count for other
+     *                                    statements, or true when one succeeded without changing
+     *                                    rows (CREATE TABLE, an UPDATE matching nothing); null on failure
      */
     public function safeQuery(string $sql, array $params = [], array $types = [])
     {
@@ -481,7 +485,11 @@ class Connection extends \Doctrine\DBAL\Connection
             $result = null;
         }
         $events->triggerEvent('core.database.query.end');
-        return $result ?: null;
+        // 0 affected rows is still a success; null must mean the statement failed
+        if ($result === 0 || $result === '0') {
+            return true;
+        }
+        return $result;
     }
 
     /**

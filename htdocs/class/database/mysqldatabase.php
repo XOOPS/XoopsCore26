@@ -223,7 +223,12 @@ class XoopsMySQLDatabase extends XoopsDatabase
     public function getAffectedRows()
     {
         $this->deprecated();
-        return $this->lastResult->rowCount();
+        $result = $this->lastResult;
+        if ($result instanceof \Doctrine\DBAL\Result) {
+            return $result->rowCount();
+        }
+        // Connection::query() returns the count for writes, or true when no rows changed
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     /**

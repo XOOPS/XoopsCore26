@@ -132,10 +132,6 @@ class TablesSchemaTest extends \PHPUnit\Framework\TestCase
 
     public function testExecuteQueueAcceptsDdlThatAffectsNoRows(): void
     {
-        $this->markTestIncomplete(
-            'Existing 2.6 bug: Connection::safeQuery() returns null when a statement affects 0 rows, '
-            . 'which every CREATE TABLE does, so Tables::executeQueue() reports a successful CREATE as failed.'
-        );
         $tables = $this->queueCreateTable(self::itemsSchema());
 
         $this->assertTrue($tables->executeQueue(true));
@@ -188,12 +184,12 @@ class SchemaFakeConnection
     {
         $this->queries[] = $sql;
         // like Connection::safeQuery(): force lasts for one statement, and a
-        // non-SELECT returns its affected-row count, or null when that is 0
+        // non-SELECT returns its affected-row count, or true when that is 0
         $this->force = false;
         if ($this->fail) {
             $result = false;
         } elseif (stripos(ltrim($sql), 'select') !== 0) {
-            $result = $this->affectedRows ?: null;
+            $result = $this->affectedRows ?: true;
         } else {
             // only x_items exists; every other table comes back empty
             $rows = [];

@@ -329,8 +329,7 @@ class XoopsDatabaseManager
         $deleted = array();
         // DBAL 4: connection is established lazily on first query
         foreach ($tables as $key => $val) {
-            //was: if (!$this->db->query("DROP TABLE " . $this->db->prefix($key))) {
-            if (!$this->db->query("DROP TABLE " . $this->db->prefix($val))) {
+            if ($this->db->query("DROP TABLE " . $this->db->prefix($val))) {
                 $deleted[] = $val;
             }
         }
