@@ -57,6 +57,9 @@ jobs:
       - name: Check platform requirements
         run: composer check-platform-reqs
 
+      - name: Generate test configuration
+        run: php console/console.php ci-bootstrap
+
       - name: Ensure build directory exists
         run: mkdir -p build/logs
 

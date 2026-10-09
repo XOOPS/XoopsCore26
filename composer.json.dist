@@ -9,12 +9,6 @@
             "Xmf\\": "./xoops_lib/Xmf/"
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../base-requires"
-        }
-    ],
     "require": {
         "php": "^8.4",
         "xoops/base-requires": "dev-master"

@@ -1,6 +1,6 @@
 version: "1.0"
 
-linter: jetbrains/qodana-php:2025.2
+linter: jetbrains/qodana-php:2025.3
 
 profile:
   name: qodana.recommended
