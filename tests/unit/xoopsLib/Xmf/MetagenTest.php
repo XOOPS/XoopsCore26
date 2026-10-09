@@ -210,4 +210,40 @@ EOT;
         $actual = $method->invokeArgs($this->object, array($input));
         $this->assertEquals($expected, $actual, $actual);
     }
+
+    // ported from XMF 1.3.2 tests/unit
+    public function testHtml2textNumericEntities()
+    {
+        $method = new \ReflectionMethod('Xmf\Metagen', 'html2text');
+        $method->setAccessible(true);
+        // Use codepoint > 255 (&#8364; = Euro sign €) to test the preg_replace_callback
+        // path, since codepoints <= 255 are already handled by the earlier $search/$replace
+        $input = 'Price: &#8364;50';
+        $actual = $method->invokeArgs(null, array($input));
+        $expected = html_entity_decode('&#8364;', ENT_NOQUOTES, Metagen::ENCODING); // €
+        $this->assertStringContainsString($expected, $actual);
+        $this->assertStringNotContainsString('&#8364;', $actual);
+    }
+
+    public function testPurifyTextReplacesNewlines()
+    {
+        $method = new \ReflectionMethod('Xmf\Metagen', 'purifyText');
+        $method->setAccessible(true);
+        $actual = $method->invokeArgs(null, array("line one\nline two\rline three"));
+        $this->assertStringNotContainsString("\n", $actual);
+        $this->assertStringNotContainsString("\r", $actual);
+        $this->assertStringContainsString('line one', $actual);
+        $this->assertStringContainsString('line two', $actual);
+        $this->assertStringContainsString('line three', $actual);
+    }
+
+    public function testPurifyTextDecodesEntitiesWithEncoding()
+    {
+        $method = new \ReflectionMethod('Xmf\Metagen', 'purifyText');
+        $method->setAccessible(true);
+        $input = 'caf&eacute; cr&egrave;me';
+        $actual = $method->invokeArgs(null, array($input));
+        $this->assertStringContainsString('café', $actual);
+        $this->assertStringContainsString('crème', $actual);
+    }
 }

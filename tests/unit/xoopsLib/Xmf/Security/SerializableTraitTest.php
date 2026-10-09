@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Xmf\Test\Security;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use Xmf\Security\Format;
 use Xmf\Security\SerializableTrait;
 use Xmf\Security\Serializer;
@@ -49,6 +50,7 @@ class SerializableEntity
     }
 }
 
+#[CoversTrait(SerializableTrait::class)]
 #[CoversClass(Serializer::class)]
 class SerializableTraitTest extends \PHPUnit\Framework\TestCase
 {

@@ -1,6 +1,7 @@
 <?php
 namespace Xmf\Test\Jwt;
 
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use Xmf\Jwt\KeyFactory;
 use Xmf\Jwt\JsonWebToken;
 use Xmf\Jwt\TokenReader;
@@ -80,5 +81,53 @@ class TokenReaderTest extends \PHPUnit\Framework\TestCase
         $this->markTestIncomplete(
             'This test has not been implemented yet.'
         );
+    }
+
+    // ported from XMF 1.3.2 tests/unit
+    /**
+     * Test fromHeader by running in a separate process to avoid static cache issues.
+     */
+    #[RunInSeparateProcess]
+    public function testFromHeaderWithBearerScheme()
+    {
+        $claims = array('rat' => 'cute');
+        $jwt = new JsonWebToken($this->testKey);
+        $token = $jwt->create($claims, 60);
+
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $token;
+        $actual = TokenReader::fromHeader($this->testKey, $claims);
+        $this->assertIsObject($actual);
+        $this->assertSame('cute', $actual->rat);
+    }
+
+    #[RunInSeparateProcess]
+    public function testFromHeaderRejectsNonBearerScheme()
+    {
+        // a valid token under another scheme, so only the scheme check can reject it
+        $jwt = new JsonWebToken($this->testKey);
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Basic ' . $jwt->create(array('rat' => 'cute'), 60);
+        $actual = TokenReader::fromHeader($this->testKey);
+        $this->assertFalse($actual);
+    }
+
+    #[RunInSeparateProcess]
+    public function testFromHeaderAcceptsBareTokenOnCustomHeader()
+    {
+        $claims = array('rat' => 'cute');
+        $jwt = new JsonWebToken($this->testKey);
+        $token = $jwt->create($claims, 60);
+
+        $_SERVER['HTTP_X_AUTH_TOKEN'] = $token;
+        $actual = TokenReader::fromHeader($this->testKey, $claims, 'X-Auth-Token');
+        $this->assertIsObject($actual);
+        $this->assertSame('cute', $actual->rat);
+    }
+
+    #[RunInSeparateProcess]
+    public function testFromHeaderRejectsEmptyHeader()
+    {
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+        $actual = TokenReader::fromHeader($this->testKey);
+        $this->assertFalse($actual);
     }
 }

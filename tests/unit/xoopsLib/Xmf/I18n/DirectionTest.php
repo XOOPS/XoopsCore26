@@ -40,6 +40,99 @@ class DirectionTest extends \PHPUnit\Framework\TestCase
         $this->assertSame(Direction::RTL, Direction::dir());
     }
 
+    /**
+     * Run $callback and return the messages of the user errors it raised.
+     */
+    private static function userErrors(callable $callback): array
+    {
+        $errors = [];
+        set_error_handler(static function (int $level, string $message) use (&$errors): bool {
+            $errors[] = [$level, $message];
+            return true;
+        }, E_USER_WARNING | E_USER_DEPRECATED);
+        try {
+            $callback();
+        } finally {
+            restore_error_handler();
+        }
+        return $errors;
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testLegacyLangcodeSetsGlobalDirection(): void
+    {
+        \define('_LANGCODE', 'ar');
+
+        $this->assertSame(Direction::RTL, Direction::dir());
+        $this->assertSame(Direction::RTL, Direction::dir(Direction::AUTO));
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testLegacyTextDirectionOverridesLocale(): void
+    {
+        \define('_LANGCODE', 'en');
+        \define('_TEXT_DIRECTION', ' RTL ');
+
+        $this->assertSame(Direction::RTL, Direction::dir());
+        $this->assertSame(Direction::LTR, Direction::dir('en'));
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testLegacyInvalidTextDirectionWarnsAndFallsBack(): void
+    {
+        \define('_LANGCODE', 'he');
+        \define('_TEXT_DIRECTION', 'sideways');
+
+        $result = null;
+        $errors = self::userErrors(static function () use (&$result): void {
+            $result = Direction::dir();
+        });
+
+        $this->assertSame(Direction::RTL, $result);
+        $this->assertSame(E_USER_WARNING, $errors[0][0]);
+        $this->assertStringContainsString('sideways', $errors[0][1]);
+    }
+
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
+    public function testLegacyRtlConstantIsDeprecatedButHonoured(): void
+    {
+        \define('_RTL', true);
+
+        $result = null;
+        $errors = self::userErrors(static function () use (&$result): void {
+            $result = Direction::dir();
+            Direction::dir();
+        });
+
+        $this->assertSame(Direction::RTL, $result);
+        $this->assertCount(1, $errors, 'the cached result does not warn again');
+        $this->assertSame(E_USER_DEPRECATED, $errors[0][0]);
+
+        // clearCache() starts a new cache lifetime, which warns again
+        Direction::clearCache();
+        $this->assertCount(1, self::userErrors(static function (): void {
+            Direction::dir();
+        }));
+    }
+
+    public function testLocaleCacheIsBounded(): void
+    {
+        for ($i = 0; $i < 150; ++$i) {
+            Direction::dir('xx-' . $i);
+        }
+
+        $cache = (new \ReflectionClass(Direction::class))->getStaticPropertyValue('cacheByLocale');
+        $limit = (new \ReflectionClassConstant(Direction::class, 'MAX_LOCALE_CACHE'))->getValue();
+        $this->assertCount($limit, $cache);
+        $this->assertArrayNotHasKey('xx-0', $cache, 'the oldest entry is evicted first');
+        $this->assertArrayHasKey('xx-149', $cache);
+        $this->assertSame(Direction::RTL, Direction::dir('ar'));
+    }
+
     public function testDirDetectsRtlFromHebrew(): void
     {
         $this->assertSame(Direction::RTL, Direction::dir('he'));

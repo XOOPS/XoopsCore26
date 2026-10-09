@@ -142,7 +142,7 @@ class Tables
      */
     public function addPrimaryKey($table, $column)
     {
-        $columns = str_getcsv(str_replace(' ', '', $column));
+        $columns = str_getcsv(str_replace(' ', '', $column), ',', '"', '\\');
         $columnList = '';
         $firstComma = '';
         foreach ($columns as $col) {
@@ -175,7 +175,7 @@ class Tables
      */
     public function addIndex($name, $table, $column, $unique = false)
     {
-        $columns = str_getcsv($column);
+        $columns = str_getcsv($column, ',', '"', '\\');
         $columnList = '';
         $firstComma = '';
         foreach ($columns as $col) {

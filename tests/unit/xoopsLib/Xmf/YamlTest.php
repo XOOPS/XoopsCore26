@@ -104,4 +104,103 @@ class YamlTest extends \PHPUnit\Framework\TestCase
 
         unlink($tmpfname);
     }
+
+    // ported from XMF 1.3.2 tests/unit
+    public function testDumpAndLoadWrappedWithClosingCommentSequence()
+    {
+        $inputArray = array('value' => 'contains */ closing comment', 'nested' => array('a' => '*/'));
+
+        $string = Yaml::dumpWrapped($inputArray);
+        $this->assertNotFalse($string);
+        $this->assertIsString($string);
+
+        $outputArray = Yaml::loadWrapped((string) $string);
+        $this->assertIsArray($outputArray);
+        $this->assertSame($inputArray, $outputArray);
+    }
+
+    public function testDumpWrappedUsesHaltCompilerGuard()
+    {
+        $inputArray = array('key' => 'value');
+        $string = Yaml::dumpWrapped($inputArray);
+        $this->assertIsString($string);
+        $this->assertStringStartsWith('<?php __halt_compiler(); ?>', (string) $string);
+    }
+
+    public function testDumpAndLoadWrappedWithPhpTag()
+    {
+        $inputArray = array('code' => '<?php echo "hello"; ?>');
+
+        $string = Yaml::dumpWrapped($inputArray);
+        $this->assertNotFalse($string);
+        $this->assertIsString($string);
+
+        $outputArray = Yaml::loadWrapped((string) $string);
+        $this->assertIsArray($outputArray);
+        $this->assertSame($inputArray, $outputArray);
+    }
+
+    public function testLoadWrappedReadsOldCommentFormat()
+    {
+        $inputArray = array('one' => 1, 'two' => 'hello');
+        $oldFormat = "<?php\n/*\n---\none: 1\ntwo: hello\n...\n*/\n";
+
+        $outputArray = Yaml::loadWrapped($oldFormat);
+        $this->assertIsArray($outputArray);
+        $this->assertSame($inputArray, $outputArray);
+    }
+
+    public function testReadNoFile()
+    {
+        $this->assertFalse(Yaml::read('./no-such-file'));
+    }
+
+    public function testReadWrappedNoFile()
+    {
+        $this->assertFalse(Yaml::readWrapped('./no-such-file'));
+    }
+
+    public function testReadOversizedFile()
+    {
+        $tmpfname = tempnam(sys_get_temp_dir(), 'YAMLTEST');
+        $this->assertNotFalse($tmpfname, 'Failed to create temp file');
+        try {
+            // Create a file just over 2MB
+            $fh = fopen($tmpfname, 'w');
+            $this->assertNotFalse($fh, 'Failed to open temp file for writing');
+            $line = str_repeat('x', 1024) . "\n";
+            for ($i = 0; $i < 2049; $i++) {
+                fwrite($fh, $line);
+            }
+            fclose($fh);
+            // Suppress the trigger_error warning
+            $result = @Yaml::read($tmpfname);
+            $this->assertFalse($result);
+        } finally {
+            if (file_exists($tmpfname)) {
+                unlink($tmpfname);
+            }
+        }
+    }
+
+    public function testReadWrappedOversizedFile()
+    {
+        $tmpfname = tempnam(sys_get_temp_dir(), 'YAMLTEST');
+        $this->assertNotFalse($tmpfname, 'Failed to create temp file');
+        try {
+            $fh = fopen($tmpfname, 'w');
+            $this->assertNotFalse($fh, 'Failed to open temp file for writing');
+            $line = str_repeat('x', 1024) . "\n";
+            for ($i = 0; $i < 2049; $i++) {
+                fwrite($fh, $line);
+            }
+            fclose($fh);
+            $result = @Yaml::readWrapped($tmpfname);
+            $this->assertFalse($result);
+        } finally {
+            if (file_exists($tmpfname)) {
+                unlink($tmpfname);
+            }
+        }
+    }
 }
