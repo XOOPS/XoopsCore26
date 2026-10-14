@@ -1,4 +1,6 @@
+
 ![alt XOOPS CMS](https://xoops.org/images/logoXoops4GithubRepository.png)
+
 # XOOPS Core
 
 [![Backers on Open Collective](https://opencollective.com/XoopsCore/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/XoopsCore/sponsors/badge.svg)](#sponsors) [![CI](https://github.com/XOOPS/XoopsCore26/actions/workflows/ci.yml/badge.svg)](https://github.com/XOOPS/XoopsCore26/actions/workflows/ci.yml)
