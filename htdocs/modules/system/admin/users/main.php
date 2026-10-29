@@ -129,10 +129,14 @@ switch ($op) {
 
     // Delete users
     case "action_group":
-        if ((@isset($_REQUEST['memberslist_id']) || @$_REQUEST['memberslist_id'] != '')) {
+        if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
+            $xoops->redirect("admin.php?fct=users", 3, implode('<br />', $xoops->security()->getErrors()));
+        }
+        $memberslist_id = Request::getArray('memberslist_id', array(), 'POST');
+        if (!empty($memberslist_id)) {
             $system_breadcrumb->render();
             $error = '';
-            foreach ($_REQUEST['memberslist_id'] as $del) {
+            foreach ($memberslist_id as $del) {
                 $del = (int)($del);
                 $user = $member_handler->getUser($del);
                 $groups = $user->getGroups();
@@ -160,6 +164,13 @@ switch ($op) {
 
     // Save user
     case "users_save":
+        $can_admin_groups = $xoops->getHandlerGroupPermission()
+            ->checkRight("system_admin", XOOPS_SYSTEM_GROUP, $xoops->user->getGroups(), 1);
+        $req_groups = array_map('intval', Request::getArray('groups', array(), 'POST'));
+        // only a webmaster may grant webmaster membership
+        if (!in_array(FixedGroups::ADMIN, $xoops->user->getGroups())) {
+            $req_groups = array_values(array_diff($req_groups, array(FixedGroups::ADMIN)));
+        }
         if (isset($_REQUEST['uid'])) {
             //Update user
             if (!$xoops->security()->check()) {
@@ -175,6 +186,13 @@ switch ($op) {
             }
 
             $edituser = $member_handler->getUser($uid);
+            if (!is_object($edituser)
+                || (in_array(FixedGroups::ADMIN, $edituser->getGroups())
+                    && !in_array(FixedGroups::ADMIN, $xoops->user->getGroups()))
+            ) {
+                // only a webmaster may change a webmaster
+                $xoops->redirect("admin.php?fct=users", 3, XoopsLocale::E_NO_ACTION_PERMISSION);
+            }
             if ($edituser->getVar('uname', 'n') != $_REQUEST['username'] && $member_handler->getUserCount(new Criteria('uname', $_REQUEST['username'])) > 0) {
                 $xoops->header();
                 echo $xoops->alert('error', sprintf(XoopsLocale::EF_USER_NAME_ALREADY_EXISTS, $myts->htmlSpecialChars($_REQUEST['username'])));
@@ -225,18 +243,19 @@ switch ($op) {
                     echo $edituser->getHtmlErrors();
                     $xoops->footer();
                 } else {
-                    if ($_REQUEST['groups'] != array()) {
+                    // membership changes need the group-administration right, like the form
+                    if ($can_admin_groups && $req_groups != array()) {
                         $oldgroups = $edituser->getGroups();
                         //If the edited user is the current user and the current user WAS in the webmaster's group and is NOT in the new groups array
-                        if ($edituser->getVar('uid') == $xoops->user->getVar('uid') && (in_array(FixedGroups::ADMIN, $oldgroups)) && !(in_array(FixedGroups::ADMIN, $_REQUEST['groups']))) {
+                        if ($edituser->getVar('uid') == $xoops->user->getVar('uid') && (in_array(FixedGroups::ADMIN, $oldgroups)) && !(in_array(FixedGroups::ADMIN, $req_groups))) {
                             //Add the webmaster's group to the groups array to prevent accidentally removing oneself from the webmaster's group
-                            array_push($_REQUEST['groups'], FixedGroups::ADMIN);
+                            $req_groups[] = FixedGroups::ADMIN;
                         }
                         $member_handler = $xoops->getHandlerMember();
                         foreach ($oldgroups as $groupid) {
                             $member_handler->removeUsersFromGroup($groupid, array($edituser->getVar('uid')));
                         }
-                        foreach ($_REQUEST['groups'] as $groupid) {
+                        foreach ($req_groups as $groupid) {
                             $member_handler->addUserToGroup($groupid, $edituser->getVar('uid'));
                         }
                     }
@@ -301,7 +320,8 @@ switch ($op) {
                         $adduser_errormsg = XoopsLocale::E_USER_NOT_REGISTERED;
                     } else {
                         $groups_failed = array();
-                        foreach ($_REQUEST['groups'] as $group) {
+                        $new_groups = $can_admin_groups ? $req_groups : array(FixedGroups::USERS);
+                        foreach ($new_groups as $group) {
                             $group = (int)($group);
                             if (!$member_handler->addUserToGroup($group, $newuser->getVar('uid'))) {
                                 $groups_failed[] = $group;
@@ -705,6 +725,7 @@ switch ($op) {
             $xoops->tpl()->assign('users_count', $users_count);
             $xoops->tpl()->assign('users_display', true);
             $xoops->tpl()->assign('php_selft', $_SERVER['PHP_SELF']);
+            $xoops->tpl()->assign('token', $xoops->security()->getTokenHTML());
 
             //User limit
             //$user_limit = (!isset($_REQUEST['user_limit'])) ? 20 : $_REQUEST['user_limit'];

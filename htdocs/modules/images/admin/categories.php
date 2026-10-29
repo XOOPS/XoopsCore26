@@ -160,6 +160,7 @@ switch ($op) {
         $admin_page->renderButton();
 
         $categories = $helper->getHandlerCategories()->getPermittedObjects();
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
 
         foreach (array_keys($categories) as $i) {
             $imgcat_read = $gperm_handler->checkRight('imgcat_read', $categories[$i]->getVar('imgcat_id'), $groups, $xoops->module->mid());

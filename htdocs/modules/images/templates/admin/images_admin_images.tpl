@@ -38,7 +38,7 @@
                 <div class="xo-actions txtcenter">
                     <div class="spacer bold"><{$img.image_nicename}></div>
                     <img id="loading_img<{$img.image_id}>" src="<{xoAppUrl 'media/xoops/images/spinner.gif'}>" style="display:none;" alt="<{translate key='LOADING'}>" />
-                    <img class="cursorpointer xo-tooltip" id="img<{$img.image_id}>" onclick="Xoops.changeStatus('images.php', { op: 'display', image_id: <{$img.image_id}> }, 'img<{$img.image_id}>', 'images.php' )" src="<{if $img.image_display}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{$smarty.const._IMGDISPLAY}>" title="<{$smarty.const._IMGDISPLAY}>" />
+                    <img class="cursorpointer xo-tooltip" id="img<{$img.image_id}>" onclick="Xoops.changeStatus('images.php', { op: 'display', image_id: <{$img.image_id}>, XOOPS_TOKEN_REQUEST: '<{$token}>' }, 'img<{$img.image_id}>', 'images.php' )" src="<{if $img.image_display}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{$smarty.const._IMGDISPLAY}>" title="<{$smarty.const._IMGDISPLAY}>" />
                     <{if !$db_store|default:false}>
                         <a rel="external" class="lightbox xo-tooltip" href="<{$xoops_upload_url}>/<{$img.image_name}>" title="<{$img.image_nicename}>">
                     <{else}>

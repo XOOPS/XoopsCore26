@@ -49,12 +49,14 @@ switch ($op) {
         }
         if ($uid == 0) {
             $access = false;
-        }
-        $criteria = new CriteriaCompo();
-        $criteria->add(new Criteria('bannerclient_uid', $uid));
-        $client_count = $client_Handler->getCount($criteria);
-        if ($client_count != 0) {
-            $access = true;
+        } else {
+            // bannerclient_uid 0 means "no linked account", never the anonymous visitor
+            $criteria = new CriteriaCompo();
+            $criteria->add(new Criteria('bannerclient_uid', $uid));
+            $client_count = $client_Handler->getCount($criteria);
+            if ($client_count != 0) {
+                $access = true;
+            }
         }
         if ($xoops->userIsAdmin) {
             $access = true;
@@ -246,12 +248,14 @@ switch ($op) {
         }
         if ($uid == 0) {
             $access = false;
-        }
-        $criteria = new CriteriaCompo();
-        $criteria->add(new Criteria('bannerclient_uid', $uid));
-        $client_count = $client_Handler->getCount($criteria);
-        if ($client_count != 0) {
-            $access = true;
+        } else {
+            // bannerclient_uid 0 means "no linked account", never the anonymous visitor
+            $criteria = new CriteriaCompo();
+            $criteria->add(new Criteria('bannerclient_uid', $uid));
+            $client_count = $client_Handler->getCount($criteria);
+            if ($client_count != 0) {
+                $access = true;
+            }
         }
         if ($xoops->userIsAdmin) {
             $access = true;

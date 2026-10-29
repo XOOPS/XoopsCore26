@@ -18,17 +18,7 @@
 
 include_once dirname(dirname(dirname(__DIR__))) . '/include/cp_header.php';
 
-$op = '';
-if (isset($_POST)) {
-    foreach ($_POST as $k => $v) {
-        ${$k} = $v;
-    }
-}
-if (isset($_GET)) {
-    foreach ($_GET as $k => $v) {
-        ${$k} = $v;
-    }
-}
+$op = \Xmf\Request::getCmd('op', '');
 
 XoopsLoad::load('system', 'system');
 

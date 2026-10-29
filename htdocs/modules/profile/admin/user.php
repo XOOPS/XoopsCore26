@@ -99,6 +99,15 @@ switch ($op) {
         $uid = empty($_POST['uid']) ? 0 : (int)($_POST['uid']);
         if (!empty($uid)) {
             $user = $handler->getUser($uid);
+            if (!is_object($user)) {
+                $xoops->redirect("user.php", 3, XoopsLocale::E_NO_ACTION_PERMISSION);
+            }
+            // same rule as the edit form: only a webmaster may change a webmaster
+            if (in_array(FixedGroups::ADMIN, $user->getGroups())
+                && !in_array(FixedGroups::ADMIN, $xoops->user->getGroups())
+            ) {
+                $xoops->redirect("user.php", 3, XoopsLocale::E_NO_ACTION_PERMISSION);
+            }
             $profile = $profile_handler->getProfile($uid);
             if (!is_object($profile)) {
                 $profile = $profile_handler->create();
@@ -169,8 +178,14 @@ switch ($op) {
                     //Update group memberships
                     $cur_groups = $user->getGroups();
 
+                    $new_groups = array_map('intval', (array) $new_groups);
                     $added_groups = array_diff($new_groups, $cur_groups);
                     $removed_groups = array_diff($cur_groups, $new_groups);
+                    // only a webmaster may grant or revoke webmaster membership
+                    if (!in_array(FixedGroups::ADMIN, $xoops->user->getGroups())) {
+                        $added_groups = array_diff($added_groups, array(FixedGroups::ADMIN));
+                        $removed_groups = array_diff($removed_groups, array(FixedGroups::ADMIN));
+                    }
 
                     if (count($added_groups) > 0) {
                         foreach ($added_groups as $groupid) {

@@ -76,6 +76,7 @@
                     </select>
                     <{$form_select_groups}>
                     <input type="hidden" name="op" value="action_group">
+                    <{$token}>
                     <input class="btn danger" type='submit' name='Submit' />
                 </td>
             </tr>
