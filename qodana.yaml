@@ -8,7 +8,9 @@ profile:
 php:
   version: "8.4"
 
-bootstrap: cp composer.json.dist composer.json && composer config platform.php 8.4 && composer install --no-interaction --prefer-dist '--ignore-platform-req=ext-*'
+# roave/security-advisories is dropped here: it rejects the pinned platform PHP 8.4(.0)
+# and only guards installs, which static analysis does not need.
+bootstrap: cp composer.json.dist composer.json && composer config platform.php 8.4 && composer remove --dev --no-update roave/security-advisories && composer install --no-interaction --prefer-dist '--ignore-platform-req=ext-*'
 
 exclude:
   - name: All
