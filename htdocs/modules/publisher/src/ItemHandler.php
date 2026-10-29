@@ -525,7 +525,7 @@ class ItemHandler extends XoopsPersistableObjectHandler
         }
         $categories = \array_map('\intval', (array)$categories);
         // non-admins are always limited to readable categories, even when no category filter is given
-        if (!Publisher\Utils::IsUserAdmin()) {
+        if (!$this->helper->isUserAdmin()) {
             $criteriaPermissions = new CriteriaCompo();
             // Categories for which user has access
             $categoriesGranted = $gpermHandler->getItemIds('category_read', $groups, $this->helper->getModule()->getVar('mid'));

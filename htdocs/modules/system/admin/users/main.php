@@ -344,7 +344,17 @@ switch ($op) {
 
     // Activ member
     case 'users_active':
+        if (!$xoops->security()->check()) {
+            $xoops->redirect("admin.php?fct=users", 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         $obj = $member_handler->getUser($uid);
+        if (!is_object($obj)
+            || (in_array(FixedGroups::ADMIN, $obj->getGroups())
+                && !in_array(FixedGroups::ADMIN, $xoops->user->getGroups()))
+        ) {
+            // only a webmaster may change a webmaster
+            $xoops->redirect("admin.php?fct=users", 3, XoopsLocale::E_NO_ACTION_PERMISSION);
+        }
         $obj->setVar("level", 1);
         if ($member_handler->insertUser($obj, true)) {
             $xoops->redirect("admin.php?fct=users", 1, XoopsLocale::S_DATABASE_UPDATED);
@@ -726,6 +736,7 @@ switch ($op) {
             $xoops->tpl()->assign('users_display', true);
             $xoops->tpl()->assign('php_selft', $_SERVER['PHP_SELF']);
             $xoops->tpl()->assign('token', $xoops->security()->getTokenHTML());
+            $xoops->tpl()->assign('token_id', $xoops->security()->createToken());
 
             //User limit
             //$user_limit = (!isset($_REQUEST['user_limit'])) ? 20 : $_REQUEST['user_limit'];

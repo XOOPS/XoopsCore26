@@ -374,6 +374,10 @@ switch ($op) {
                 $xoops->redirect("admin.php?fct=users", 3, XoopsLocale::E_NO_ACTION_PERMISSION);
             }
             $memberslist_id = array_map('intval', Request::getArray('memberslist_id', array(), 'POST'));
+            // only a webmaster may change a webmaster's memberships
+            if (!in_array(FixedGroups::ADMIN, $xoops->user->getGroups())) {
+                $memberslist_id = array_diff($memberslist_id, $member_handler->getUsersByGroup(FixedGroups::ADMIN));
+            }
             if ($edit_group === 'add_group' && $selgroups > 0) {
                 foreach ($memberslist_id as $uid) {
                     $member_handler->addUserToGroup($selgroups, $uid);
