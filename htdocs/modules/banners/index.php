@@ -36,35 +36,25 @@ $nb_banners = $helper->getConfig('banners_pager');
 // Get Action type
 $op = Request::getCmd('op', 'list');
 
+// Admins and users linked to a banner client may enter; everyone else is redirected.
+// Returns [$admin, $criteria] where $criteria selects the current user's clients.
+$checkClientAccess = function () use ($xoops, $client_Handler) {
+    $uid = $xoops->isUser() ? $xoops->user->getVar('uid') : 0;
+    $criteria = new CriteriaCompo();
+    $criteria->add(new Criteria('bannerclient_uid', $uid));
+    $admin = (bool) $xoops->userIsAdmin;
+    // bannerclient_uid 0 means "no linked account", never the anonymous visitor
+    if (!$admin && ($uid == 0 || $client_Handler->getCount($criteria) == 0)) {
+        $xoops->redirect(\XoopsBaseConfig::get('url'), 2, XoopsLocale::E_NO_ACCESS_PERMISSION);
+    }
+    return array($admin, $criteria);
+};
+
 switch ($op) {
 
     case 'list':
     default:
-        $access = false;
-        $admin = false;
-        if ($xoops->isUser()) {
-            $uid = $xoops->user->getVar('uid');
-        } else {
-            $uid = 0;
-        }
-        if ($uid == 0) {
-            $access = false;
-        } else {
-            // bannerclient_uid 0 means "no linked account", never the anonymous visitor
-            $criteria = new CriteriaCompo();
-            $criteria->add(new Criteria('bannerclient_uid', $uid));
-            $client_count = $client_Handler->getCount($criteria);
-            if ($client_count != 0) {
-                $access = true;
-            }
-        }
-        if ($xoops->userIsAdmin) {
-            $access = true;
-            $admin = true;
-        }
-        if ($access == false) {
-            $xoops->redirect(\XoopsBaseConfig::get('url'), 2, XoopsLocale::E_NO_ACCESS_PERMISSION);
-        }
+        list($admin, $criteria) = $checkClientAccess();
         // Get start pager
         $start = Request::getInt('start', 0);
         $startF = Request::getInt('startF', 0);
@@ -239,31 +229,7 @@ switch ($op) {
         break;
 
     case 'edit':
-        $access = false;
-        $admin = false;
-        if ($xoops->isUser()) {
-            $uid = $xoops->user->getVar('uid');
-        } else {
-            $uid = 0;
-        }
-        if ($uid == 0) {
-            $access = false;
-        } else {
-            // bannerclient_uid 0 means "no linked account", never the anonymous visitor
-            $criteria = new CriteriaCompo();
-            $criteria->add(new Criteria('bannerclient_uid', $uid));
-            $client_count = $client_Handler->getCount($criteria);
-            if ($client_count != 0) {
-                $access = true;
-            }
-        }
-        if ($xoops->userIsAdmin) {
-            $access = true;
-            $admin = true;
-        }
-        if ($access == false) {
-            $xoops->redirect(\XoopsBaseConfig::get('url'), 2, XoopsLocale::E_NO_ACCESS_PERMISSION);
-        }
+        $checkClientAccess();
         $bid = Request::getInt('bid', 0);
         if ($bid > 0) {
             // Call header
