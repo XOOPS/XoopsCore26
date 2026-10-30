@@ -11,8 +11,10 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
 {
     $shortcodes = \Xoops\Core\Text\Sanitizer::getInstance()->getShortCodes();
 
-    $scPattern = '/(<textarea[\S\s]*\/textarea\s*>|<select[\S\s]*\/select\s*>|<script[\S\s]*\/script\s*>'
-        . '|<style[\S\s]*\/style\s*>|<!--[\S\s]*-->|<[\/!]?[a-z](?:[^>"\']|"[^"]*"|\'[^\']*\')*>)/Ui';
+    $tagPattern = '<[\/!]?[a-z](?:[^>"\']|"[^"]*"|\'[^\']*\')*>';
+    $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*<\/textarea\s*>|<select(?=[\s\/>])[\S\s]*<\/select\s*>'
+        . '|<script(?=[\s\/>])[\S\s]*<\/script\s*>|<style(?=[\s\/>])[\S\s]*<\/style\s*>|<!--[\S\s]*-->'
+        . '|' . $tagPattern . ')/Ui';
 
     $marker = "\x1A" . bin2hex(random_bytes(8)) . '_';
     $held = array();
@@ -31,6 +33,18 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
     }
 
     $text = $shortcodes->process($text);
+
+    // a placeholder that a shortcode copied into the attributes of a tag it
+    // generated is dropped: escaping is not enough where the attribute is a
+    // javascript: URL or an event handler, which decode entities before running
+    $dropped = array_fill_keys(array_keys($held), '');
+    $text = preg_replace_callback(
+        '/' . $tagPattern . '/i',
+        function ($tag) use ($dropped) {
+            return strtr($tag[0], $dropped);
+        },
+        $text
+    );
 
     return strtr($text, $held);
 }

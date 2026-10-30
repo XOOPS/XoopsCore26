@@ -41,14 +41,30 @@ if (empty($settings['ROOT_PATH'])) {
 
 // A mainfile.php that this session did not write means the site is already
 // installed: never let a new installer session rewrite its configuration.
-if (defined('XOOPS_MAINFILE_INCLUDED') && empty($_SESSION['configsave_owner'])) {
+// Ownership is the hash of each configuration file this session wrote, so it
+// ends as soon as anyone else rewrites the file.
+$configFiles = array(
+    'mainfile' => $settings['ROOT_PATH'] . '/mainfile.php',
+    'secure' => $settings['VAR_PATH'] . '/data/secure.php',
+);
+$owned = (isset($_SESSION['configsave_owner']) && is_array($_SESSION['configsave_owner']))
+    ? $_SESSION['configsave_owner'] : array();
+$foreign = defined('XOOPS_MAINFILE_INCLUDED') && empty($owned);
+foreach ($configFiles as $key => $path) {
+    if (file_exists($path)
+        && !(isset($owned[$key]) && hash_equals((string) $owned[$key], (string) md5_file($path)))
+    ) {
+        $foreign = true;
+    }
+}
+if ($foreign) {
+    unset($_SESSION['configsave_owner']);
     $_SESSION['pageHasHelp'] = false;
     $_SESSION['pageHasForm'] = false;
     $_SESSION['content'] = '<div class="errorMsg">' . ERR_ALREADY_INSTALLED . '</div>';
-    include XOOPS_INSTALL_PATH . '/include/install_tpl.php';
+    include_once XOOPS_INSTALL_PATH . '/include/install_tpl.php';
     exit();
 }
-$_SESSION['configsave_owner'] = true;
 $error = '';
 
 $rewrite = array(
@@ -71,8 +87,11 @@ if (!@copy($settings['ROOT_PATH'] . '/mainfile.dist.php', $settings['ROOT_PATH']
         if (!$file = fopen($settings['ROOT_PATH'] . '/mainfile.php', "w")) {
             $error = ERR_WRITE_MAINFILE;
         } else {
-            if (fwrite($file, $content) == -1) {
+            if (fwrite($file, $content) !== strlen($content)) {
                 $error = ERR_WRITE_MAINFILE;
+            } else {
+                $owned['mainfile'] = md5($content);
+                $_SESSION['configsave_owner'] = $owned;
             }
             fclose($file);
         }
@@ -94,8 +113,11 @@ if (!@copy($rewrite['VAR_PATH'] . '/data/secure.dist.php', $rewrite['VAR_PATH'] 
         if (!$file = fopen($rewrite['VAR_PATH'] . '/data/secure.php', "w")) {
             $error = ERR_WRITE_SECURE;
         } else {
-            if (fwrite($file, $content) == -1) {
+            if (fwrite($file, $content) !== strlen($content)) {
                 $error = ERR_WRITE_SECURE;
+            } else {
+                $owned['secure'] = md5($content);
+                $_SESSION['configsave_owner'] = $owned;
             }
             fclose($file);
         }

@@ -48,4 +48,18 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
             . '<style>a[href] {}</style><!-- [b] -->';
         $this->assertSame($html, $this->filter($html));
     }
+
+    public function testScriptBodyEndsOnlyAtClosingTag()
+    {
+        $html = '<script>var a = "x/script>[b]";</script>';
+        $this->assertSame($html, $this->filter($html));
+    }
+
+    public function testHeldMarkupCopiedIntoGeneratedAttributeIsDropped()
+    {
+        $this->assertSame(
+            '<p><a href="mailto:xz">x<img src="a">z</a></p>',
+            $this->filter('<p>[email]x<img src="a">z[/email]</p>')
+        );
+    }
 }
