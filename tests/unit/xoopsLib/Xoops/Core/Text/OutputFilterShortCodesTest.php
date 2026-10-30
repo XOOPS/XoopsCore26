@@ -58,8 +58,23 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
     public function testHeldMarkupCopiedIntoGeneratedAttributeIsDropped()
     {
         $this->assertSame(
-            '<p><a href="mailto:xz">x<img src="a">z</a></p>',
+            '<p>x<img src="a">z</a></p>',
             $this->filter('<p>[email]x<img src="a">z[/email]</p>')
         );
+    }
+
+    public function testHeldMarkupCannotJoinIntoJavascriptUrl()
+    {
+        $out = $this->filter('<p>[url=java<b></b>script://%0Aalert(1)]click[/url]</p>');
+        $this->assertStringNotContainsString('href', $out);
+        $this->assertStringNotContainsString('javascript', $out);
+        $this->assertStringContainsString('click', $out);
+    }
+
+    public function testGeneratedTagWithoutHeldMarkupIsKept()
+    {
+        $out = $this->filter('<p>[url=http://example.test/a]click[/url]</p>');
+        $this->assertStringContainsString('href="http://example.test/a"', $out);
+        $this->assertStringContainsString('>click</a>', $out);
     }
 }

@@ -34,14 +34,15 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
 
     $text = $shortcodes->process($text);
 
-    // a placeholder that a shortcode copied into the attributes of a tag it
-    // generated is dropped: escaping is not enough where the attribute is a
-    // javascript: URL or an event handler, which decode entities before running
-    $dropped = array_fill_keys(array_keys($held), '');
+    // a tag a shortcode generated with a placeholder copied into its attributes
+    // is dropped whole: escaping the held markup is not enough where the
+    // attribute is a URL or an event handler, which decode entities before
+    // running, and removing just the placeholder joins its neighbours, so that
+    // [url=java<b></b>script:...] would become a javascript: link
     $text = preg_replace_callback(
         '/' . $tagPattern . '/i',
-        function ($tag) use ($dropped) {
-            return strtr($tag[0], $dropped);
+        function ($tag) use ($marker) {
+            return strpos($tag[0], $marker) === false ? $tag[0] : '';
         },
         $text
     );

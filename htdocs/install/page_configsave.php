@@ -43,6 +43,12 @@ if (empty($settings['ROOT_PATH'])) {
 // installed: never let a new installer session rewrite its configuration.
 // Ownership is the hash of each configuration file this session wrote, so it
 // ends as soon as anyone else rewrites the file.
+// The check and both writes run under one installer-wide lock (this script,
+// released at exit), so concurrent sessions cannot both pass the check.
+$configLock = fopen(__FILE__, 'r');
+if ($configLock) {
+    flock($configLock, LOCK_EX);
+}
 $configFiles = array(
     'mainfile' => $settings['ROOT_PATH'] . '/mainfile.php',
     'secure' => $settings['VAR_PATH'] . '/data/secure.php',
@@ -52,7 +58,7 @@ $owned = (isset($_SESSION['configsave_owner']) && is_array($_SESSION['configsave
 $foreign = defined('XOOPS_MAINFILE_INCLUDED') && empty($owned);
 foreach ($configFiles as $key => $path) {
     if (file_exists($path)
-        && !(isset($owned[$key]) && hash_equals((string) $owned[$key], (string) md5_file($path)))
+        && !(isset($owned[$key]) && hash_equals((string) $owned[$key], (string) hash_file('sha256', $path)))
     ) {
         $foreign = true;
     }
@@ -72,56 +78,33 @@ $rewrite = array(
 );
 $rewrite = array_merge($rewrite, $settings);
 
-if (!@copy($settings['ROOT_PATH'] . '/mainfile.dist.php', $settings['ROOT_PATH'] . '/mainfile.php')) {
-    $error = ERR_COPY_MAINFILE;
-} else {
-    clearstatcache();
-
-    if (!$file = fopen($settings['ROOT_PATH'] . '/mainfile.php', "r")) {
-        $error = ERR_READ_MAINFILE;
-    } else {
-        $content = fread($file, filesize($settings['ROOT_PATH'] . '/mainfile.php'));
-        fclose($file);
-
-        $content = install_rewriteDefines($content, $rewrite);
-        if (!$file = fopen($settings['ROOT_PATH'] . '/mainfile.php', "w")) {
-            $error = ERR_WRITE_MAINFILE;
-        } else {
-            if (fwrite($file, $content) !== strlen($content)) {
-                $error = ERR_WRITE_MAINFILE;
-            } else {
-                $owned['mainfile'] = md5($content);
-                $_SESSION['configsave_owner'] = $owned;
-            }
-            fclose($file);
-        }
+$configErrors = array(
+    'mainfile' => array(ERR_COPY_MAINFILE, ERR_READ_MAINFILE, ERR_WRITE_MAINFILE),
+    'secure' => array(ERR_COPY_SECURE . $settings['VAR_PATH'] . '/data/secure.dist.php', ERR_READ_SECURE, ERR_WRITE_SECURE),
+);
+foreach ($configFiles as $key => $path) {
+    list($errCopy, $errRead, $errWrite) = $configErrors[$key];
+    if (!@copy(substr($path, 0, -4) . '.dist.php', $path)) {
+        $error = $errCopy;
+        continue;
     }
-}
-
-if (!@copy($rewrite['VAR_PATH'] . '/data/secure.dist.php', $rewrite['VAR_PATH'] . '/data/secure.php')) {
-    $error = ERR_COPY_SECURE . $rewrite['VAR_PATH'] . '/data/secure.dist.php';
-} else {
     clearstatcache();
-
-    if (!$file = fopen($rewrite['VAR_PATH'] . '/data/secure.php', "r")) {
-        $error = ERR_READ_SECURE;
+    $content = @file_get_contents($path);
+    if ($content === false) {
+        $error = $errRead;
     } else {
-        $content = fread($file, filesize($rewrite['VAR_PATH'] . '/data/secure.php'));
-        fclose($file);
-
         $content = install_rewriteDefines($content, $rewrite);
-        if (!$file = fopen($rewrite['VAR_PATH'] . '/data/secure.php', "w")) {
-            $error = ERR_WRITE_SECURE;
-        } else {
-            if (fwrite($file, $content) !== strlen($content)) {
-                $error = ERR_WRITE_SECURE;
-            } else {
-                $owned['secure'] = md5($content);
-                $_SESSION['configsave_owner'] = $owned;
-            }
-            fclose($file);
+        if (@file_put_contents($path, $content) === strlen($content)) {
+            $owned[$key] = hash('sha256', $content);
+            $_SESSION['configsave_owner'] = $owned;
+            continue;
         }
+        $error = $errWrite;
     }
+    // remove the file this attempt left half-written, so a retry does not see it as foreign
+    unset($owned[$key]);
+    $_SESSION['configsave_owner'] = $owned;
+    @unlink($path);
 }
 
 // update composer.json with our paths
