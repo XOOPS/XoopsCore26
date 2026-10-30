@@ -37,7 +37,7 @@
                 <td class="txtcenter width10"><{$category.imgcat_maxheight}></td>
                 <td class="xo-actions txtcenter width10">
                     <img id="loading_cat<{$category.imgcat_id}>" src="<{xoAppUrl 'media/xoops/images/spinner.gif'}>" style="display:none;" alt="<{translate key='LOADING'}>" />
-                    <img class="cursorpointer" id="cat<{$category.imgcat_id}>" onclick="Xoops.changeStatus( 'categories.php', { op: 'display', imgcat_id: <{$category.imgcat_id}> }, 'cat<{$category.imgcat_id}>', 'categories.php' )" src="<{if $category.imgcat_display}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="" title="<{if $category.imgcat_display}><{$smarty.const._AM_IMAGES_CAT_OFF}><{else}><{$smarty.const._AM_IMAGES_CAT_ON}><{/if}>" />
+                    <img class="cursorpointer" id="cat<{$category.imgcat_id}>" onclick="Xoops.changeStatus( 'categories.php', { op: 'display', imgcat_id: <{$category.imgcat_id}>, XOOPS_TOKEN_REQUEST: '<{$token}>' }, 'cat<{$category.imgcat_id}>', 'categories.php' )" src="<{if $category.imgcat_display}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="" title="<{if $category.imgcat_display}><{$smarty.const._AM_IMAGES_CAT_OFF}><{else}><{$smarty.const._AM_IMAGES_CAT_ON}><{/if}>" />
                 </td>
                 <td class="xo-actions txtcenter width10">
                     <a class="xo-tooltip" href="images.php?op=list&amp;imgcat_id=<{$category.imgcat_id}>" title="<{$smarty.const._AM_IMAGES_VIEW}>">

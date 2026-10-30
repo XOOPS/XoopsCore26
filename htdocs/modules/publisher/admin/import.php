@@ -37,6 +37,9 @@ switch ($op) {
     case 'importExecute':
 
         $importfile = $_POST['importfile'] ?? 'nonselected';
+        if (!in_array($importfile, ['news', 'smartsection', 'wfsection', 'xfsection'], true)) {
+            $helper->redirect('admin/import.php', 3, _AM_PUBLISHER_IMPORT_SELECT_FILE);
+        }
         $importfile_path = XoopsBaseConfig::get('root-path') . '/modules/' . $helper->getModule()->dirname() . '/admin/import/' . $importfile . '.php';
         require_once $importfile_path;
         break;

@@ -362,24 +362,30 @@ switch ($op) {
 
     //Add users group
     case 'action_group':
+        if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
+            $xoops->redirect("admin.php?fct=users", 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         $error = true;
-        if (isset($_REQUEST['edit_group'])) {
-            if (isset($_REQUEST['edit_group'])
-                && $_REQUEST['edit_group'] === 'add_group'
-                && isset($_REQUEST['selgroups'])
-            ) {
-                foreach ($_REQUEST['memberslist_id'] as $uid) {
-                    $member_handler->addUserToGroup($_REQUEST['selgroups'], $uid);
+        $edit_group = Request::getString('edit_group', '', 'POST');
+        if ($edit_group !== '') {
+            $selgroups = Request::getInt('selgroups', 0, 'POST');
+            // only a webmaster may change webmaster membership
+            if ($selgroups === FixedGroups::ADMIN && !in_array(FixedGroups::ADMIN, $xoops->user->getGroups())) {
+                $xoops->redirect("admin.php?fct=users", 3, XoopsLocale::E_NO_ACTION_PERMISSION);
+            }
+            $memberslist_id = array_map('intval', Request::getArray('memberslist_id', array(), 'POST'));
+            // only a webmaster may change a webmaster's memberships
+            if (!in_array(FixedGroups::ADMIN, $xoops->user->getGroups())) {
+                $memberslist_id = array_diff($memberslist_id, $member_handler->getUsersByGroup(FixedGroups::ADMIN));
+            }
+            if ($edit_group === 'add_group' && $selgroups > 0) {
+                foreach ($memberslist_id as $uid) {
+                    $member_handler->addUserToGroup($selgroups, $uid);
                     $error = false;
                 }
-            } else {
-                if (isset($_REQUEST['edit_group'])
-                    && $_REQUEST['edit_group'] === 'delete_group'
-                    && isset($_REQUEST['selgroups'])
-                ) {
-                    $member_handler->removeUsersFromGroup($_REQUEST['selgroups'], $_REQUEST['memberslist_id']);
-                    $error = false;
-                }
+            } elseif ($edit_group === 'delete_group' && $selgroups > 0 && !empty($memberslist_id)) {
+                $member_handler->removeUsersFromGroup($selgroups, $memberslist_id);
+                $error = false;
             }
             //if ($error == true)
             $xoops->redirect("admin.php?fct=users", 1, XoopsLocale::S_DATABASE_UPDATED);

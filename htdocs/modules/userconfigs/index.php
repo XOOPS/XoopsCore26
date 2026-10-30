@@ -90,12 +90,7 @@ switch ($op) {
             $helper->redirect("index.php", 3, implode('<br />', $xoops->security()->getErrors()));
         }
 
-        $conf_ids = array();
-        if (isset($_REQUEST)) {
-            foreach ($_REQUEST as $k => $v) {
-                ${$k} = $v;
-            }
-        }
+        $conf_ids = array_map('intval', Request::getArray('conf_ids', array(), 'POST'));
 
         $xoopsTpl = new XoopsTpl();
         $count = count($conf_ids);
@@ -103,7 +98,18 @@ switch ($op) {
         if ($count > 0) {
             for ($i = 0; $i < $count; ++$i) {
                 $config = $config_handler->getConfig($conf_ids[$i]);
-                $new_value = isset(${$config->getVar('conf_name')}) ? ${$config->getVar('conf_name')} : null;
+                // only the current user's own config rows may be changed
+                if (!is_object($config) || (int)$config->getVar('conf_uid') !== (int)$uid) {
+                    continue;
+                }
+                // raw value: config fields may legitimately hold markup
+                $new_value = Request::getVar(
+                    $config->getVar('conf_name'),
+                    null,
+                    'POST',
+                    'none',
+                    Request::MASK_ALLOW_RAW | Request::MASK_NO_TRIM
+                );
                 if (!is_null($new_value) && (is_array($new_value) || $new_value != $config->getVar('conf_value'))) {
                     $config->setConfValueForInput($new_value);
                     $config_handler->insertConfig($config);

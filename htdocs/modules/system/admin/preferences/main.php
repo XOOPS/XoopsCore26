@@ -34,16 +34,6 @@ if (!$xoops->isUser() || !$xoops->isModule() || !$xoops->user->isAdmin($xoops->m
     exit(XoopsLocale::E_NO_ACCESS_PERMISSION);
 }
 
-$conf_ids = array();
-$session_expire = null;
-$session_name = null;
-
-// TODO this needs to go!
-if (isset($_REQUEST)) {
-    foreach ($_REQUEST as $k => $v) {
-        ${$k} = $v;
-    }
-}
 // Get Action type
 $op = Request::getString('op', 'showmod');
 // Setting type
@@ -96,6 +86,7 @@ switch ($op) {
             $xoops->redirect("admin.php?fct=preferences", 3, implode('<br />', $xoops->security()->getErrors()));
         }
         $xoopsTpl = new XoopsTpl();
+        $conf_ids = array_map('intval', Request::getArray('conf_ids', array(), 'POST'));
         $count = count($conf_ids);
         $tpl_updated = false;
         $theme_updated = false;
@@ -105,13 +96,23 @@ switch ($op) {
         if ($count > 0) {
             for ($i = 0; $i < $count; ++$i) {
                 $config = $config_handler->getConfig($conf_ids[$i]);
-                $new_value = isset(${$config->getVar('conf_name')}) ? ${$config->getVar('conf_name')} : null;
+                if (!is_object($config)) {
+                    continue;
+                }
+                // raw value: config fields may legitimately hold markup
+                $new_value = Request::getVar(
+                    $config->getVar('conf_name'),
+                    null,
+                    'POST',
+                    'none',
+                    Request::MASK_ALLOW_RAW | Request::MASK_NO_TRIM
+                );
                 if (!is_null($new_value) && (is_array($new_value) || $new_value != $config->getVar('conf_value'))) {
                     // if language has been changed
                     if (!$lang_updated && $config->getVar('conf_catid') == XOOPS_CONF
                         && $config->getVar('conf_name') === 'locale'
                     ) {
-                        $xoops->setConfig('locale', ${$config->getVar('conf_name')});
+                        $xoops->setConfig('locale', $new_value);
                         $lang_updated = true;
                     }
 
@@ -120,7 +121,7 @@ switch ($op) {
                         && $config->getVar('conf_name') === 'theme_set'
                     ) {
                         $member_handler = $xoops->getHandlerMember();
-                        $member_handler->updateUsersByField('theme', ${$config->getVar('conf_name')});
+                        $member_handler->updateUsersByField('theme', $new_value);
                         $theme_updated = true;
                     }
 
@@ -156,7 +157,8 @@ switch ($op) {
         $options = array(1, 2, 3); //1 goes for smarty cache, 3 goes for xoops_cache
         register_shutdown_function(array(&$system, 'cleanCache'), $options);
         $xoops->events()->triggerEvent('system.preferences.save');
-        if (isset($redirect) && $redirect != '') {
+        $redirect = Request::getString('redirect', '', 'POST');
+        if ($redirect != '') {
             $xoops->redirect($redirect, 2, XoopsLocale::S_DATABASE_UPDATED);
         } else {
             $xoops->redirect("admin.php?fct=preferences", 2, XoopsLocale::S_DATABASE_UPDATED);

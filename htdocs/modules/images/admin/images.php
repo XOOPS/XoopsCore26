@@ -204,6 +204,7 @@ switch ($op) {
 
         $xoops->tpl()->assign('listimg', true);
         $xoops->tpl()->assign('imgcat_id', $imgcat_id);
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         break;
 }
 $xoops->footer();
