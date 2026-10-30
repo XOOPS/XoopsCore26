@@ -12,9 +12,17 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
     $shortcodes = \Xoops\Core\Text\Sanitizer::getInstance()->getShortCodes();
 
     $tagPattern = '<[\/!]?[a-z](?:[^>"\']|"[^"]*"|\'[^\']*\')*>';
-    $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*<\/textarea\s*>|<select(?=[\s\/>])[\S\s]*<\/select\s*>'
-        . '|<script(?=[\s\/>])[\S\s]*<\/script\s*>|<style(?=[\s\/>])[\S\s]*<\/style\s*>|<!--[\S\s]*-->|<\?[\S\s]*\?>'
-        . '|' . $tagPattern . ')/Ui';
+    // CDATA sections (inert text inside SVG and MathML) and the bogus comments a
+    // browser makes of any other <!, <? or </ are held whole too: escaping their
+    // opener would turn the markup they hide into live tags. An unclosed element
+    // or comment is held to the end of the output and a comment ends where a
+    // browser ends it (<!-->, <!--->, --!>), as a browser reads them. An unclosed
+    // CDATA is held only to its first >, which ends it outside SVG and MathML;
+    // inside them the rest stays inert text whatever the shortcodes make of it.
+    $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*(?:<\/textarea\s*>|\z)|<select(?=[\s\/>])[\S\s]*(?:<\/select\s*>|\z)'
+        . '|<script(?=[\s\/>])[\S\s]*(?:<\/script\s*>|\z)|<style(?=[\s\/>])[\S\s]*(?:<\/style\s*>|\z)'
+        . '|<!--(?:-?>|[\S\s]*(?:--!?>|\z))|<\?[\S\s]*\?>|<!\[CDATA\[[\S\s]*\]\]>'
+        . '|' . $tagPattern . '|<[!?\/][^>]*>)/Ui';
 
     $marker = "\x1A" . bin2hex(random_bytes(8)) . '_';
     $held = array();

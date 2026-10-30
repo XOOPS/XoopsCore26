@@ -84,6 +84,35 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
         $this->assertSame('<?xml version="1.0" encoding="UTF-8"?><p><strong>x</strong></p>', $this->filter($html));
     }
 
+    public function testCdataSectionIsKept()
+    {
+        $html = '<svg><![CDATA[<foreignObject><img src=x onerror=alert(1)></foreignObject> [b]x[/b]]]></svg>';
+        $this->assertSame($html . '<strong>y</strong>', $this->filter($html . '[b]y[/b]'));
+    }
+
+    public function testBogusCommentIsKept()
+    {
+        foreach (array('<![x <img src=x onerror=alert(1)>', '<?x <img src=x onerror=alert(1)>', '</ <img src=x>') as $html) {
+            $this->assertSame($html . '<b>y</b>', $this->filter($html . '<b>y</b>'));
+        }
+    }
+
+    public function testUnclosedBlockIsHeldToTheEnd()
+    {
+        $blocks = array('<script>[b]x[/b]', '<textarea>[b]x[/b]', '<style>[b]x[/b]', '<select>[b]x[/b]',
+            '<!-- [b]x[/b]');
+        foreach ($blocks as $html) {
+            $this->assertSame($html, $this->filter($html));
+        }
+    }
+
+    public function testCommentEndsWhereBrowserEndsIt()
+    {
+        foreach (array('<!-->', '<!--->', '<!-- a --!>', '<![CDATA[x>') as $html) {
+            $this->assertSame($html . '<strong>y</strong>', $this->filter($html . '[b]y[/b]'));
+        }
+    }
+
     public function testGeneratedTagWithoutHeldMarkupIsKept()
     {
         $out = $this->filter('<p>[url=http://example.test/a]click[/url]</p>');

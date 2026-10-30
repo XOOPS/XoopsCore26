@@ -46,19 +46,28 @@ if (empty($settings['ROOT_PATH'])) {
 // The check and both writes run under one installer-wide lock (this script,
 // released at exit), so concurrent sessions cannot both pass the check; without
 // the lock nothing is written.
+// An empty file is a first-install stub, not a configuration. A non-empty
+// secure.php is guarded even without mainfile.php: VAR_PATH comes from this
+// session and may point at another site's data directory.
 $configLock = @fopen(__FILE__, 'r');
 $locked = $configLock !== false && flock($configLock, LOCK_EX);
+// secure.php first: mainfile.php requires it, so it is written only once
+// secure.php is in place, and the first failure stops the step
 $configFiles = array(
-    'mainfile' => $settings['ROOT_PATH'] . '/mainfile.php',
     'secure' => $settings['VAR_PATH'] . '/data/secure.php',
+    'mainfile' => $settings['ROOT_PATH'] . '/mainfile.php',
 );
 $owned = (isset($_SESSION['configsave_owner']) && is_array($_SESSION['configsave_owner']))
     ? $_SESSION['configsave_owner'] : array();
+// keyed by real path, so an identical copy of a file elsewhere is not owned
+$ownsFile = function ($path) use (&$owned) {
+    $real = realpath($path);
+    $hash = $real === false ? false : hash_file('sha256', $real);
+    return $hash !== false && isset($owned[$real]) && hash_equals((string) $owned[$real], $hash);
+};
 $foreign = defined('XOOPS_MAINFILE_INCLUDED') && empty($owned);
-foreach ($configFiles as $key => $path) {
-    if (file_exists($path)
-        && !(isset($owned[$key]) && hash_equals((string) $owned[$key], (string) hash_file('sha256', $path)))
-    ) {
+foreach ($configFiles as $path) {
+    if (is_file($path) && filesize($path) > 0 && !$ownsFile($path)) {
         $foreign = true;
     }
 }
@@ -88,11 +97,17 @@ foreach ($configFiles as $key => $path) {
     $content = @file_get_contents(substr($path, 0, -4) . '.dist.php');
     if ($content === false) {
         $error = $errCopy;
-        continue;
+        break;
     }
     $content = install_rewriteDefines($content, $rewrite);
+    $hash = hash('sha256', $content);
+    if ($ownsFile($path) && hash_file('sha256', $path) === $hash) {
+        continue; // a retry: this session already wrote exactly this file
+    }
     // write a new file beside the target and rename it over it, so a failed
-    // attempt leaves the previous file (and its ownership) untouched
+    // attempt leaves the previous file (and its ownership) untouched; without a
+    // writable directory only an empty stub is written in place, and emptied
+    // again if the write fails
     $tmp = $path . '.' . bin2hex(random_bytes(8)) . '.tmp';
     $handle = @fopen($tmp, 'xb');
     if ($handle !== false) {
@@ -100,14 +115,26 @@ foreach ($configFiles as $key => $path) {
             @chmod($tmp, fileperms($path) & 0777); // keep a mode the admin tightened
         }
         $saved = fwrite($handle, $content) === strlen($content);
-        if (fclose($handle) && $saved && @rename($tmp, $path)) {
-            $owned[$key] = hash('sha256', $content);
-            $_SESSION['configsave_owner'] = $owned;
-            continue;
+        $saved = fclose($handle) && $saved && @rename($tmp, $path);
+        if (!$saved) {
+            @unlink($tmp);
         }
-        @unlink($tmp);
+    } elseif (is_file($path) && filesize($path) === 0 && ($handle = @fopen($path, 'cb')) !== false) {
+        $saved = fwrite($handle, $content) === strlen($content) && fflush($handle);
+        if (!$saved) {
+            ftruncate($handle, 0);
+        }
+        $saved = fclose($handle) && $saved;
+    } else {
+        $saved = false;
+    }
+    if ($saved && ($real = realpath($path)) !== false) {
+        $owned[$real] = $hash;
+        $_SESSION['configsave_owner'] = $owned;
+        continue;
     }
     $error = $errWrite;
+    break;
 }
 
 // update composer.json with our paths
