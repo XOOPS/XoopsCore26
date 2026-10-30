@@ -144,6 +144,15 @@ switch ($op) {
             }
         } else {
             $user_avatar = Request::getString('user_avatar', 'blank.gif');
+            // accept only the choices the form offers: a displayed system avatar or none
+            $allowed = array_keys($avatar_Handler->getListByType('S', true));
+            $allowed[] = 'blank.gif';
+            if (!in_array($user_avatar, $allowed, true)) {
+                $xoops->redirect($xoops->url('userinfo.php?uid=' . $uid), 2, XoopsLocale::E_DATABASE_NOT_UPDATED);
+            }
+            if ($user_avatar === 'avatars/blank.gif') {
+                $user_avatar = 'blank.gif';
+            }
             $oldavatar = $xoops->user->getVar('user_avatar');
             $xoops->user->setVar('user_avatar', $user_avatar);
             $member_handler = $xoops->getHandlerMember();

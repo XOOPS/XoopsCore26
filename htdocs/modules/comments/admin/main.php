@@ -217,7 +217,6 @@ switch ($op) {
         $admin_page->addTips(_AM_COMMENTS_NAV_TIPS);
         $admin_page->renderTips();
         // Display comments
-        $myts = \Xoops\Core\Text\Sanitizer::getInstance();
         $comments_Handler = $helper->getHandlerComment();
         $comments_module = '';
         $comments_status = '';
@@ -312,7 +311,7 @@ switch ($op) {
                 $comments['comments_title'] = '<a href="main.php?op=comments_jump&amp;item_id=' . $comments_arr[$i]->getVar("id") . '">' . $comments_arr[$i]->getVar("title")  . '</a>';
                 $comments['comments_ip'] = $comments_arr[$i]->getVar('ip');
                 $comments['comments_date'] = XoopsLocale::formatTimestamp($comments_arr[$i]->getVar('created'));
-                $comments['comments_text'] = $myts->undoHtmlSpecialChars($comments_arr[$i]->getVar('text'));
+                $comments['comments_text'] = $comments_arr[$i]->getVar('text');
                 $comments['comments_status'] = @$status_array2[$comments_arr[$i]->getVar('status')];
                 $comments['comments_date_created'] = XoopsLocale::formatTimestamp($comments_arr[$i]->getVar('created'), 'm');
                 $comments['comments_modid'] = @$module_array[$comments_arr[$i]->getVar('modid')];

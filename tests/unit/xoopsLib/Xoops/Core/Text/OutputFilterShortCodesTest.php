@@ -1,0 +1,129 @@
+<?php
+namespace Xoops\Core\Text;
+
+require_once __DIR__.'/../../../../init_new.php';
+require_once __DIR__.'/../../../../../../xoops_lib/smarty/xoops_plugins/outputfilter.shortcodes.php';
+
+class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
+{
+    protected function filter($html)
+    {
+        $template = $this->getMockBuilder('Smarty_Internal_Template')
+            ->disableOriginalConstructor()
+            ->getMock();
+        return smarty_outputfilter_shortcodes($html, $template);
+    }
+
+    public function testTextBetweenTagsIsProcessed()
+    {
+        $this->assertSame('<p><strong>bold</strong></p>', $this->filter('<p>[b]bold[/b]</p>'));
+    }
+
+    public function testComparisonTextIsNotTreatedAsTag()
+    {
+        $this->assertSame('a &lt; b <strong>c</strong> > d', $this->filter('a < b [b]c[/b] > d'));
+    }
+
+    public function testAttributesAreNotProcessed()
+    {
+        $html = '<img src="x.gif" alt="[b]x[/b]" title="[url=http://e.test/ onmouseover=alert(1)]y[/url]">';
+        $this->assertSame($html, $this->filter($html));
+        $html = '<a onclick="if (a > 0) {}" title=\'b > a [b]x[/b]\'>[b]y[/b]</a>';
+        $this->assertSame(
+            '<a onclick="if (a > 0) {}" title=\'b > a [b]x[/b]\'><strong>y</strong></a>',
+            $this->filter($html)
+        );
+    }
+
+    public function testMaskShortcodeIsNotPublic()
+    {
+        $payload = '[nosc42]' . base64_encode('<script>alert(1)</script>') . '[/nosc42]';
+        $out = $this->filter('<p>' . $payload . '</p>');
+        $this->assertStringNotContainsString('<script>', $out);
+    }
+
+    public function testFormAndScriptBodiesAreNotProcessed()
+    {
+        $html = '<textarea>[b]x[/b]</textarea><script>var a = "[b]";</script><select><option>[b]</option></select>'
+            . '<style>a[href] {}</style><!-- [b] -->';
+        $this->assertSame($html, $this->filter($html));
+    }
+
+    public function testScriptBodyEndsOnlyAtClosingTag()
+    {
+        $html = '<script>var a = "x/script>[b]";</script>';
+        $this->assertSame($html, $this->filter($html));
+    }
+
+    public function testClosingTagWithAttributesEndsBlock()
+    {
+        $out = $this->filter('<script>var a = 1;</script data-x>[b]next[/b]<style>a{}</style >[b]y[/b]');
+        $this->assertStringStartsWith('<script>var a = 1;</script data-x><strong>next</strong>', $out);
+        $this->assertStringEndsWith('</style ><strong>y</strong>', $out);
+    }
+
+    public function testHeldMarkupCopiedIntoGeneratedAttributeIsDropped()
+    {
+        $this->assertSame(
+            '<p>x<img src="a">z</a></p>',
+            $this->filter('<p>[email]x<img src="a">z[/email]</p>')
+        );
+    }
+
+    public function testHeldMarkupCannotJoinIntoJavascriptUrl()
+    {
+        $out = $this->filter('<p>[url=java<b></b>script://%0Aalert(1)]click[/url]</p>');
+        $this->assertStringNotContainsString('href', $out);
+        $this->assertStringNotContainsString('javascript', $out);
+        $this->assertStringContainsString('click', $out);
+    }
+
+    public function testDroppedTagCannotJoinStrayLessThanIntoTag()
+    {
+        $out = $this->filter('<p><[url=java<b></b>script:x]img src=x onerror=alert(1)//[/url]></p>');
+        $this->assertStringNotContainsString('<img', $out);
+        $this->assertStringContainsString('&lt;img src=x', $out);
+    }
+
+    public function testXmlDeclarationIsKept()
+    {
+        $html = '<?xml version="1.0" encoding="UTF-8"?><p>[b]x[/b]</p>';
+        $this->assertSame('<?xml version="1.0" encoding="UTF-8"?><p><strong>x</strong></p>', $this->filter($html));
+    }
+
+    public function testCdataSectionIsKept()
+    {
+        $html = '<svg><![CDATA[<foreignObject><img src=x onerror=alert(1)></foreignObject> [b]x[/b]]]></svg>';
+        $this->assertSame($html . '<strong>y</strong>', $this->filter($html . '[b]y[/b]'));
+    }
+
+    public function testBogusCommentIsKept()
+    {
+        foreach (array('<![x <img src=x onerror=alert(1)>', '<?x <img src=x onerror=alert(1)>', '</ <img src=x>') as $html) {
+            $this->assertSame($html . '<b>y</b>', $this->filter($html . '<b>y</b>'));
+        }
+    }
+
+    public function testUnclosedBlockIsHeldToTheEnd()
+    {
+        $blocks = array('<script>[b]x[/b]', '<textarea>[b]x[/b]', '<style>[b]x[/b]', '<select>[b]x[/b]',
+            '<!-- [b]x[/b]');
+        foreach ($blocks as $html) {
+            $this->assertSame($html, $this->filter($html));
+        }
+    }
+
+    public function testCommentEndsWhereBrowserEndsIt()
+    {
+        foreach (array('<!-->', '<!--->', '<!-- a --!>', '<![CDATA[x>') as $html) {
+            $this->assertSame($html . '<strong>y</strong>', $this->filter($html . '[b]y[/b]'));
+        }
+    }
+
+    public function testGeneratedTagWithoutHeldMarkupIsKept()
+    {
+        $out = $this->filter('<p>[url=http://example.test/a]click[/url]</p>');
+        $this->assertStringContainsString('href="http://example.test/a"', $out);
+        $this->assertStringContainsString('>click</a>', $out);
+    }
+}

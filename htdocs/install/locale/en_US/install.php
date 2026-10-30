@@ -154,6 +154,7 @@ define("ERR_NO_DBCONNECTION", "Could not connect to the database server."); // L
 define("ERR_WRITING_CONSTANT", "Failed writing constant %s."); // L122
 define("ERR_NO_CREATEDB", "Cannot create database on this platform.");
 
+define("ERR_ALREADY_INSTALLED", "mainfile.php or secure.php (in the data folder of the XOOPS data directory) already exists, so this site is already installed. To install again, check that the paths you entered are this site's, delete both files and restart the installer.");
 define("ERR_COPY_MAINFILE", "Could not copy the distribution file to mainfile.php");
 define("ERR_WRITE_MAINFILE", "Could not write into mainfile.php. Please check the file permission and try again.");
 define("ERR_READ_MAINFILE", "Could not open mainfile.php for reading");
