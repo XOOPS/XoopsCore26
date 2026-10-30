@@ -42,11 +42,21 @@ if ($op === 'save') {
     $uid = $xoops->user->getVar('uid');
     $errors = array();
     $edituser = $xoops->user;
+    $wrongPassword = false;
     if ($xoops->user->isAdmin()) {
+        $email = trim($_POST['email']);
+        // a new email address needs the current password
+        $wrongPassword = $email !== $edituser->getVar('email', 'n')
+            && !$xoops->getHandlerMember()->verifyPassword($edituser, isset($_POST['oldpass']) ? (string) $_POST['oldpass'] : '');
         $edituser->setVar('uname', trim($_POST['uname']));
-        $edituser->setVar('email', trim($_POST['email']));
+        if (!$wrongPassword) {
+            $edituser->setVar('email', $email);
+        }
     }
     $stop = XoopsUserUtility::validate($edituser);
+    if ($wrongPassword) {
+        $stop .= XoopsLocale::E_WRONG_CURRENT_PASSWORD . '<br />';
+    }
 
     if (!empty($stop)) {
         $op = 'editprofile';

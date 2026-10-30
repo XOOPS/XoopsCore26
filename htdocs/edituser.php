@@ -19,6 +19,7 @@
  */
 
 use Xmf\Request;
+use Xoops\Core\Session\RememberMe;
 
 include __DIR__ . '/mainfile.php';
 
@@ -68,6 +69,14 @@ if ($op === 'saveuser') {
             $errors[] = XoopsLocale::E_PASSWORDS_MUST_MATCH;
         }
     }
+    // a new password or email address needs the current password
+    $emailChanged = $email != '' && $email != $xoops->user->getVar('email', 'n');
+    if ($password != '' || $emailChanged) {
+        $oldpass = Request::getString('oldpass', '');
+        if (!$xoops->getHandlerMember()->verifyPassword($xoops->user, $oldpass)) {
+            $errors[] = XoopsLocale::E_WRONG_CURRENT_PASSWORD;
+        }
+    }
     if (count($errors) > 0) {
         $xoops->header();
         echo '<div>';
@@ -110,6 +119,9 @@ if ($op === 'saveuser') {
             echo $edituser->getHtmlErrors();
             $xoops->footer();
         } else {
+            if ($password != '') {
+                (new RememberMe())->invalidateAllForUser($uid);
+            }
             $xoops->redirect('userinfo.php?uid=' . $uid, 1, XoopsLocale::S_YOUR_PROFILE_UPDATED);
         }
         exit();
@@ -185,6 +197,8 @@ if ($op === 'editprofile') {
     );
     $pwd_tray->addElement($pwd_text);
     $pwd_tray->addElement($pwd_text2);
+    $oldpass_text = new Xoops\Form\Password(XoopsLocale::CURRENT_PASSWORD, 'oldpass');
+    $oldpass_text->setDescription(XoopsLocale::CURRENT_PASSWORD_DESC);
     $mailok_radio = new Xoops\Form\RadioYesNo(
         XoopsLocale::Q_RECEIVE_OCCASIONAL_EMAIL_NOTICES_FROM_ADMINISTRATORS,
         'user_mailok',
@@ -207,6 +221,7 @@ if ($op === 'editprofile') {
     $form->addElement($sig_cbox);
     $form->addElement($bio_tarea);
     $form->addElement($pwd_tray);
+    $form->addElement($oldpass_text);
     $form->addElement($mailok_radio);
     $form->addElement($uid_hidden);
     $form->addElement($op_hidden);

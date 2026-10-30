@@ -228,7 +228,8 @@ switch ($op) {
                 $edituser->setVar("user_occ", $_REQUEST['user_occ']);
                 $edituser->setVar("user_intrest", $_REQUEST['user_intrest']);
                 $edituser->setVar('user_mailok', $_REQUEST['user_mailok']);
-                if ($_REQUEST['pass2'] != "") {
+                $passwordChanged = $_REQUEST['pass2'] != "";
+                if ($passwordChanged) {
                     if ($_REQUEST['password'] != $_REQUEST['pass2']) {
                         $xoops->header();
                         echo "
@@ -237,12 +238,16 @@ switch ($op) {
                         exit();
                     }
                     $edituser->setVar("pass", password_hash($_REQUEST['password'], PASSWORD_DEFAULT));
+                    $edituser->setVar('last_pass_change', time());
                 }
                 if (!$member_handler->insertUser($edituser)) {
                     $xoops->header();
                     echo $edituser->getHtmlErrors();
                     $xoops->footer();
                 } else {
+                    if ($passwordChanged) {
+                        (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($edituser->getVar('uid'));
+                    }
                     // membership changes need the group-administration right, like the form
                     if ($can_admin_groups && $req_groups != array()) {
                         $oldgroups = $edituser->getGroups();

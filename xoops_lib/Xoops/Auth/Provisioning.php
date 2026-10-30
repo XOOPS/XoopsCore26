@@ -218,11 +218,18 @@ class Provisioning
         $xoops = \Xoops::getInstance();
         $ret = false;
         $member_handler = $xoops->getHandlerMember();
-        $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
-        $xoopsUser->setVar('last_pass_change', time());
+        // this runs on every synchronised login: only a changed directory password is a password change
+        $passwordChanged = !$member_handler->verifyPassword($xoopsUser, stripslashes($pwd));
+        if ($passwordChanged) {
+            $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
+            $xoopsUser->setVar('last_pass_change', time());
+        }
         $this->setVarsMapping($xoopsUser, $data);
 
         if ($member_handler->insertUser($xoopsUser)) {
+            if ($passwordChanged) {
+                (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($xoopsUser->getVar('uid'));
+            }
             return $xoopsUser;
         } else {
             $xoops->redirect(\XoopsBaseConfig::get('url') . '/user.php', 5, $xoopsUser->getHtmlErrors());

@@ -105,7 +105,7 @@ if (!isset($_POST['submit'])) {
     $password = trim($_POST['newpass']);
     $vpass = trim($_POST['vpass']);
     $errors = array();
-    if (!password_verify($oldpass, $xoops->user->getVar('pass', 'n'))) {
+    if (!$xoops->getHandlerMember()->verifyPassword($xoops->user, $oldpass)) {
         $errors[] = _PROFILE_MA_WRONGPASSWORD;
     }
     if (mb_strlen($password) < $xoops->getConfig('minpass')) {
@@ -122,6 +122,7 @@ if (!isset($_POST['submit'])) {
         $xoops->user->setVar('pass', password_hash($password, PASSWORD_DEFAULT));
         $xoops->user->setVar('last_pass_change', time());
         if ($xoops->getHandlerMember()->insertUser($xoops->user)) {
+            (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($xoops->user->getVar('uid'));
             $msg = _PROFILE_MA_PASSWORDCHANGED;
         } else {
             $msg = _PROFILE_MA_ERRORDURINGSAVE;

@@ -133,7 +133,14 @@ switch ($op) {
         }
         $myts = \Xoops\Core\Text\Sanitizer::getInstance();
         $user->setVar('uname', $_POST['uname']);
-        $user->setVar('email', trim($_POST['email']));
+        // changing your own email address needs the current password
+        $email = trim($_POST['email']);
+        $wrongPassword = !$user->isNew() && $user->getVar('uid') == $xoops->user->getVar('uid')
+            && $email !== $user->getVar('email', 'n')
+            && !$xoops->getHandlerMember()->verifyPassword($user, isset($_POST['oldpass']) ? (string) $_POST['oldpass'] : '');
+        if (!$wrongPassword) {
+            $user->setVar('email', $email);
+        }
         if (isset($_POST['level']) && $user->getVar('level') != (int)($_POST['level'])) {
             $user->setVar('level', (int)($_POST['level']));
         }
@@ -151,6 +158,9 @@ switch ($op) {
         $errors = array();
         if ($stop != "") {
             $errors[] = $stop;
+        }
+        if ($wrongPassword) {
+            $errors[] = XoopsLocale::E_WRONG_CURRENT_PASSWORD;
         }
 
         foreach (array_keys($fields) as $i) {
@@ -171,6 +181,9 @@ switch ($op) {
 
         if (count($errors) == 0) {
             if ($handler->insertUser($user)) {
+                if (!empty($password)) {
+                    (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($user->getVar('uid'));
+                }
                 $profile->setVar('profile_id', $user->getVar('uid'));
                 $profile_handler->insert($profile);
                 include_once $xoops->path("/modules/system/constants.php");

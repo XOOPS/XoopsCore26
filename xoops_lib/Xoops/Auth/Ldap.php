@@ -148,6 +148,8 @@ class Ldap extends AuthAbstract
             if ($this->ldap_use_TLS) { // We use TLS secure connection
                 if (!ldap_start_tls($this->ds)) {
                     $this->setErrors(0, \XoopsLocale::E_TLS_CONNECTION_NOT_OPENED);
+                    @ldap_close($this->ds);
+                    return false;
                 }
             }
             // If the uid is not in the DN we proceed to a search
