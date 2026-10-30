@@ -10,6 +10,7 @@
 */
 
 use Xoops\Core\FixedGroups;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * Extended User Profile
@@ -184,7 +185,7 @@ switch ($op) {
         if (count($errors) == 0) {
             if ($handler->insertUser($user)) {
                 if (!empty($password)) {
-                    (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($user->getVar('uid'));
+                    new RememberMe()->invalidateAllForUser($user->getVar('uid'));
                 }
                 $profile->setVar('profile_id', $user->getVar('uid'));
                 $profile_handler->insert($profile);

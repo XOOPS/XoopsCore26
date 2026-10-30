@@ -20,6 +20,8 @@
  * @author          Taiwen Jiang <phppp@users.sourceforge.net>
  */
 
+use Xoops\Core\Session\RememberMe;
+
 include __DIR__ . '/header.php';
 $xoops = Xoops::getInstance();
 $email = isset($_GET['email']) ? trim($_GET['email']) : '';
@@ -40,7 +42,7 @@ if (empty($user)) {
 } else {
     $code = isset($_GET['code']) ? trim($_GET['code']) : '';
     // full digest of the hash: a prefix of the hash itself is the same for every bcrypt user
-    $areyou = md5($user->getVar("pass", 'n'));
+    $areyou = hash('sha256', $user->getVar("pass", 'n'));
     if ($code != '' && hash_equals($areyou, $code)) {
         $newpass = $xoops->makePass();
         // save first: never mail a password that was not stored
@@ -52,7 +54,7 @@ if (empty($user)) {
             include __DIR__ . '/footer.php';
             exit();
         }
-        (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($user->getVar('uid'));
+        new RememberMe()->invalidateAllForUser($user->getVar('uid'));
         $xoopsMailer = $xoops->getMailer();
         $xoopsMailer->useMail();
         $xoopsMailer->setTemplate("lostpass2.tpl");

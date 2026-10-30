@@ -72,7 +72,7 @@ if ($op === 'saveuser') {
     // a new password or email address needs the current password
     $emailChanged = $email != '' && $email != $xoops->user->getVar('email', 'n');
     if ($password != '' || $emailChanged) {
-        $oldpass = Request::getString('oldpass', '');
+        $oldpass = Request::getString('oldpass');
         if (!$xoops->getHandlerMember()->verifyPassword($xoops->user, $oldpass)) {
             $errors[] = XoopsLocale::E_WRONG_CURRENT_PASSWORD;
         }
@@ -120,7 +120,7 @@ if ($op === 'saveuser') {
             $xoops->footer();
         } else {
             if ($password != '') {
-                (new RememberMe())->invalidateAllForUser($uid);
+                new RememberMe()->invalidateAllForUser($uid);
             }
             $xoops->redirect('userinfo.php?uid=' . $uid, 1, XoopsLocale::S_YOUR_PROFILE_UPDATED);
         }

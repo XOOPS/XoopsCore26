@@ -34,7 +34,7 @@ if ($xoops->isUser()) {
     $dirname = '';
     $modulesPath = rtrim($xoops->normalizePath($xoops->path('modules')), '/') . '/';
     $scriptPath = $xoops->normalizePath($_SERVER['SCRIPT_FILENAME']);
-    if (0 === strpos($scriptPath, $modulesPath)) {
+    if (str_starts_with($scriptPath, $modulesPath)) {
         $parts = explode('/', substr($scriptPath, strlen($modulesPath)));
         if (count($parts) > 1 && !in_array('..', $parts, true)) {
             $dirname = $parts[0];
@@ -49,7 +49,7 @@ if ($xoops->isUser()) {
         foreach ($xoops->getActiveModules() as $activeDirname) {
             $modulePath = realpath($xoops->path('modules/' . $activeDirname));
             if (false !== $modulePath
-                && 0 === strpos($scriptPath, rtrim($xoops->normalizePath($modulePath), '/') . '/')
+                && str_starts_with($scriptPath, rtrim($xoops->normalizePath($modulePath), '/') . '/')
             ) {
                 $matches[] = $activeDirname;
             }

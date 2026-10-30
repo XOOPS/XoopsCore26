@@ -364,14 +364,14 @@ class XoopsMemberHandler
      *
      * @todo - md5 support should be completely removed eventually
      */
-    public function verifyPassword(XoopsUser $user, $pwd)
+    public function verifyPassword(XoopsUser $user, $pwd): bool
     {
         $hash = (string) $user->pass();
         // see if we have a crypt like signature, old md5 hash is just hex digits
-        if (substr($hash, 0, 1) === '$') {
+        if (str_starts_with($hash, '$')) {
             return password_verify((string) $pwd, $hash);
         }
-        return hash_equals($hash, md5((string) $pwd));
+        return hash_equals($hash, md5((string) $pwd)); // NOSONAR verifies legacy md5 hashes; loginUser() rehashes them
     }
 
     /**

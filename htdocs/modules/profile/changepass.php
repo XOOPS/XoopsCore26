@@ -10,6 +10,7 @@
 */
 
 use Xoops\Html\Menu\Link;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * Extended User Profile
@@ -122,7 +123,7 @@ if (!isset($_POST['submit'])) {
         $xoops->user->setVar('pass', password_hash($password, PASSWORD_DEFAULT));
         $xoops->user->setVar('last_pass_change', time());
         if ($xoops->getHandlerMember()->insertUser($xoops->user)) {
-            (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($xoops->user->getVar('uid'));
+            new RememberMe()->invalidateAllForUser($xoops->user->getVar('uid'));
             $msg = _PROFILE_MA_PASSWORDCHANGED;
         } else {
             $msg = _PROFILE_MA_ERRORDURINGSAVE;

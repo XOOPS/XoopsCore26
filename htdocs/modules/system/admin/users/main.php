@@ -32,6 +32,7 @@ use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\CriteriaCompo;
 use Xmf\Request;
 use Xoops\Core\FixedGroups;
+use Xoops\Core\Session\RememberMe;
 
 $xoops = Xoops::getInstance();
 
@@ -246,7 +247,7 @@ switch ($op) {
                     $xoops->footer();
                 } else {
                     if ($passwordChanged) {
-                        (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($edituser->getVar('uid'));
+                        new RememberMe()->invalidateAllForUser($edituser->getVar('uid'));
                     }
                     // membership changes need the group-administration right, like the form
                     if ($can_admin_groups && $req_groups != array()) {

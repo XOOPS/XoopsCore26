@@ -39,7 +39,7 @@ class MemberHandlerLoginTest extends \PHPUnit\Framework\TestCase
 
     public function testLoginUserLegacyMd5LogsInAndRehashes()
     {
-        list($handler, $users) = $this->handlerForHash(md5('secret'));
+        list($handler, $users) = $this->handlerForHash(md5('secret')); // NOSONAR legacy md5 hash fixture
         $user = $handler->loginUser('someone', 'secret');
         $this->assertInstanceOf(XoopsUser::class, $user);
         $this->assertSame(1, $users->inserted);
@@ -63,7 +63,7 @@ class MemberHandlerLoginTest extends \PHPUnit\Framework\TestCase
     public function testLoginUserLegacyMd5MagicHashCollisionIsRejected()
     {
         // md5('240610708') and md5('QNKCDZO') both look like 0e<digits>, equal under ==
-        list($handler, $users) = $this->handlerForHash(md5('240610708'));
+        list($handler, $users) = $this->handlerForHash(md5('240610708')); // NOSONAR legacy md5 hash fixture
         $this->assertFalse($handler->loginUser('someone', 'QNKCDZO'));
         $this->assertSame(0, $users->inserted);
     }

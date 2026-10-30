@@ -13,6 +13,7 @@ namespace Xoops\Auth;
 
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\Handlers\XoopsUser;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * Authentication provisioning class
@@ -231,7 +232,7 @@ class Provisioning
 
         if ($member_handler->insertUser($xoopsUser)) {
             if ($passwordChanged) {
-                (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($xoopsUser->getVar('uid'));
+                new RememberMe()->invalidateAllForUser($xoopsUser->getVar('uid'));
             }
             return $xoopsUser;
         } else {

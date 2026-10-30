@@ -10,6 +10,7 @@
 */
 
 use Xmf\Request;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * XOOPS password recovery
@@ -47,7 +48,7 @@ if (empty($getuser)) {
     $userObject = $getuser[0]; // what if there was more than one?
     $code = Request::getCmd('code', '', 'GET');
     // full digest: the old 5-character code could be guessed; the hash changes once used
-    $areyou = md5($userObject->getVar("pass", 'n'));
+    $areyou = hash('sha256', $userObject->getVar("pass", 'n'));
     if ($code != '' && hash_equals($areyou, $code)) {
         $newpass = $xoops->makePass();
         // save first: never mail a password that was not stored
@@ -59,7 +60,7 @@ if (empty($getuser)) {
             $xoops->footer();
             exit();
         }
-        (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($userObject->getVar('uid'));
+        new RememberMe()->invalidateAllForUser($userObject->getVar('uid'));
         $xoopsMailer = $xoops->getMailer();
         $xoopsMailer->useMail();
         $xoopsMailer->setTemplate("lostpass2.tpl");
