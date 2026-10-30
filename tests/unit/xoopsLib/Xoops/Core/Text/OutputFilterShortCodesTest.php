@@ -55,6 +55,13 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($html, $this->filter($html));
     }
 
+    public function testClosingTagWithAttributesEndsBlock()
+    {
+        $out = $this->filter('<script>var a = 1;</script data-x>[b]next[/b]<style>a{}</style >[b]y[/b]');
+        $this->assertStringStartsWith('<script>var a = 1;</script data-x><strong>next</strong>', $out);
+        $this->assertStringEndsWith('</style ><strong>y</strong>', $out);
+    }
+
     public function testHeldMarkupCopiedIntoGeneratedAttributeIsDropped()
     {
         $this->assertSame(

@@ -19,8 +19,12 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
     // browser ends it (<!-->, <!--->, --!>), as a browser reads them. An unclosed
     // CDATA is held only to its first >, which ends it outside SVG and MathML;
     // inside them the rest stays inert text whatever the shortcodes make of it.
-    $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*(?:<\/textarea\s*>|\z)|<select(?=[\s\/>])[\S\s]*(?:<\/select\s*>|\z)'
-        . '|<script(?=[\s\/>])[\S\s]*(?:<\/script\s*>|\z)|<style(?=[\s\/>])[\S\s]*(?:<\/style\s*>|\z)'
+    // a browser ignores attributes on an end tag, so </script data-x> closes too
+    $endTag = '(?=[\s\/>])(?:[^>"\']|"[^"]*"|\'[^\']*\')*>';
+    $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*(?:<\/textarea' . $endTag . '|\z)'
+        . '|<select(?=[\s\/>])[\S\s]*(?:<\/select' . $endTag . '|\z)'
+        . '|<script(?=[\s\/>])[\S\s]*(?:<\/script' . $endTag . '|\z)'
+        . '|<style(?=[\s\/>])[\S\s]*(?:<\/style' . $endTag . '|\z)'
         . '|<!--(?:-?>|[\S\s]*(?:--!?>|\z))|<\?[\S\s]*\?>|<!\[CDATA\[[\S\s]*\]\]>'
         . '|' . $tagPattern . '|<[!?\/][^>]*>)/Ui';
 

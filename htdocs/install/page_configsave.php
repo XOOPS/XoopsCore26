@@ -168,7 +168,8 @@ if (empty($error)) {
     if ($k === 'authorized') {
         continue;
     }
-    echo "<li><strong>XOOPS_{$k}</strong> " . IS_VALOR . ' ' . installHtmlSpecialCharacters((string) $v) . '</li>';
+    $displayValue = is_array($v) ? var_export($v, true) : (string) $v;
+    echo "<li><strong>XOOPS_{$k}</strong> " . IS_VALOR . ' ' . installHtmlSpecialCharacters($displayValue) . '</li>';
 }
     ?>
 </ul>
