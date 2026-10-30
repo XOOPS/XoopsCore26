@@ -1,24 +1,27 @@
 <?php
 /*
  * Smarty plugin to enable shortcodes in templates
+ *
+ * Shortcodes are expanded only in text between HTML tags. Tags (and so their
+ * attributes) and the bodies of form, script and style elements are swapped out
+ * for random placeholders first, because text there is already escaped for its
+ * context and shortcode markup would break out of it.
  */
 function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $template)
 {
     $shortcodes = \Xoops\Core\Text\Sanitizer::getInstance()->getShortCodes();
-    $shortcodes->addShortcode(
-        'nosc42',
-        function ($attributes, $content, $tagName) {
-            return base64_decode($content);
-        }
-    );
 
-    // breaks out form elements
-    $scPattern = '/(<textarea[\S\s]*\/textarea>|<input[\S\s]*>|<select[\S\s]*\/select>|<script[\S\s]*\/script>|<style[\S\s]*\/style>)/U';
+    $scPattern = '/(<textarea[\S\s]*\/textarea\s*>|<select[\S\s]*\/select\s*>|<script[\S\s]*\/script\s*>'
+        . '|<style[\S\s]*\/style\s*>|<!--[\S\s]*-->|<[\/!]?[a-z](?:[^>"\']|"[^"]*"|\'[^\']*\')*>)/Ui';
 
+    $marker = "\x1A" . bin2hex(random_bytes(8)) . '_';
+    $held = array();
     $text = preg_replace_callback(
         $scPattern,
-        function ($innerMatches) {
-            return '[nosc42]' . base64_encode($innerMatches[1]) . '[/nosc42]';
+        function ($innerMatches) use ($marker, &$held) {
+            $key = $marker . count($held) . "\x1A";
+            $held[$key] = $innerMatches[1];
+            return $key;
         },
         $output
     );
@@ -29,23 +32,5 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
 
     $text = $shortcodes->process($text);
 
-    return $text;
-
-    /*
-    $noscPattern = '/({nosc42filter}([\S\s]*){\/nosc42filter})/U';
-
-    $text = preg_replace_callback(
-        $noscPattern,
-        function ($innerMatches) {
-            return base64_decode($innerMatches[2]);
-        },
-        $text
-    );
-    if ($text===null) {
-        trigger_error('preg_last_error=' . preg_last_error(), E_USER_WARNING);
-        return $output;
-    }
-
-    return $text;
-*/
+    return strtr($text, $held);
 }

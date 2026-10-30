@@ -10,6 +10,12 @@ include_once $xoops_root_path . "/mainfile.php";
 $xoops = \Xoops::getInstance();
 $xoops->logger()->quiet();
 
+// every file manager script includes this file: only system administrators may use it
+if (!$xoops->isAdmin()) {
+    http_response_code(403);
+    exit('Access Denied');
+}
+
 $chemin_array=parse_url(\XoopsBaseConfig::get('url'));
 $chemin_scheme =  $chemin_array["scheme"]; // http
 $chemin_host =  $chemin_array["host"]; // www.example.com  or // localhost

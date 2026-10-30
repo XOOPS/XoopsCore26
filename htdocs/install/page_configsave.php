@@ -38,6 +38,17 @@ if (empty($settings['ROOT_PATH'])) {
     $wizard->redirectToPage('dbdriver');
     exit();
 }
+
+// A mainfile.php that this session did not write means the site is already
+// installed: never let a new installer session rewrite its configuration.
+if (defined('XOOPS_MAINFILE_INCLUDED') && empty($_SESSION['configsave_owner'])) {
+    $_SESSION['pageHasHelp'] = false;
+    $_SESSION['pageHasForm'] = false;
+    $_SESSION['content'] = '<div class="errorMsg">' . ERR_ALREADY_INSTALLED . '</div>';
+    include XOOPS_INSTALL_PATH . '/include/install_tpl.php';
+    exit();
+}
+$_SESSION['configsave_owner'] = true;
 $error = '';
 
 $rewrite = array(
@@ -56,22 +67,7 @@ if (!@copy($settings['ROOT_PATH'] . '/mainfile.dist.php', $settings['ROOT_PATH']
         $content = fread($file, filesize($settings['ROOT_PATH'] . '/mainfile.php'));
         fclose($file);
 
-        foreach ($rewrite as $key => $val) {
-            if ($key === 'authorized') {
-                continue;
-            }
-            if (is_int($val) && preg_match("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([0-9]+)\s*\)/", $content)) {
-                $content = preg_replace("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([0-9]+)\s*\)/", "define('XOOPS_{$key}', {$val})", $content);
-            } else {
-                if (preg_match("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([\"'])(.*?)\\4\s*\)/", $content)) {
-                    $val = str_replace('$', '\$', addslashes($val));
-                    $content = preg_replace("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([\"'])(.*?)\\4\s*\)/", "define('XOOPS_{$key}', '{$val}')", $content);
-                } else {
-                    //$this->error = true;
-                    //$this->report .= _NGIMG.sprintf( ERR_WRITING_CONSTANT, "<strong>$val</strong>")."<br />\n";
-                }
-            }
-        }
+        $content = install_rewriteDefines($content, $rewrite);
         if (!$file = fopen($settings['ROOT_PATH'] . '/mainfile.php', "w")) {
             $error = ERR_WRITE_MAINFILE;
         } else {
@@ -94,19 +90,7 @@ if (!@copy($rewrite['VAR_PATH'] . '/data/secure.dist.php', $rewrite['VAR_PATH'] 
         $content = fread($file, filesize($rewrite['VAR_PATH'] . '/data/secure.php'));
         fclose($file);
 
-        foreach ($rewrite as $key => $val) {
-            if ($key === 'authorized') {
-                continue;
-            }
-            if (is_int($val) && preg_match("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([0-9]+)\s*\)/", $content)) {
-                $content = preg_replace("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([0-9]+)\s*\)/", "define('XOOPS_{$key}', {$val})", $content);
-            } else {
-                if (preg_match("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([\"'])(.*?)\\4\s*\)/", $content)) {
-                    $val = str_replace('$', '\$', addslashes($val));
-                    $content = preg_replace("/(define\()([\"'])(XOOPS_{$key})\\2,\s*([\"'])(.*?)\\4\s*\)/", "define('XOOPS_{$key}', \"{$val}\")", $content);
-                }
-            }
-        }
+        $content = install_rewriteDefines($content, $rewrite);
         if (!$file = fopen($rewrite['VAR_PATH'] . '/data/secure.php', "w")) {
             $error = ERR_WRITE_SECURE;
         } else {
@@ -149,7 +133,7 @@ if (empty($error)) {
     if ($k === 'authorized') {
         continue;
     }
-    echo "<li><strong>XOOPS_{$k}</strong> " . IS_VALOR . " {$v}</li>";
+    echo "<li><strong>XOOPS_{$k}</strong> " . IS_VALOR . ' ' . installHtmlSpecialCharacters((string) $v) . '</li>';
 }
     ?>
 </ul>
