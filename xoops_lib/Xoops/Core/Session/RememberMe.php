@@ -77,6 +77,11 @@ class RememberMe
     protected $now = 0;
 
     /**
+     * @var string revocation generation; tokens tagged with any other one are discarded
+     */
+    protected $generation = '';
+
+    /**
      * constructor
      */
     public function __construct()
@@ -156,7 +161,12 @@ class RememberMe
     /**
      * Invalidate all existing "remember me" cookie by deleting all the series/tokens
      *
-     * This should be called during a password change.
+     * This should be called during a password change. A fresh generation also voids
+     * tokens that a concurrent recall() writes back after this call. It is random rather
+     * than a counter so concurrent revocations cannot collapse into one. Tokens refresh
+     * their 30 day lifetime on every recall but the generation is never rewritten (a
+     * rewrite could restore a revoked value), so it is kept for ten years; a null TTL
+     * would mean the cache default of five days. If it is evicted, tagged tokens fail closed.
      *
      * @param integer $userId id of user associated with the sessions/tokens to be invalidated
      *
@@ -165,6 +175,7 @@ class RememberMe
     public function invalidateAllForUser($userId)
     {
         $this->readUserTokens($userId);
+        $this->xoops->cache()->write("user/{$userId}/usercookie_gen", Random::generateKey(), 315360000);
         $this->clearUserTokens();
         $this->writeUserTokens($userId);
     }
@@ -233,6 +244,7 @@ class RememberMe
      */
     protected function setSeriesToken($series, $token, $values)
     {
+        $values['gen'] = $this->generation;
         $this->userTokens[$series][$token] = $values;
     }
 
@@ -259,6 +271,7 @@ class RememberMe
     protected function readUserTokens($userId)
     {
         $key = "user/{$userId}/usercookie";
+        $this->generation = (string) $this->xoops->cache()->read("user/{$userId}/usercookie_gen");
         $this->userTokens = $this->xoops->cache()->read($key);
         if (false === $this->userTokens) {
             $this->clearUserTokens();
@@ -280,7 +293,7 @@ class RememberMe
     }
 
     /**
-     * Remove any expired tokens
+     * Remove any expired or revoked tokens
      *
      * @return void
      */
@@ -290,7 +303,9 @@ class RememberMe
         $userTokens = $this->userTokens;
         foreach ($userTokens as $series => $tokens) {
             foreach ($tokens as $token => $values) {
-                if (isset($values['expires_at']) && $values['expires_at'] < $now) {
+                if ((isset($values['expires_at']) && $values['expires_at'] < $now)
+                    || ($values['gen'] ?? '') !== $this->generation
+                ) {
                     $this->unsetSeriesToken($series, $token);
                 }
             }

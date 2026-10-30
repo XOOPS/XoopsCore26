@@ -30,12 +30,40 @@ include_once $xoops->path('include/cp_functions.php');
 
 $moduleperm_handler = $xoops->getHandlerGroupPermission();
 if ($xoops->isUser()) {
-    $url_arr = explode('/', strstr($_SERVER['REQUEST_URI'], '/modules/'));
-    if (!$xoops->isActiveModule($url_arr[2])) {
+    // take the module from the script being run, not from the request URI
+    $dirname = '';
+    $modulesPath = rtrim($xoops->normalizePath($xoops->path('modules')), '/') . '/';
+    $scriptPath = $xoops->normalizePath($_SERVER['SCRIPT_FILENAME']);
+    if (str_starts_with($scriptPath, $modulesPath)) {
+        $parts = explode('/', substr($scriptPath, strlen($modulesPath)));
+        if (count($parts) > 1 && !in_array('..', $parts, true)) {
+            $dirname = $parts[0];
+        }
+    }
+    // the server may report the resolved path: match it against each resolved module folder,
+    // so symlinked modules (or a symlinked modules folder) still work
+    $scriptPath = realpath($_SERVER['SCRIPT_FILENAME']);
+    if ('' === $dirname && false !== $scriptPath) {
+        $scriptPath = $xoops->normalizePath($scriptPath);
+        $matches = array();
+        foreach ($xoops->getActiveModules() as $activeDirname) {
+            $modulePath = realpath($xoops->path('modules/' . $activeDirname));
+            if (false !== $modulePath
+                && str_starts_with($scriptPath, rtrim($xoops->normalizePath($modulePath), '/') . '/')
+            ) {
+                $matches[] = $activeDirname;
+            }
+        }
+        // two module names on one folder: the right one cannot be known, so deny
+        if (1 === count($matches)) {
+            $dirname = $matches[0];
+        }
+    }
+    if (!$xoops->isActiveModule($dirname)) {
         $xoops->redirect($xoops_url, 1, XoopsLocale::E_NO_ACCESS_PERMISSION);
     }
-    $xoops->module = $xoops->getModuleByDirname($url_arr[2]);
-    unset($url_arr);
+    $xoops->module = $xoops->getModuleByDirname($dirname);
+    unset($dirname, $modulesPath, $scriptPath, $parts, $activeDirname, $modulePath, $matches);
     if (!$moduleperm_handler->checkRight('module_admin', $xoops->module->getVar('mid'), $xoops->user->getGroups())) {
         $xoops->redirect($xoops_url, 1, XoopsLocale::E_NO_ACCESS_PERMISSION);
     }

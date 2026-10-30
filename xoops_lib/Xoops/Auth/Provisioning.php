@@ -13,6 +13,7 @@ namespace Xoops\Auth;
 
 use Xoops\Core\Kernel\Criteria;
 use Xoops\Core\Kernel\Handlers\XoopsUser;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * Authentication provisioning class
@@ -218,11 +219,21 @@ class Provisioning
         $xoops = \Xoops::getInstance();
         $ret = false;
         $member_handler = $xoops->getHandlerMember();
-        $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
-        $xoopsUser->setVar('last_pass_change', time());
+        // this runs on every synchronised login: only a changed directory password is a password change
+        $passwordChanged = !$member_handler->verifyPassword($xoopsUser, stripslashes($pwd));
+        if ($passwordChanged) {
+            $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
+            $xoopsUser->setVar('last_pass_change', time());
+        } elseif (password_needs_rehash((string) $xoopsUser->pass(), PASSWORD_DEFAULT)) {
+            // same password, weaker stored hash (legacy MD5): upgrade it, this is not a password change
+            $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
+        }
         $this->setVarsMapping($xoopsUser, $data);
 
         if ($member_handler->insertUser($xoopsUser)) {
+            if ($passwordChanged) {
+                new RememberMe()->invalidateAllForUser($xoopsUser->getVar('uid'));
+            }
             return $xoopsUser;
         } else {
             $xoops->redirect(\XoopsBaseConfig::get('url') . '/user.php', 5, $xoopsUser->getHtmlErrors());

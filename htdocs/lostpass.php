@@ -10,6 +10,7 @@
 */
 
 use Xmf\Request;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * XOOPS password recovery
@@ -46,9 +47,20 @@ if (empty($getuser)) {
 } else {
     $userObject = $getuser[0]; // what if there was more than one?
     $code = Request::getCmd('code', '', 'GET');
-    $areyou = substr(md5($userObject->getVar("pass")), 0, 5);
-    if ($code != '' && $areyou == $code) {
+    // full digest: the old 5-character code could be guessed; the hash changes once used
+    $areyou = hash('sha256', $userObject->getVar("pass", 'n'));
+    if ($code != '' && hash_equals($areyou, $code)) {
         $newpass = $xoops->makePass();
+        // save first: never mail a password that was not stored
+        $userObject->setVar("pass", password_hash($newpass, PASSWORD_DEFAULT));
+        $userObject->setVar('last_pass_change', time());
+        if (false === $userHandler->insert($userObject)) {
+            $xoops->header();
+            echo XoopsLocale::E_USER_NOT_UPDATED;
+            $xoops->footer();
+            exit();
+        }
+        new RememberMe()->invalidateAllForUser($userObject->getVar('uid'));
         $xoopsMailer = $xoops->getMailer();
         $xoopsMailer->useMail();
         $xoopsMailer->setTemplate("lostpass2.tpl");
@@ -64,13 +76,6 @@ if (empty($getuser)) {
         if (!$xoopsMailer->send()) {
             echo $xoopsMailer->getErrors();
         }
-        // Next step: add the new password to the database
-        $userObject->setVar("pass", password_hash($newpass, PASSWORD_DEFAULT));
-        if (false === $userHandler->insert($userObject)) {
-            $xoops->header();
-            echo XoopsLocale::E_USER_NOT_UPDATED;
-            $xoops->footer();
-        }
         $xoops->redirect("user.php", 3, sprintf(XoopsLocale::SF_PASSWORD_SENT_TO, $userObject->getVar("uname")), false);
         // If no Code, send it
     } else {
@@ -81,7 +86,7 @@ if (empty($getuser)) {
         $xoopsMailer->assign("ADMINMAIL", $xoops->getConfig('adminmail'));
         $xoopsMailer->assign("SITEURL", $xoops_url . "/");
         $xoopsMailer->assign("IP", $_SERVER['REMOTE_ADDR']);
-        $xoopsMailer->assign("NEWPWD_LINK", $xoops_url . "/lostpass.php?email=" . $email . "&code=" . $areyou);
+        $xoopsMailer->assign("NEWPWD_LINK", $xoops_url . "/lostpass.php?email=" . urlencode($email) . "&code=" . $areyou);
         $xoopsMailer->setToUsers($userObject);
         $xoopsMailer->setFromEmail($xoops->getConfig('adminmail'));
         $xoopsMailer->setFromName($xoops->getConfig('sitename'));
