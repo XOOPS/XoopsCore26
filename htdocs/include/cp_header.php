@@ -45,21 +45,25 @@ if ($xoops->isUser()) {
     $scriptPath = realpath($_SERVER['SCRIPT_FILENAME']);
     if ('' === $dirname && false !== $scriptPath) {
         $scriptPath = $xoops->normalizePath($scriptPath);
+        $matches = array();
         foreach ($xoops->getActiveModules() as $activeDirname) {
             $modulePath = realpath($xoops->path('modules/' . $activeDirname));
             if (false !== $modulePath
                 && 0 === strpos($scriptPath, rtrim($xoops->normalizePath($modulePath), '/') . '/')
             ) {
-                $dirname = $activeDirname;
-                break;
+                $matches[] = $activeDirname;
             }
+        }
+        // two module names on one folder: the right one cannot be known, so deny
+        if (1 === count($matches)) {
+            $dirname = $matches[0];
         }
     }
     if (!$xoops->isActiveModule($dirname)) {
         $xoops->redirect($xoops_url, 1, XoopsLocale::E_NO_ACCESS_PERMISSION);
     }
     $xoops->module = $xoops->getModuleByDirname($dirname);
-    unset($dirname, $modulesPath, $scriptPath, $parts, $activeDirname, $modulePath);
+    unset($dirname, $modulesPath, $scriptPath, $parts, $activeDirname, $modulePath, $matches);
     if (!$moduleperm_handler->checkRight('module_admin', $xoops->module->getVar('mid'), $xoops->user->getGroups())) {
         $xoops->redirect($xoops_url, 1, XoopsLocale::E_NO_ACCESS_PERMISSION);
     }

@@ -223,6 +223,9 @@ class Provisioning
         if ($passwordChanged) {
             $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
             $xoopsUser->setVar('last_pass_change', time());
+        } elseif (password_needs_rehash((string) $xoopsUser->pass(), PASSWORD_DEFAULT)) {
+            // same password, weaker stored hash (legacy MD5): upgrade it, this is not a password change
+            $xoopsUser->setVar('pass', password_hash(stripslashes($pwd), PASSWORD_DEFAULT));
         }
         $this->setVarsMapping($xoopsUser, $data);
 

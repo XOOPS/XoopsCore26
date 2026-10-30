@@ -43,6 +43,16 @@ if (empty($user)) {
     $areyou = md5($user->getVar("pass", 'n'));
     if ($code != '' && hash_equals($areyou, $code)) {
         $newpass = $xoops->makePass();
+        // save first: never mail a password that was not stored
+        $user->setVar('pass', password_hash($newpass, PASSWORD_DEFAULT));
+        $user->setVar('last_pass_change', time());
+        if (!$member_handler->insertUser($user)) {
+            $xoops->header();
+            echo XoopsLocale::E_USER_NOT_UPDATED;
+            include __DIR__ . '/footer.php';
+            exit();
+        }
+        (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($user->getVar('uid'));
         $xoopsMailer = $xoops->getMailer();
         $xoopsMailer->useMail();
         $xoopsMailer->setTemplate("lostpass2.tpl");
@@ -58,17 +68,6 @@ if (empty($user)) {
         if (!$xoopsMailer->send()) {
             echo $xoopsMailer->getErrors();
         }
-
-        // Next step: add the new password to the database
-        $user->setVar('pass', password_hash($newpass, PASSWORD_DEFAULT));
-        $user->setVar('last_pass_change', time());
-        if (!$member_handler->insertUser($user)) {
-            $xoops->header();
-            echo XoopsLocale::E_USER_NOT_UPDATED;
-            include __DIR__ . '/footer.php';
-            exit();
-        }
-        (new \Xoops\Core\Session\RememberMe())->invalidateAllForUser($user->getVar('uid'));
         $xoops->redirect("user.php", 3, sprintf(XoopsLocale::SF_PASSWORD_SENT_TO, $user->getVar("uname")), false);
         // If no Code, send it
     } else {

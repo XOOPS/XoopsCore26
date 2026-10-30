@@ -37,7 +37,7 @@ class MemberHandlerLoginTest extends \PHPUnit\Framework\TestCase
         return array($handler, $users);
     }
 
-    public function test_legacyMd5_correctPasswordLogsInAndRehashes()
+    public function testLoginUserLegacyMd5LogsInAndRehashes()
     {
         list($handler, $users) = $this->handlerForHash(md5('secret'));
         $user = $handler->loginUser('someone', 'secret');
@@ -46,21 +46,21 @@ class MemberHandlerLoginTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(password_verify('secret', $user->pass()));
     }
 
-    public function test_currentHash_correctPasswordLogsInWithoutRehash()
+    public function testLoginUserCurrentHashLogsInWithoutRehash()
     {
         list($handler, $users) = $this->handlerForHash(password_hash('secret', PASSWORD_DEFAULT));
         $this->assertInstanceOf(XoopsUser::class, $handler->loginUser('someone', 'secret'));
         $this->assertSame(0, $users->inserted);
     }
 
-    public function test_currentHash_wrongPasswordIsRejected()
+    public function testLoginUserCurrentHashWrongPasswordIsRejected()
     {
         list($handler, $users) = $this->handlerForHash(password_hash('secret', PASSWORD_DEFAULT));
         $this->assertFalse($handler->loginUser('someone', 'Secret'));
         $this->assertSame(0, $users->inserted);
     }
 
-    public function test_legacyMd5_magicHashCollisionIsRejected()
+    public function testLoginUserLegacyMd5MagicHashCollisionIsRejected()
     {
         // md5('240610708') and md5('QNKCDZO') both look like 0e<digits>, equal under ==
         list($handler, $users) = $this->handlerForHash(md5('240610708'));

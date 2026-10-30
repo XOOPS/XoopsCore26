@@ -133,10 +133,12 @@ switch ($op) {
         }
         $myts = \Xoops\Core\Text\Sanitizer::getInstance();
         $user->setVar('uname', $_POST['uname']);
-        // changing your own email address needs the current password
+        // changing your own email address or password needs the current password
         $email = trim($_POST['email']);
+        // a blank or whitespace-only password field means "no change"
+        $newPassword = isset($_POST['password']) ? trim($_POST['password']) : '';
         $wrongPassword = !$user->isNew() && $user->getVar('uid') == $xoops->user->getVar('uid')
-            && $email !== $user->getVar('email', 'n')
+            && ($email !== $user->getVar('email', 'n') || '' !== $newPassword)
             && !$xoops->getHandlerMember()->verifyPassword($user, isset($_POST['oldpass']) ? (string) $_POST['oldpass'] : '');
         if (!$wrongPassword) {
             $user->setVar('email', $email);
@@ -145,9 +147,9 @@ switch ($op) {
             $user->setVar('level', (int)($_POST['level']));
         }
         $password = $vpass = null;
-        if (!empty($_POST['password'])) {
-            $password = trim($_POST['password']);
-            $vpass = trim($_POST['vpass']);
+        if ('' !== $newPassword && !$wrongPassword) {
+            $password = $newPassword;
+            $vpass = isset($_POST['vpass']) ? trim($_POST['vpass']) : '';
             $user->setVar('pass', password_hash($password, PASSWORD_DEFAULT));
             $user->setVar('last_pass_change', time());
         } elseif ($user->isNew()) {
