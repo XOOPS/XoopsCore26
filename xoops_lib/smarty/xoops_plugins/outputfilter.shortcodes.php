@@ -13,7 +13,7 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
 
     $tagPattern = '<[\/!]?[a-z](?:[^>"\']|"[^"]*"|\'[^\']*\')*>';
     $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*<\/textarea\s*>|<select(?=[\s\/>])[\S\s]*<\/select\s*>'
-        . '|<script(?=[\s\/>])[\S\s]*<\/script\s*>|<style(?=[\s\/>])[\S\s]*<\/style\s*>|<!--[\S\s]*-->'
+        . '|<script(?=[\s\/>])[\S\s]*<\/script\s*>|<style(?=[\s\/>])[\S\s]*<\/style\s*>|<!--[\S\s]*-->|<\?[\S\s]*\?>'
         . '|' . $tagPattern . ')/Ui';
 
     $marker = "\x1A" . bin2hex(random_bytes(8)) . '_';
@@ -32,7 +32,9 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
         return $output;
     }
 
-    $text = $shortcodes->process($text);
+    // every remaining < is text: escape it, so no tag dropped below can join it
+    // with the text that follows into new markup
+    $text = $shortcodes->process(str_replace('<', '&lt;', $text));
 
     // a tag a shortcode generated with a placeholder copied into its attributes
     // is dropped whole: escaping the held markup is not enough where the

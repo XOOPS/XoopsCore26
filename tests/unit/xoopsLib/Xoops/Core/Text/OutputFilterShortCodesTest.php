@@ -21,7 +21,7 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
 
     public function testComparisonTextIsNotTreatedAsTag()
     {
-        $this->assertSame('a < b <strong>c</strong> > d', $this->filter('a < b [b]c[/b] > d'));
+        $this->assertSame('a &lt; b <strong>c</strong> > d', $this->filter('a < b [b]c[/b] > d'));
     }
 
     public function testAttributesAreNotProcessed()
@@ -69,6 +69,19 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
         $this->assertStringNotContainsString('href', $out);
         $this->assertStringNotContainsString('javascript', $out);
         $this->assertStringContainsString('click', $out);
+    }
+
+    public function testDroppedTagCannotJoinStrayLessThanIntoTag()
+    {
+        $out = $this->filter('<p><[url=java<b></b>script:x]img src=x onerror=alert(1)//[/url]></p>');
+        $this->assertStringNotContainsString('<img', $out);
+        $this->assertStringContainsString('&lt;img src=x', $out);
+    }
+
+    public function testXmlDeclarationIsKept()
+    {
+        $html = '<?xml version="1.0" encoding="UTF-8"?><p>[b]x[/b]</p>';
+        $this->assertSame('<?xml version="1.0" encoding="UTF-8"?><p><strong>x</strong></p>', $this->filter($html));
     }
 
     public function testGeneratedTagWithoutHeldMarkupIsKept()

@@ -44,11 +44,10 @@ if (empty($settings['ROOT_PATH'])) {
 // Ownership is the hash of each configuration file this session wrote, so it
 // ends as soon as anyone else rewrites the file.
 // The check and both writes run under one installer-wide lock (this script,
-// released at exit), so concurrent sessions cannot both pass the check.
-$configLock = fopen(__FILE__, 'r');
-if ($configLock) {
-    flock($configLock, LOCK_EX);
-}
+// released at exit), so concurrent sessions cannot both pass the check; without
+// the lock nothing is written.
+$configLock = @fopen(__FILE__, 'r');
+$locked = $configLock !== false && flock($configLock, LOCK_EX);
 $configFiles = array(
     'mainfile' => $settings['ROOT_PATH'] . '/mainfile.php',
     'secure' => $settings['VAR_PATH'] . '/data/secure.php',
@@ -63,11 +62,13 @@ foreach ($configFiles as $key => $path) {
         $foreign = true;
     }
 }
-if ($foreign) {
-    unset($_SESSION['configsave_owner']);
+if ($foreign || !$locked) {
+    if ($foreign) {
+        unset($_SESSION['configsave_owner']);
+    }
     $_SESSION['pageHasHelp'] = false;
     $_SESSION['pageHasForm'] = false;
-    $_SESSION['content'] = '<div class="errorMsg">' . ERR_ALREADY_INSTALLED . '</div>';
+    $_SESSION['content'] = '<div class="errorMsg">' . ($foreign ? ERR_ALREADY_INSTALLED : ERR_WRITE_MAINFILE) . '</div>';
     include_once XOOPS_INSTALL_PATH . '/include/install_tpl.php';
     exit();
 }
@@ -79,32 +80,34 @@ $rewrite = array(
 $rewrite = array_merge($rewrite, $settings);
 
 $configErrors = array(
-    'mainfile' => array(ERR_COPY_MAINFILE, ERR_READ_MAINFILE, ERR_WRITE_MAINFILE),
-    'secure' => array(ERR_COPY_SECURE . $settings['VAR_PATH'] . '/data/secure.dist.php', ERR_READ_SECURE, ERR_WRITE_SECURE),
+    'mainfile' => array(ERR_COPY_MAINFILE, ERR_WRITE_MAINFILE),
+    'secure' => array(ERR_COPY_SECURE . $settings['VAR_PATH'] . '/data/secure.dist.php', ERR_WRITE_SECURE),
 );
 foreach ($configFiles as $key => $path) {
-    list($errCopy, $errRead, $errWrite) = $configErrors[$key];
-    if (!@copy(substr($path, 0, -4) . '.dist.php', $path)) {
+    list($errCopy, $errWrite) = $configErrors[$key];
+    $content = @file_get_contents(substr($path, 0, -4) . '.dist.php');
+    if ($content === false) {
         $error = $errCopy;
         continue;
     }
-    clearstatcache();
-    $content = @file_get_contents($path);
-    if ($content === false) {
-        $error = $errRead;
-    } else {
-        $content = install_rewriteDefines($content, $rewrite);
-        if (@file_put_contents($path, $content) === strlen($content)) {
+    $content = install_rewriteDefines($content, $rewrite);
+    // write a new file beside the target and rename it over it, so a failed
+    // attempt leaves the previous file (and its ownership) untouched
+    $tmp = $path . '.' . bin2hex(random_bytes(8)) . '.tmp';
+    $handle = @fopen($tmp, 'xb');
+    if ($handle !== false) {
+        if (is_file($path)) {
+            @chmod($tmp, fileperms($path) & 0777); // keep a mode the admin tightened
+        }
+        $saved = fwrite($handle, $content) === strlen($content);
+        if (fclose($handle) && $saved && @rename($tmp, $path)) {
             $owned[$key] = hash('sha256', $content);
             $_SESSION['configsave_owner'] = $owned;
             continue;
         }
-        $error = $errWrite;
+        @unlink($tmp);
     }
-    // remove the file this attempt left half-written, so a retry does not see it as foreign
-    unset($owned[$key]);
-    $_SESSION['configsave_owner'] = $owned;
-    @unlink($path);
+    $error = $errWrite;
 }
 
 // update composer.json with our paths
