@@ -46,7 +46,7 @@
                         <img src="<{xoAdminIcons 'user_delete.png'}>" alt="<{translate key='DELETE_USER' dirname='system'}>" />
                     </a>
                     <{else}>
-                    <a class="xo-tooltip" href="admin.php?fct=users&amp;op=users_active&amp;uid=<{$user.uid}>&amp;XOOPS_TOKEN_REQUEST=<{$token_id}>" title="<{translate key='ONLY_ACTIVE_USERS' dirname='system'}>">
+                    <a class="xo-tooltip" href="admin.php?fct=users&amp;op=users_active&amp;uid=<{$user.uid}>&amp;XOOPS_TOKEN_REQUEST=<{$user.token_id}>" title="<{translate key='ONLY_ACTIVE_USERS' dirname='system'}>">
                         <img src="<{xoAdminIcons 'xoops/active_user.png'}>" alt="<{translate key='ONLY_ACTIVE_USERS' dirname='system'}>" />
                     </a>
                     <img class="xo-tooltip" onclick="display_dialog('<{$user.uid}>', true, true, 'slide', 'slide', 300, 400);" src="<{xoAdminIcons 'display.png'}>" alt="<{translate key='VIEW_USER_INFO' dirname='system'}>" title="<{translate key='VIEW_USER_INFO' dirname='system'}>" />

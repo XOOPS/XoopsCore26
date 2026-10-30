@@ -736,7 +736,6 @@ switch ($op) {
             $xoops->tpl()->assign('users_display', true);
             $xoops->tpl()->assign('php_selft', $_SERVER['PHP_SELF']);
             $xoops->tpl()->assign('token', $xoops->security()->getTokenHTML());
-            $xoops->tpl()->assign('token_id', $xoops->security()->createToken());
 
             //User limit
             //$user_limit = (!isset($_REQUEST['user_limit'])) ? 20 : $_REQUEST['user_limit'];
@@ -823,6 +822,8 @@ switch ($op) {
                         $users['last_login'] = SystemLocale::NEVER_CONNECTED;
                     }
                     $users['user_level'] = $user->getVar("level");
+                    // single-use token for this row's activation link (inactive users only)
+                    $users['token_id'] = $users['user_level'] > 0 ? '' : $xoops->security()->createToken();
                     $users['user_icq'] = $user->getVar("user_icq");
                     $users['user_aim'] = $user->getVar("user_aim");
                     $users['user_yim'] = $user->getVar("user_yim");
