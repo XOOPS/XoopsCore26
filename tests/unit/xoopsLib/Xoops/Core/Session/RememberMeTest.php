@@ -11,12 +11,18 @@ class RememberMeTest extends \PHPUnit\Framework\TestCase
     protected $object;
 
     /**
+     * @var int random id so the cache entries cannot belong to a real user or another run
+     */
+    protected $userId;
+
+    /**
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
     protected function setUp(): void
     {
         $this->object = new RememberMe;
+        $this->userId = random_int(1000000000, 2000000000);
     }
 
     /**
@@ -25,10 +31,8 @@ class RememberMeTest extends \PHPUnit\Framework\TestCase
      */
     protected function tearDown(): void
     {
-        foreach ([900001, 900002] as $userId) {
-            \Xoops::getInstance()->cache()->delete("user/{$userId}/usercookie");
-            \Xoops::getInstance()->cache()->delete("user/{$userId}/usercookie_gen");
-        }
+        \Xoops::getInstance()->cache()->delete("user/{$this->userId}/usercookie");
+        \Xoops::getInstance()->cache()->delete("user/{$this->userId}/usercookie_gen");
     }
 
     public function testRecall()
@@ -49,7 +53,7 @@ class RememberMeTest extends \PHPUnit\Framework\TestCase
 
     public function testInvalidateAllForUser()
     {
-        $userId = 900001;
+        $userId = $this->userId;
         $remember = new RememberMeTestDouble();
         $remember->createUserCookie($userId);
         $cookie = $remember->cookie;
@@ -66,7 +70,7 @@ class RememberMeTest extends \PHPUnit\Framework\TestCase
 
     public function testInvalidateAllForUserSurvivesConcurrentRecall()
     {
-        $userId = 900002;
+        $userId = $this->userId;
         $remember = new RememberMeTestDouble();
         $remember->createUserCookie($userId);
 
