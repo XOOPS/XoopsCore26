@@ -105,7 +105,8 @@ class PmMessageHandlerTest extends \PHPUnit\Framework\TestCase
             'from_userid' => $fromUid, 'from_delete' => $fromDelete, 'from_save' => $fromSave,
         ]);
         $handler = new class extends PmMessageHandler {
-            public ?array $row;
+            /** @var array<int, array> rows keyed by msg_id */
+            public array $rows = [];
 
             public function __construct()
             {
@@ -113,25 +114,29 @@ class PmMessageHandlerTest extends \PHPUnit\Framework\TestCase
 
             public function updateAll($fieldname, $fieldvalue, CriteriaElement $criteria, $force = false)
             {
-                if (null === $this->row) {
+                $id = (int) $criteria->value;
+                if (!isset($this->rows[$id])) {
                     return false; // no row to update
                 }
-                $this->row[$fieldname] = $fieldvalue;
+                $this->rows[$id][$fieldname] = $fieldvalue;
                 return true;
             }
 
             public function delete(XoopsObject $object, $force = false)
             {
-                if (null === $this->row) {
+                $id = (int) $object->getVar('msg_id');
+                if (!isset($this->rows[$id])) {
                     return false;
                 }
-                $this->row = null;
+                unset($this->rows[$id]);
                 return true;
             }
         };
-        $handler->row = ['to_delete' => 0, 'from_delete' => $fromDelete];
+        $other = ['to_delete' => 0, 'from_delete' => 0];
+        $handler->rows = [1 => ['to_delete' => 0, 'from_delete' => $fromDelete], 2 => $other];
 
         $this->assertTrue($handler->deleteFromFolder($message, self::ME, $folder));
-        $this->assertSame($expected, $handler->row);
+        $this->assertSame($expected, $handler->rows[1] ?? null);
+        $this->assertSame($other, $handler->rows[2], 'another message must stay untouched');
     }
 }

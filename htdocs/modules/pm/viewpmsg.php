@@ -74,7 +74,7 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
     if (!$xoops->security()->check()) {
         $xoops->tpl()->assign('errormsg', implode('<br />', $xoops->security()->getErrors()));
     } else {
-        $msg = array_values(array_map('intval', (array) $_POST['msg_id']));
+        $msg = array_values(array_unique(array_map('intval', (array) $_POST['msg_id'])));
         $size = count($msg);
         $uid = $xoops->user->getVar('uid');
         if ($_POST['op'] === 'save') {
@@ -93,19 +93,25 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
                 unset($pm);
             }
         } else {
+            $room = PHP_INT_MAX;
             if (!$xoops->user->isAdmin()) {
                 $total_save = $pm_handler->getSavecount();
-                $size = min($size, $xoops->getModuleConfig('max_save') - $total_save);
+                $room = $xoops->getModuleConfig('max_save') - $total_save;
             }
-            for ($i = 0; $i < $size; ++$i) {
-                $pm = $pm_handler->get($msg[$i]);
+            // only a message actually saved uses a slot; skipped ids do not
+            $saved = 0;
+            foreach ($msg as $msgId) {
+                if ($saved >= $room) {
+                    break;
+                }
+                $pm = $pm_handler->get($msgId);
                 if (!is_object($pm)) {
                     continue;
                 }
                 if ($_POST['op'] === 'in' && $pm->getVar('to_userid') == $uid) {
-                    $pm_handler->setTosave($pm);
+                    $saved += $pm_handler->setTosave($pm) ? 1 : 0;
                 } elseif ($_POST['op'] === 'out' && $pm->getVar('from_userid') == $uid) {
-                    $pm_handler->setFromsave($pm);
+                    $saved += $pm_handler->setFromsave($pm) ? 1 : 0;
                 }
                 unset($pm);
             }
@@ -114,7 +120,7 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
             $xoops->tpl()->assign('msg', _PM_UNSAVED);
         } else {
             if (isset($total_save) && !$xoops->user->isAdmin()) {
-                $xoops->tpl()->assign('msg', sprintf(_PM_SAVED_PART, $xoops->getModuleConfig('max_save'), $i));
+                $xoops->tpl()->assign('msg', sprintf(_PM_SAVED_PART, $xoops->getModuleConfig('max_save'), $saved));
             } else {
                 $xoops->tpl()->assign('msg', _PM_SAVED_ALL);
             }
