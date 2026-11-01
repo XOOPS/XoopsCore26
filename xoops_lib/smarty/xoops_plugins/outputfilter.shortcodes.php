@@ -1,24 +1,41 @@
 <?php
 /*
  * Smarty plugin to enable shortcodes in templates
+ *
+ * Shortcodes are expanded only in text between HTML tags. Tags (and so their
+ * attributes) and the bodies of form, script and style elements are swapped out
+ * for random placeholders first, because text there is already escaped for its
+ * context and shortcode markup would break out of it.
  */
 function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $template)
 {
     $shortcodes = \Xoops\Core\Text\Sanitizer::getInstance()->getShortCodes();
-    $shortcodes->addShortcode(
-        'nosc42',
-        function ($attributes, $content, $tagName) {
-            return base64_decode($content);
-        }
-    );
 
-    // breaks out form elements
-    $scPattern = '/(<textarea[\S\s]*\/textarea>|<input[\S\s]*>|<select[\S\s]*\/select>|<script[\S\s]*\/script>|<style[\S\s]*\/style>)/U';
+    $tagPattern = '<[\/!]?[a-z](?:[^>"\']|"[^"]*"|\'[^\']*\')*>';
+    // CDATA sections (inert text inside SVG and MathML) and the bogus comments a
+    // browser makes of any other <!, <? or </ are held whole too: escaping their
+    // opener would turn the markup they hide into live tags. An unclosed element
+    // or comment is held to the end of the output and a comment ends where a
+    // browser ends it (<!-->, <!--->, --!>), as a browser reads them. An unclosed
+    // CDATA is held only to its first >, which ends it outside SVG and MathML;
+    // inside them the rest stays inert text whatever the shortcodes make of it.
+    // a browser ignores attributes on an end tag, so </script data-x> closes too
+    $endTag = '(?=[\s\/>])(?:[^>"\']|"[^"]*"|\'[^\']*\')*>';
+    $scPattern = '/(<textarea(?=[\s\/>])[\S\s]*(?:<\/textarea' . $endTag . '|\z)'
+        . '|<select(?=[\s\/>])[\S\s]*(?:<\/select' . $endTag . '|\z)'
+        . '|<script(?=[\s\/>])[\S\s]*(?:<\/script' . $endTag . '|\z)'
+        . '|<style(?=[\s\/>])[\S\s]*(?:<\/style' . $endTag . '|\z)'
+        . '|<!--(?:-?>|[\S\s]*(?:--!?>|\z))|<\?[\S\s]*\?>|<!\[CDATA\[[\S\s]*\]\]>'
+        . '|' . $tagPattern . '|<[!?\/][^>]*>)/Ui';
 
+    $marker = "\x1A" . bin2hex(random_bytes(8)) . '_';
+    $held = array();
     $text = preg_replace_callback(
         $scPattern,
-        function ($innerMatches) {
-            return '[nosc42]' . base64_encode($innerMatches[1]) . '[/nosc42]';
+        function ($innerMatches) use ($marker, &$held) {
+            $key = $marker . count($held) . "\x1A";
+            $held[$key] = $innerMatches[1];
+            return $key;
         },
         $output
     );
@@ -27,25 +44,22 @@ function smarty_outputfilter_shortcodes($output, Smarty_Internal_Template $templ
         return $output;
     }
 
-    $text = $shortcodes->process($text);
+    // every remaining < is text: escape it, so no tag dropped below can join it
+    // with the text that follows into new markup
+    $text = $shortcodes->process(str_replace('<', '&lt;', $text));
 
-    return $text;
-
-    /*
-    $noscPattern = '/({nosc42filter}([\S\s]*){\/nosc42filter})/U';
-
+    // a tag a shortcode generated with a placeholder copied into its attributes
+    // is dropped whole: escaping the held markup is not enough where the
+    // attribute is a URL or an event handler, which decode entities before
+    // running, and removing just the placeholder joins its neighbours, so that
+    // [url=java<b></b>script:...] would become a javascript: link
     $text = preg_replace_callback(
-        $noscPattern,
-        function ($innerMatches) {
-            return base64_decode($innerMatches[2]);
+        '/' . $tagPattern . '/i',
+        function ($tag) use ($marker) {
+            return strpos($tag[0], $marker) === false ? $tag[0] : '';
         },
         $text
     );
-    if ($text===null) {
-        trigger_error('preg_last_error=' . preg_last_error(), E_USER_WARNING);
-        return $output;
-    }
 
-    return $text;
-*/
+    return strtr($text, $held);
 }

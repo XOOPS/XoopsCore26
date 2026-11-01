@@ -249,7 +249,9 @@ class Xoops_Locale_AbstractTest extends \PHPUnit\Framework\TestCase
         \Xoops\Locale::setTimeZone(new \DateTimeZone($timezone));
         \Xoops\Locale::setCurrent($locale);
 
-        $dateTime = new \DateTime;
+        // add the interval on the target zone's wall clock; in UTC it can cross a DST change
+        // and come out an hour short (P1DT1H read as "in 24 hours" instead of "tomorrow")
+        $dateTime = new \DateTime('now', new \DateTimeZone($timezone));
         $interval = new \DateInterval($interval);
         if ($op === 'add') {
             $dateTime->add($interval);

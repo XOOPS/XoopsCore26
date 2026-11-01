@@ -28,6 +28,37 @@ function installHtmlSpecialCharacters($value)
 }
 
 /**
+ * Replace the values of XOOPS_* define() calls in a configuration file template
+ *
+ * Only define() calls at the start of a line are rewritten, so commented examples
+ * are left alone. Values are written with var_export() through a callback, so no
+ * value can end the string literal or be read as a replacement reference.
+ *
+ * @param string $content file content
+ * @param array  $rewrite map of constant names without the XOOPS_ prefix to values
+ *
+ * @return string
+ */
+function install_rewriteDefines($content, array $rewrite)
+{
+    foreach ($rewrite as $key => $val) {
+        if (!is_string($key) || !preg_match('/^[A-Z][A-Z0-9_]*\z/', $key) || !is_scalar($val)) {
+            continue;
+        }
+        $pattern = "/^(\s*)define\(([\"'])XOOPS_{$key}\\2,\s*(?:([0-9]+)|([\"']).*?\\4)\s*\)/m";
+        $content = preg_replace_callback($pattern, function ($m) use ($key, $val) {
+            $isIntDefine = isset($m[3]) && $m[3] !== '';
+            if ($isIntDefine && !is_int($val)) {
+                return $m[0];
+            }
+            $value = $isIntDefine ? $val : (string) $val;
+            return $m[1] . "define('XOOPS_{$key}', " . var_export($value, true) . ')';
+        }, $content);
+    }
+    return $content;
+}
+
+/**
  * @param string $hash
  * @return bool
  */

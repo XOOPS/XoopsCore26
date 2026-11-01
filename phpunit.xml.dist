@@ -28,6 +28,7 @@
             <directory suffix=".php">./htdocs/kernel</directory>
             <directory suffix=".php">./xoops_lib/Xmf</directory>
             <directory suffix=".php">./xoops_lib/Xoops</directory>
+            <directory suffix=".php">./xoops_lib/smarty/xoops_plugins</directory>
             <file>./xoops_lib/Xoops.php</file>
         </include>
     </source>
