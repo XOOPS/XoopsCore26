@@ -48,15 +48,22 @@ $admin_page->renderNavigation('plugins.php');
 
 switch ($op) {
     case 'update':
-        $orders = Request::getArray('order');
-        foreach ($orders as $id => $order) {
-            $handler->updateOrder((int) $id, (int) $order);
+        if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
+            $xoops->tpl()->assign(
+                'errorMsg',
+                $xoops->alert('error', $xoops->security()->getErrors() ?: XoopsLocale::E_NO_ACCESS_PERMISSION)
+            );
+        } else {
+            $orders = Request::getArray('order', [], 'POST');
+            foreach ($orders as $id => $order) {
+                $handler->updateOrder((int) $id, (int) $order);
+            }
+            $statuses = Request::getArray('status', [], 'POST');
+            foreach ($statuses as $id => $status) {
+                $handler->updateStatus((int) $id, (int) $status);
+            }
+            $xoops->tpl()->assign('infoMsg', $xoops->alert('success', XoopsLocale::S_DATA_UPDATED));
         }
-        $statuses = Request::getArray('status');
-        foreach ($statuses as $id => $status) {
-            $handler->updateStatus((int) $id, (int) $status);
-        }
-        $xoops->tpl()->assign('infoMsg', $xoops->alert('success', XoopsLocale::S_DATA_UPDATED));
         //No break;
     case 'list':
     default:
@@ -134,18 +141,8 @@ switch ($op) {
         $hiddenFields .= $hidden->render();
         $hidden = new \Xoops\Form\Hidden('caller', $caller);
         $hiddenFields .= $hidden->render();
+        $hiddenFields .= $xoops->security()->getTokenHTML();
         $xoops->tpl()->assign('hiddenFields', $hiddenFields);
-        break;
-    case 'status':
-        // Get the plugin id
-        $id = Request::getInt('id', 0);
-        // Get new status
-        $status = Request::getInt('status', 0);
-        if ($object = $handler->get($id)) {
-            $object->setVar('plugin_status', $status);
-            return $handler->insert($object);
-        }
-        return false;
         break;
 }
 $xoops->footer();

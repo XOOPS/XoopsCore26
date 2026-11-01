@@ -84,13 +84,13 @@ $false = false;
 /* -- Available operations -- */
 switch ($op) {
     case 'uploadfile':
-        Publisher\Utils::uploadFile(false, true, $false);
-        exit;
-        break;
     case 'uploadanother':
-        Publisher\Utils::uploadFile(true, true, $false);
+        // keep the token: upload errors send the user back to this form to retry
+        if (!$xoops->security()->check(false)) {
+            $xoops->redirect('item.php', 3, implode('<br />', $xoops->security()->getErrors()));
+        }
+        Publisher\Utils::uploadFile('uploadanother' === $op, true, $false);
         exit;
-        break;
     case 'mod':
         $fileid = $_GET['fileid'] ?? 0;
         $itemid = $_GET['itemid'] ?? 0;
@@ -102,6 +102,9 @@ switch ($op) {
         publisher_editFile(true, $fileid, $itemid);
         break;
     case 'modify':
+        if (!$xoops->security()->check(false)) {
+            $xoops->redirect('item.php', 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         $fileid = isset($_POST['fileid']) ? (int)$_POST['fileid'] : 0;
 
         // Creating the file object
@@ -137,6 +140,9 @@ switch ($op) {
         $title = $_POST['title'] ?? '';
 
         if ($confirm) {
+            if (!$xoops->security()->check()) {
+                $xoops->redirect('item.php', 3, implode('<br />', $xoops->security()->getErrors()));
+            }
             if (!$helper->getFileHandler()->delete($fileObj)) {
                 $xoops->redirect('item.php', 2, _AM_PUBLISHER_FILE_DELETE_ERROR);
             }

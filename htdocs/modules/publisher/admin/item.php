@@ -73,6 +73,10 @@ switch ($op) {
         publisher_editItem(true, $itemid);
         break;
     case 'additem':
+        // keep the token: save errors send the user back to this form to fix and resubmit
+        if (!$xoops->security()->check(false)) {
+            $xoops->redirect('item.php', 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         // Creating the item object
         /* @var Publisher\Item $itemObj */
         if (0 != $itemid) {
@@ -151,6 +155,9 @@ switch ($op) {
         $confirm = $_POST['confirm'] ?? 0;
 
         if ($confirm) {
+            if (!$xoops->security()->check()) {
+                $xoops->redirect('item.php', 3, implode('<br />', $xoops->security()->getErrors()));
+            }
             if (!$helper->getItemHandler()->delete($itemObj)) {
                 $xoops->redirect('item.php', 2, _AM_PUBLISHER_ITEM_DELETE_ERROR . Publisher\Utils::formatErrors($itemObj->getErrors()));
                 exit();

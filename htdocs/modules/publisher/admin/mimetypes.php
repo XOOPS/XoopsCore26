@@ -48,6 +48,14 @@ $aSearchBy = ['mime_id' => _AM_PUBLISHER_MIME_ID, 'mime_name' => _AM_PUBLISHER_M
 
 $op = $_REQUEST['op'] ?? 'default';
 
+// Every POST and the two link actions change data, so all need a token.
+$xoops = Xoops::getInstance();
+if ('POST' === \Xmf\Request::getMethod() || in_array($op, ['delete', 'updateMimeValue'], true)) {
+    if (!$xoops->security()->check()) {
+        $xoops->redirect(PUBLISHER_ADMIN_URL . '/mimetypes.php', 3, implode('<br />', $xoops->security()->getErrors()));
+    }
+}
+
 switch ($op) {
     case 'add':
         add();
@@ -112,7 +120,7 @@ function add()
         }
 
         // Display add form
-        echo "<form action='mimetypes.php?op=add' method='post'>";
+        echo "<form action='mimetypes.php?op=add' method='post'>"; echo $xoops->security()->getTokenHTML();
         echo "<table width='100%' cellspacing='1' class='outer'>";
         echo "<tr><th colspan='2'>" . _AM_PUBLISHER_MIME_CREATEF . '</th></tr>';
         echo "<tr valign='top'>
@@ -281,7 +289,7 @@ function edit()
         }
 
         // Display edit form
-        echo "<form action='mimetypes.php?op=edit&amp;id=" . $mime_id . "' method='post'>";
+        echo "<form action='mimetypes.php?op=edit&amp;id=" . $mime_id . "' method='post'>"; echo $xoops->security()->getTokenHTML();
         echo "<input type='hidden' name='limit' value='" . $limit . "'>";
         echo "<input type='hidden' name='start' value='" . $start . "'>";
         echo "<table width='100%' cellspacing='1' class='outer'>";
@@ -384,18 +392,13 @@ function manage()
     $xoops = Xoops::getInstance();
     $helper = Helper::getInstance();
 
-    $imagearray = [
-        'editimg' => "<img src='" . $helper->url('images/button_edit.png') . "' alt='" . _AM_PUBLISHER_ICO_EDIT . "' align='middle'>",
-        'deleteimg' => "<img src='" . $helper->url('images/button_delete.png') . "' alt='" . _AM_PUBLISHER_ICO_DELETE . "' align='middle'>",
-        'online' => "<img src='" . $helper->url('images/on.png') . "' alt='" . _AM_PUBLISHER_ICO_ONLINE . "' align='middle'>",
-        'offline' => "<img src='" . $helper->url('images/off.png') . "' alt='" . _AM_PUBLISHER_ICO_OFFLINE . "' align='middle'>",
-    ];
     global $start, $limit, $aSortBy, $aOrderBy, $aLimitBy, $aSearchBy;
+    $linkToken = $xoops->security()->createToken();
 
     if (isset($_POST['deleteMimes'])) {
         $aMimes = $_POST['mimes'];
 
-        $crit = new Criteria('mime_id', '(' . implode(',', $aMimes) . ')', 'IN');
+        $crit = new Criteria('mime_id', '(' . implode(',', array_map('intval', (array) $aMimes)) . ')', 'IN');
 
         if ($helper->getMimetypeHandler()->deleteAll($crit)) {
             header('Location: ' . PUBLISHER_ADMIN_URL . "/mimetypes.php?limit=$limit&start=$start");
@@ -428,7 +431,7 @@ function manage()
 
     echo "<table width='100%' cellspacing='1' class='outer'>";
     echo "<tr><td colspan='6' align='right'>";
-    echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=search' style='margin:0; padding:0;' method='post'>";
+    echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=search' style='margin:0; padding:0;' method='post'>"; echo $xoops->security()->getTokenHTML();
     echo '<table>';
     echo '<tr>';
     echo "<td align='right'>" . _AM_PUBLISHER_TEXT_SEARCH_BY . '</td>';
@@ -444,7 +447,7 @@ function manage()
     echo '</tr></table></form></td></tr>';
 
     echo "<tr><td colspan='6'>";
-    echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=manage' style='margin:0; padding:0;' method='post'>";
+    echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=manage' style='margin:0; padding:0;' method='post'>"; echo $xoops->security()->getTokenHTML();
     echo "<table width='100%'>";
     echo "<tr><td align='right'>" . _AM_PUBLISHER_TEXT_SORT_BY . "
     <select name='sort'>";
@@ -484,23 +487,7 @@ function manage()
     <td>' . _AM_PUBLISHER_MINDEX_ACTION . '</td>
     </tr>';
     foreach ($mimetypes as $mime) {
-        echo "<tr class='even'>
-        <td><input type='checkbox' name='mimes[]' value='" . $mime->getVar('mime_id') . "'>" . $mime->getVar('mime_id') . '</td>
-        <td>' . $mime->getVar('mime_name') . '</td>
-        <td>' . $mime->getVar('mime_ext') . "</td>
-        <td>
-        <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=updateMimeValue&amp;id=' . $mime->getVar('mime_id') . '&amp;mime_admin=' . $mime->getVar('mime_admin') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>
-        " . ($mime->getVar('mime_admin') ? $imagearray['online'] : $imagearray['offline']) . "</a>
-        </td>
-        <td>
-        <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=updateMimeValue&amp;id=' . $mime->getVar('mime_id') . '&amp;mime_user=' . $mime->getVar('mime_user') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>
-        " . ($mime->getVar('mime_user') ? $imagearray['online'] : $imagearray['offline']) . "</a>
-        </td>
-        <td>
-        <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=edit&amp;id=' . $mime->getVar('mime_id') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>" . $imagearray['editimg'] . "</a>
-        <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=delete&amp;id=' . $mime->getVar('mime_id') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>" . $imagearray['deleteimg'] . '</a>
-        </td>
-        </tr>';
+        echo mimeTableRow($mime, $limit, $start, $linkToken);
     }
     echo "<tr class='foot'>
     <td colspan='6' valign='top'>
@@ -523,12 +510,13 @@ function search()
     $helper = Helper::getInstance();
     $xoops = Xoops::getInstance();
 
-    global $limit, $start, $imagearray, $aSearchBy, $aOrderBy, $aLimitBy, $aSortBy;
+    global $limit, $start, $aSearchBy, $aOrderBy, $aLimitBy, $aSortBy;
+    $linkToken = $xoops->security()->createToken();
 
     if (isset($_POST['deleteMimes'])) {
         $aMimes = $_POST['mimes'];
 
-        $crit = new Criteria('mime_id', '(' . implode(',', $aMimes) . ')', 'IN');
+        $crit = new Criteria('mime_id', '(' . implode(',', array_map('intval', (array) $aMimes)) . ')', 'IN');
 
         if ($helper->getMimetypeHandler()->deleteAll($crit)) {
             header('Location: ' . PUBLISHER_ADMIN_URL . "/mimetypes.php?limit=$limit&start=$start");
@@ -549,7 +537,7 @@ function search()
     Publisher\Utils::openCollapsableBar('mimemsearchtable', 'mimesearchicon', _AM_PUBLISHER_MIME_SEARCH);
 
     if (!isset($_REQUEST['mime_search'])) {
-        echo "<form action='mimetypes.php?op=search' method='post'>";
+        echo "<form action='mimetypes.php?op=search' method='post'>"; echo $xoops->security()->getTokenHTML();
         echo "<table width='100%' cellspacing='1' class='outer'>";
         echo "<tr><th colspan='2'>" . _AM_PUBLISHER_TEXT_SEARCH_MIME . '</th></tr>';
         echo "<tr><td class='head' width='20%'>" . _AM_PUBLISHER_TEXT_SEARCH_BY . "</td>
@@ -589,7 +577,7 @@ function search()
 
         echo "<table width='100%' cellspacing='1' class='outer'>";
         echo "<tr><td colspan='6' align='right'>";
-        echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=search' style='margin:0; padding:0;' method='post'>";
+        echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=search' style='margin:0; padding:0;' method='post'>"; echo $xoops->security()->getTokenHTML();
         echo '<table>';
         echo '<tr>';
         echo "<td align='right'>" . _AM_PUBLISHER_TEXT_SEARCH_BY . '</td>';
@@ -605,7 +593,7 @@ function search()
         echo '</tr></table></form></td></tr>';
 
         echo "<tr><td colspan='6'>";
-        echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=search' style='margin:0; padding:0;' method='post'>";
+        echo "<form action='" . PUBLISHER_ADMIN_URL . "/mimetypes.php?op=search' style='margin:0; padding:0;' method='post'>"; echo $xoops->security()->getTokenHTML();
         echo "<table width='100%'>";
         echo "<tr><td align='right'>" . _AM_PUBLISHER_TEXT_SORT_BY . "
         <select name='sort'>";
@@ -649,23 +637,7 @@ function search()
             <td>' . _AM_PUBLISHER_MINDEX_ACTION . '</td>
             </tr>';
             foreach ($mimetypes as $mime) {
-                echo "<tr class='even'>
-                <td><input type='checkbox' name='mimes[]' value='" . $mime->getVar('mime_id') . "'>" . $mime->getVar('mime_id') . '</td>
-                <td>' . $mime->getVar('mime_name') . '</td>
-                <td>' . $mime->getVar('mime_ext') . "</td>
-                <td>
-                <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=updateMimeValue&amp;id=' . $mime->getVar('mime_id') . '&amp;mime_admin=' . $mime->getVar('mime_admin') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>
-                " . ($mime->getVar('mime_admin') ? $imagearray['online'] : $imagearray['offline']) . "</a>
-                </td>
-                <td>
-                <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=updateMimeValue&amp;id=' . $mime->getVar('mime_id') . '&amp;mime_user=' . $mime->getVar('mime_user') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>
-                " . ($mime->getVar('mime_user') ? $imagearray['online'] : $imagearray['offline']) . "</a>
-                </td>
-                <td>
-                <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=edit&amp;id=' . $mime->getVar('mime_id') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>" . $imagearray['editimg'] . "</a>
-                <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=delete&amp;id=' . $mime->getVar('mime_id') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>" . $imagearray['deleteimg'] . '</a>
-                </td>
-                </tr>';
+                echo mimeTableRow($mime, $limit, $start, $linkToken);
             }
             echo "<tr class='foot'>
             <td colspan='6' valign='top'>
@@ -686,6 +658,48 @@ function search()
     }
     Publisher\Utils::closeCollapsableBar('mimesearchtable', 'mimesearchicon');
     $xoops->footer();
+}
+
+/**
+ * Render one row of the mime type table with its toggle, edit and delete links
+ *
+ * @param \XoopsObject $mime      mime type
+ * @param int          $limit     page size
+ * @param int          $start     page offset
+ * @param string       $linkToken token for the toggle and delete links
+ *
+ * @return string
+ */
+function mimeTableRow($mime, $limit, $start, $linkToken)
+{
+    static $imagearray = null;
+    if (null === $imagearray) {
+        $helper = Helper::getInstance();
+        $imagearray = [
+            'editimg' => "<img src='" . $helper->url('images/button_edit.png') . "' alt='" . _AM_PUBLISHER_ICO_EDIT . "' align='middle'>",
+            'deleteimg' => "<img src='" . $helper->url('images/button_delete.png') . "' alt='" . _AM_PUBLISHER_ICO_DELETE . "' align='middle'>",
+            'online' => "<img src='" . $helper->url('images/on.png') . "' alt='" . _AM_PUBLISHER_ICO_ONLINE . "' align='middle'>",
+            'offline' => "<img src='" . $helper->url('images/off.png') . "' alt='" . _AM_PUBLISHER_ICO_OFFLINE . "' align='middle'>",
+        ];
+    }
+
+    return "<tr class='even'>
+    <td><input type='checkbox' name='mimes[]' value='" . $mime->getVar('mime_id') . "'>" . $mime->getVar('mime_id') . '</td>
+    <td>' . $mime->getVar('mime_name') . '</td>
+    <td>' . $mime->getVar('mime_ext') . "</td>
+    <td>
+    <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=updateMimeValue&amp;XOOPS_TOKEN_REQUEST=' . $linkToken . '&amp;id=' . $mime->getVar('mime_id') . '&amp;mime_admin=' . $mime->getVar('mime_admin') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>
+    " . ($mime->getVar('mime_admin') ? $imagearray['online'] : $imagearray['offline']) . "</a>
+    </td>
+    <td>
+    <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=updateMimeValue&amp;XOOPS_TOKEN_REQUEST=' . $linkToken . '&amp;id=' . $mime->getVar('mime_id') . '&amp;mime_user=' . $mime->getVar('mime_user') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>
+    " . ($mime->getVar('mime_user') ? $imagearray['online'] : $imagearray['offline']) . "</a>
+    </td>
+    <td>
+    <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=edit&amp;id=' . $mime->getVar('mime_id') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>" . $imagearray['editimg'] . "</a>
+    <a href='" . PUBLISHER_ADMIN_URL . '/mimetypes.php?op=delete&amp;XOOPS_TOKEN_REQUEST=' . $linkToken . '&amp;id=' . $mime->getVar('mime_id') . '&amp;limit=' . $limit . '&amp;start=' . $start . "'>" . $imagearray['deleteimg'] . '</a>
+    </td>
+    </tr>';
 }
 
 function updateMimeValue()

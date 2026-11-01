@@ -44,6 +44,9 @@ switch ($op) {
         $confirm = $_POST['confirm'] ?? 0;
         $name = $_POST['name'] ?? '';
         if ($confirm) {
+            if (!$xoops->security()->check()) {
+                $xoops->redirect('category.php', 3, implode('<br />', $xoops->security()->getErrors()));
+            }
             if (!$helper->getCategoryHandler()->delete($categoryObj)) {
                 $xoops->redirect('category.php', 1, _AM_PUBLISHER_DELETE_CAT_ERROR);
             }
@@ -70,6 +73,10 @@ switch ($op) {
         break;
     case 'addcategory':
         global $modify;
+        // keep the token: save errors send the user back to this form to fix and resubmit
+        if (!$xoops->security()->check(false)) {
+            $xoops->redirect('category.php', 3, implode('<br />', $xoops->security()->getErrors()));
+        }
 
         $parentid = Request::getInt('parentid');
         /* @var Publisher\Category $categoryObj */

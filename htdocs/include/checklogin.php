@@ -74,27 +74,7 @@ if (false != $user) {
 
     $xoops->events()->triggerEvent('core.include.checklogin.success');
 
-    if (!empty($xoops_redirect) && !strpos($xoops_redirect, 'register')) {
-        $xoops_redirect = rawurldecode($xoops_redirect);
-        $parsed = parse_url($xoops_url);
-        $url = isset($parsed['scheme']) ? $parsed['scheme'] . '://' : 'http://';
-        if (isset($parsed['host'])) {
-            $url .= $parsed['host'];
-            if (isset($parsed['port'])) {
-                $url .= ':' . $parsed['port'];
-            }
-        } else {
-            $url .= $_SERVER['HTTP_HOST'];
-        }
-        if (@$parsed['path']) {
-            if (strncmp($parsed['path'], $xoops_redirect, strlen($parsed['path']))) {
-                $url .= $parsed['path'];
-            }
-        }
-        $url .= $xoops_redirect;
-    } else {
-        $url = $xoops_url . '/index.php';
-    }
+    $url = \Xoops\Core\RedirectUrl::afterLogin((string) $xoops_redirect, (string) $xoops_url);
 
     $xoops->redirect($url, 1, sprintf(XoopsLocale::SF_THANK_YOU_FOR_LOGGING_IN, $user->getVar('uname')), false);
 } else {

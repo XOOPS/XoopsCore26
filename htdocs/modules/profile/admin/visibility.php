@@ -46,20 +46,37 @@ $visibility_handler = \Xoops::getModuleHelper('profile')->getHandler('visibility
 $field_handler = \Xoops::getModuleHelper('profile')->getHandler('field');
 $fields = $field_handler->getList();
 
-if (isset($_REQUEST['submit'])) {
+$fieldId = Request::getInt('field_id', 0);
+$userGroup = Request::getInt('ug', 0);
+$profileGroup = Request::getInt('pg', 0);
+if (Request::hasVar('submit', 'POST')) {
+    if (!$xoops->security()->check()) {
+        $xoops->redirect('visibility.php', 3, implode(',', $xoops->security()->getErrors()));
+    }
     $visibility = $visibility_handler->create();
-    $visibility->setVar('field_id', $_REQUEST['field_id']);
-    $visibility->setVar('user_group', $_REQUEST['ug']);
-    $visibility->setVar('profile_group', $_REQUEST['pg']);
+    $visibility->setVar('field_id', $fieldId);
+    $visibility->setVar('user_group', $userGroup);
+    $visibility->setVar('profile_group', $profileGroup);
     $visibility_handler->insert($visibility, true);
     $xoops->redirect("visibility.php", 2, sprintf(_PROFILE_AM_SAVEDSUCCESS, _PROFILE_AM_PROF_VISIBLE));
 }
 if ($op === "del") {
-    $criteria = new CriteriaCompo(new Criteria('field_id', (int)($_REQUEST['field_id'])));
-    $criteria->add(new Criteria('user_group', (int)($_REQUEST['ug'])));
-    $criteria->add(new Criteria('profile_group', (int)($_REQUEST['pg'])));
-    $visibility_handler->deleteAll($criteria, true);
-    $xoops->redirect("visibility.php", 2, sprintf(_PROFILE_AM_DELETEDSUCCESS, _PROFILE_AM_PROF_VISIBLE));
+    if (1 === Request::getInt('ok', 0, 'POST')) {
+        if (!$xoops->security()->check()) {
+            $xoops->redirect('visibility.php', 3, implode(',', $xoops->security()->getErrors()));
+        }
+        $criteria = new CriteriaCompo(new Criteria('field_id', $fieldId));
+        $criteria->add(new Criteria('user_group', $userGroup));
+        $criteria->add(new Criteria('profile_group', $profileGroup));
+        $visibility_handler->deleteAll($criteria, true);
+        $xoops->redirect("visibility.php", 2, sprintf(_PROFILE_AM_DELETEDSUCCESS, _PROFILE_AM_PROF_VISIBLE));
+    }
+    echo $xoops->confirm(
+        array('ok' => 1, 'op' => 'del', 'field_id' => $fieldId, 'ug' => $userGroup, 'pg' => $profileGroup),
+        'visibility.php',
+        XoopsLocale::Q_ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_ITEM
+    );
+    $xoops->footer();
 }
 
 $opform = new Xoops\Form\SimpleForm('', 'opform', 'permissions.php', "get");
@@ -88,7 +105,7 @@ $xoops->tpl()->assign('fields', $fields);
 $xoops->tpl()->assign('visibilities', $visibilities);
 $xoops->tpl()->assign('groups', $groups);
 
-$add_form = new Xoops\Form\SimpleForm('', 'addform', 'visibility.php');
+$add_form = new Xoops\Form\SimpleForm('', 'addform', 'visibility.php', 'post', true);
 
 $sel_field = new Xoops\Form\Select(_PROFILE_AM_FIELDVISIBLE, 'field_id');
 $sel_field->addOptionArray($fields);

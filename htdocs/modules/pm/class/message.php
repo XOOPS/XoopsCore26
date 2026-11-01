@@ -83,9 +83,11 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
     public function setFromDelete(PmMessage $pm, $val = 1)
     {
         if ($pm->getVar('to_delete') == 0) {
+            // keep the object in step so a following setTodelete() sees this side as deleted
+            $pm->setVar('from_delete', (int)($val));
             return $this->updateAll('from_delete', (int)($val), new Criteria('msg_id', $pm->getVar('msg_id')));
         } else {
-            return parent::delete($pm);
+            return $this->delete($pm);
         }
     }
 
@@ -98,11 +100,45 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
      */
     public function setTodelete(PmMessage $pm, $val = 1)
     {
-        if ($pm->getVar('from_delete') == 0 && $pm->getVar('from_userid') == 0) {
+        if ($pm->getVar('from_delete') == 0 && $pm->getVar('from_userid') != 0) {
+            // keep the object in step so a following setFromDelete() removes the row
+            $pm->setVar('to_delete', (int)($val));
             return $this->updateAll('to_delete', (int)($val), new Criteria('msg_id', $pm->getVar('msg_id')));
         } else {
-            return parent::delete($pm);
+            return $this->delete($pm);
         }
+    }
+
+    /**
+     * Delete the sides of a message that a user has in a folder
+     *
+     * A message to yourself has two sides: the inbox holds the recipient side,
+     * the outbox the sender side, and the save box each saved side. A side that
+     * is already deleted is skipped.
+     *
+     * @param PmMessage $pm
+     * @param int       $uid    user who deletes the message
+     * @param string    $folder 'in', 'out' or 'save'
+     * @return bool|null null when the user has no side of $pm in $folder
+     */
+    public function deleteFromFolder(PmMessage $pm, $uid, $folder)
+    {
+        $inFolder = static function ($side) use ($pm, $uid, $folder) {
+            $saved = (bool) $pm->getVar($side . '_save');
+
+            return $pm->getVar($side . '_userid') == $uid
+                && 0 == $pm->getVar($side . '_delete')
+                && ('save' === $folder ? $saved : !$saved && $folder === ('to' === $side ? 'in' : 'out'));
+        };
+        $to = $inFolder('to');
+        $from = $inFolder('from');
+        if (!$to && !$from) {
+            return null;
+        }
+        // setTodelete() updates the object, so setFromDelete() then removes the row
+        $res = !$to || $this->setTodelete($pm);
+
+        return $res && (!$from || $this->setFromDelete($pm));
     }
 
     /**

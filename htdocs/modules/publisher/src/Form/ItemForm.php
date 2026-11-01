@@ -108,6 +108,8 @@ class ItemForm extends SimpleForm
         $xoops = Xoops::getInstance();
 
         parent::__construct('title', 'form', $xoops->getEnv('PHP_SELF'));
+        // writing an article takes longer than the default 5-minute token lifetime
+        $this->addElement(new \Xoops\Form\Token('XOOPS_TOKEN', 3600));
         $this->setExtra('enctype="multipart/form-data"');
 
         $tabTray = new TabTray('', 'uniqueid');
