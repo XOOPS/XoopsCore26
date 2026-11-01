@@ -9,6 +9,7 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
+use Xmf\Request;
 use Xoops\Core\FixedGroups;
 use Xoops\Core\Session\RememberMe;
 
@@ -135,12 +136,15 @@ switch ($op) {
         $myts = \Xoops\Core\Text\Sanitizer::getInstance();
         $user->setVar('uname', $_POST['uname']);
         // changing your own email address or password needs the current password
-        $email = trim($_POST['email']);
+        $email = Request::getString('email', '', 'POST', Request::MASK_ALLOW_RAW);
         // a blank or whitespace-only password field means "no change"
-        $newPassword = isset($_POST['password']) ? trim($_POST['password']) : '';
+        $newPassword = Request::getString('password', '', 'POST', Request::MASK_ALLOW_RAW);
         $wrongPassword = !$user->isNew() && $user->getVar('uid') == $xoops->user->getVar('uid')
             && ($email !== $user->getVar('email', 'n') || '' !== $newPassword)
-            && !$xoops->getHandlerMember()->verifyPassword($user, isset($_POST['oldpass']) ? (string) $_POST['oldpass'] : '');
+            && !$xoops->getHandlerMember()->verifyPassword(
+                $user,
+                Request::getString('oldpass', '', 'POST', Request::MASK_ALLOW_RAW | Request::MASK_NO_TRIM)
+            );
         if (!$wrongPassword) {
             $user->setVar('email', $email);
         }
@@ -150,7 +154,7 @@ switch ($op) {
         $password = $vpass = null;
         if ('' !== $newPassword && !$wrongPassword) {
             $password = $newPassword;
-            $vpass = isset($_POST['vpass']) ? trim($_POST['vpass']) : '';
+            $vpass = Request::getString('vpass', '', 'POST', Request::MASK_ALLOW_RAW);
             $user->setVar('pass', password_hash($password, PASSWORD_DEFAULT));
             $user->setVar('last_pass_change', time());
         } elseif ($user->isNew()) {

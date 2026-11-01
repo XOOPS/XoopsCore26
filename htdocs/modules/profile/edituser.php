@@ -9,6 +9,7 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
+use Xmf\Request;
 use Xoops\Html\Menu\Link;
 
 /**
@@ -44,10 +45,13 @@ if ($op === 'save') {
     $edituser = $xoops->user;
     $wrongPassword = false;
     if ($xoops->user->isAdmin()) {
-        $email = trim($_POST['email']);
+        $email = Request::getString('email', '', 'POST', Request::MASK_ALLOW_RAW);
         // a new email address needs the current password
         $wrongPassword = $email !== $edituser->getVar('email', 'n')
-            && !$xoops->getHandlerMember()->verifyPassword($edituser, isset($_POST['oldpass']) ? (string) $_POST['oldpass'] : '');
+            && !$xoops->getHandlerMember()->verifyPassword(
+                $edituser,
+                Request::getString('oldpass', '', 'POST', Request::MASK_ALLOW_RAW | Request::MASK_NO_TRIM)
+            );
         $edituser->setVar('uname', trim($_POST['uname']));
         if (!$wrongPassword) {
             $edituser->setVar('email', $email);
