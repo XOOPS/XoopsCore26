@@ -1486,6 +1486,14 @@ class Xoops
      */
     public function redirect($url, $time = 3, $message = '', $addredirect = true, $allowExternalLink = false)
     {
+        // Check the target before any listener sees it: the System preload sends
+        // the Location header itself and exits when redirect_message_ajax is on.
+        $url = \Xoops\Core\RedirectUrl::sanitize(
+            (string) $url,
+            (string) \XoopsBaseConfig::get('url'),
+            (bool) $allowExternalLink
+        );
+
         $this->events()->triggerEvent('core.redirect.start', array(
             $url, $time, $message, $addredirect, $allowExternalLink
         ));
@@ -1495,19 +1503,6 @@ class Xoops
             $url, $time, $message, $addredirect, $allowExternalLink
         ));
 
-        $xoops_url = \XoopsBaseConfig::get('url');
-
-        if (preg_match("/[\\0-\\31]|about:|script:/i", $url)) {
-            if (!preg_match('/^\b(java)?script:([\s]*)history\.go\(-[0-9]*\)([\s]*[;]*[\s]*)$/si', $url)) {
-                $url = $xoops_url;
-            }
-        }
-        if (!$allowExternalLink && $pos = strpos($url, '://')) {
-            $xoopsLocation = substr($xoops_url, strpos($xoops_url, '://') + 3);
-            if (strcasecmp(substr($url, $pos + 3, strlen($xoopsLocation)), $xoopsLocation)) {
-                $url = $xoops_url;
-            }
-        }
         if (!defined('XOOPS_CPFUNC_LOADED')) {
             $theme = 'default';
         } else {

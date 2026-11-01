@@ -79,6 +79,8 @@ if (is_object($pm) && !empty($_POST['action'])) {
                 }
                 break;
             case 'save':
+                // A message is in the save box of its recipient, its sender, or both.
+                $res1 = $res2 = null;
                 if ($pm->getVar('to_userid') == $xoops->user->getVar('uid')) {
                     if (!empty($_REQUEST['delete_message'])) {
                         $res1 = $pm_handler->setTodelete($pm);
@@ -95,7 +97,7 @@ if (is_object($pm) && !empty($_POST['action'])) {
                         $res2 = $pm_handler->setFromsave($pm, 0);
                     }
                 }
-                $res = $res1 && $res2;
+                $res = (null !== $res1 || null !== $res2) && false !== $res1 && false !== $res2;
                 break;
 
             case 'in':
@@ -112,7 +114,7 @@ if (is_object($pm) && !empty($_POST['action'])) {
         }
     }
     $res_message = isset($res_message) ? $res_message : (($res) ? _PM_ACTION_DONE : _PM_ACTION_ERROR);
-    $xoops->redirect('viewpmsg.php?op=' . htmlspecialchars($_REQUEST['op']), 2, $res_message);
+    $xoops->redirect('viewpmsg.php?op=' . $op, 2, $res_message);
 }
 $start = !empty($_GET['start']) ? (int)($_GET['start']) : 0;
 $total_messages = !empty($_GET['total_messages']) ? (int)($_GET['total_messages']) : 0;

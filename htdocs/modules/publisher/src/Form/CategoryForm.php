@@ -72,7 +72,7 @@ class CategoryForm extends ThemeForm
         $memberHandler = $xoops->getHandlerMember();
         $userGroups = $memberHandler->getGroupList();
 
-        parent::__construct(_AM_PUBLISHER_CATEGORY, 'form', $xoops->getEnv('PHP_SELF'));
+        parent::__construct(_AM_PUBLISHER_CATEGORY, 'form', $xoops->getEnv('PHP_SELF'), 'post', true);
         $this->setExtra('enctype="multipart/form-data"');
 
         // Category

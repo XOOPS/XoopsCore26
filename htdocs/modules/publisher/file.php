@@ -62,6 +62,10 @@ switch ($op) {
         $files_form->display();
         break;
     case 'modify':
+        // keep the token: save errors send the user back to this form to retry
+        if (!$xoops->security()->check(false)) {
+            $xoops->redirect('item.php?itemid=' . $fileObj->getVar('itemid'), 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         $fileid = isset($_POST['fileid']) ? (int)$_POST['fileid'] : 0;
 
         // Creating the file object
@@ -103,6 +107,9 @@ switch ($op) {
         $confirm = $_POST['confirm'] ?? 0;
 
         if ($confirm) {
+            if (!$xoops->security()->check()) {
+                $xoops->redirect('item.php?itemid=' . $fileObj->getVar('itemid'), 3, implode('<br />', $xoops->security()->getErrors()));
+            }
             if (!$helper->getFileHandler()->delete($fileObj)) {
                 $xoops->redirect('item.php?itemid=' . $fileObj->getVar('itemid'), 2, _AM_PUBLISHER_FILE_DELETE_ERROR);
             }

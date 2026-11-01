@@ -48,7 +48,7 @@ class FileForm extends ThemeForm
         $helper = Helper::getInstance();
         $helper->loadLanguage('main');
 
-        parent::__construct(_AM_PUBLISHER_UPLOAD_FILE, 'form', $xoops->getEnv('PHP_SELF'));
+        parent::__construct(_AM_PUBLISHER_UPLOAD_FILE, 'form', $xoops->getEnv('PHP_SELF'), 'post', true);
         $this->setExtra('enctype="multipart/form-data"');
 
         // NAME

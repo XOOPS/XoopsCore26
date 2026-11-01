@@ -130,6 +130,9 @@ switch ($op) {
         $confirm = $_POST['confirm'] ?? 0;
 
         if ($confirm) {
+            if (!$xoops->security()->check()) {
+                $xoops->redirect('index.php', 3, implode('<br />', $xoops->security()->getErrors()));
+            }
             if (!$helper->getItemHandler()->delete($itemObj)) {
                 $xoops->redirect('index.php', 2, _AM_PUBLISHER_ITEM_DELETE_ERROR . Publisher\Utils::formatErrors($itemObj->getErrors()));
             }
@@ -181,6 +184,10 @@ switch ($op) {
 
         break;
     case 'post':
+        // keep the token: save errors send the user back to this form to fix and resubmit
+        if (!$xoops->security()->check(false)) {
+            $xoops->redirect('index.php', 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         // Putting the values about the ITEM in the ITEM object
         $itemObj->setVarsFromRequest();
 

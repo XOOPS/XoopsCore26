@@ -33,6 +33,7 @@ $xoops->events()->triggerEvent('core.user.start');
 
 $xoops->loadLanguage('user');
 
+$xoops_redirect = '';
 if ('POST' === Request::getMethod()) {
     // from $_POST we use keys: op, ok
     $op = Request::getCmd('op', 'main', 'POST');
@@ -81,19 +82,10 @@ if ($op === 'main') {
         $xoops->tpl()->assign('mailpasswd_token', $xoops->security()->createToken());
         $xoops->footer();
     }
-    if (!empty($xoops_redirect)) {
-        $redirect = $xoops_redirect;
-        $isExternal = false;
-        if ($pos = strpos($redirect, '://')) {
-            $xoopsLocation = substr($xoops_url, strpos($xoops_url, '://') + 3);
-            if (strcasecmp(substr($redirect, $pos + 3, strlen($xoopsLocation)), $xoopsLocation)) {
-                $isExternal = true;
-            }
-        }
-        if (!$isExternal) {
-            header('Location: ' . $redirect);
-            exit();
-        }
+    $redirect = \Xoops\Core\RedirectUrl::validate((string) $xoops_redirect, (string) $xoops_url);
+    if ('' !== $redirect) {
+        header('Location: ' . $redirect);
+        exit();
     }
     header('Location: ' . $xoops_url . '/userinfo.php?uid=' . $xoopsUser->getVar('uid'));
     exit();

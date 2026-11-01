@@ -83,6 +83,8 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
     public function setFromDelete(PmMessage $pm, $val = 1)
     {
         if ($pm->getVar('to_delete') == 0) {
+            // keep the object in step so a following setTodelete() sees this side as deleted
+            $pm->setVar('from_delete', (int)($val));
             return $this->updateAll('from_delete', (int)($val), new Criteria('msg_id', $pm->getVar('msg_id')));
         } else {
             return parent::delete($pm);
@@ -98,7 +100,9 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
      */
     public function setTodelete(PmMessage $pm, $val = 1)
     {
-        if ($pm->getVar('from_delete') == 0 && $pm->getVar('from_userid') == 0) {
+        if ($pm->getVar('from_delete') == 0 && $pm->getVar('from_userid') != 0) {
+            // keep the object in step so a following setFromDelete() removes the row
+            $pm->setVar('to_delete', (int)($val));
             return $this->updateAll('to_delete', (int)($val), new Criteria('msg_id', $pm->getVar('msg_id')));
         } else {
             return parent::delete($pm);

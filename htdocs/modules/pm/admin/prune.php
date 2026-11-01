@@ -43,6 +43,9 @@ switch ($op) {
         break;
 
     case "prune":
+        if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
+            $xoops->redirect('prune.php', 3, implode('<br />', $xoops->security()->getErrors()));
+        }
         $criteria = new CriteriaCompo();
         $afterDateTime = Request::getDateTime('after', null);
         if (null !== $afterDateTime) {
@@ -67,7 +70,6 @@ switch ($op) {
             // Get array of uid => number of deleted messages
             $uids = $pmHandler->getCount($notifycriteria);
         }
-        \Xmf\Debug::log($criteria, $uids);
         $deletedrows = 0; // $pmHandler->deleteAll($criteria);
         if ($deletedrows === false) {
             $xoops->redirect('prune.php', 2, _PM_AM_ERRORWHILEPRUNING);

@@ -52,24 +52,27 @@ if (isset($_POST['delete_messages']) && (isset($_POST['msg_id']) || isset($_POST
         if (empty($_REQUEST['ok'])) {
             echo $xoops->confirm(array(
                                  'ok' => 1, 'delete_messages' => 1, 'op' => $op,
-                                 'msg_ids' => json_encode(array_map("intval", $_POST['msg_id']))
+                                 'msg_ids' => json_encode(array_values(array_map('intval', (array) ($_POST['msg_id'] ?? []))))
                             ), $_SERVER['REQUEST_URI'], XoopsLocale::Q_ARE_YOU_SURE_YOU_WANT_TO_DELETE_THIS_MESSAGES);
             $xoops->footer();
         } else {
-            $clean_msg_id = json_decode($_POST['msg_ids'], true, 2);
-            if (!empty($clean_msg_id)) {
-                $clean_msg_id = array_map("intval", $clean_msg_id);
-            }
-            $size = count($clean_msg_id);
-            $msg =& $clean_msg_id;
+            $clean_msg_id = json_decode((string) ($_POST['msg_ids'] ?? ''), true, 2);
+            $msg = is_array($clean_msg_id) ? array_values(array_map('intval', $clean_msg_id)) : [];
+            $size = count($msg);
             for ($i = 0; $i < $size; ++$i) {
                 $pm = $pm_handler->get($msg[$i]);
-                if ($pm->getVar('to_userid') == $xoops->user->getVar('uid')) {
+                if (!is_object($pm)) {
+                    continue;
+                }
+                // A message to yourself has both sides: the inbox deletes the recipient
+                // side, the outbox the sender side, the save box both.
+                $isTo = $pm->getVar('to_userid') == $xoops->user->getVar('uid');
+                $isFrom = $pm->getVar('from_userid') == $xoops->user->getVar('uid');
+                if ($isTo && ('out' !== $op || !$isFrom)) {
                     $pm_handler->setTodelete($pm);
-                } else {
-                    if ($pm->getVar('from_userid') == $xoops->user->getVar('uid')) {
-                        $pm_handler->setFromdelete($pm);
-                    }
+                }
+                if ($isFrom && ('in' !== $op || !$isTo)) {
+                    $pm_handler->setFromdelete($pm);
                 }
                 unset($pm);
             }
@@ -81,11 +84,15 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
     if (!$xoops->security()->check()) {
         $xoops->tpl()->assign('errormsg', implode('<br />', $xoops->security()->getErrors()));
     } else {
-        $size = count($_POST['msg_id']);
-        $msg = $_POST['msg_id'];
+        $msg = array_values(array_map('intval', (array) $_POST['msg_id']));
+        $size = count($msg);
+        $uid = $xoops->user->getVar('uid');
         if ($_POST['op'] === 'save') {
             for ($i = 0; $i < $size; ++$i) {
                 $pm = $pm_handler->get($msg[$i]);
+                if (!is_object($pm)) {
+                    continue;
+                }
                 if ($pm->getVar('to_userid') == $xoops->user->getVar('uid')) {
                     $pm_handler->setTosave($pm, 0);
                 } else {
@@ -102,12 +109,13 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
             }
             for ($i = 0; $i < $size; ++$i) {
                 $pm = $pm_handler->get($msg[$i]);
-                if ($_POST['op'] === 'in') {
+                if (!is_object($pm)) {
+                    continue;
+                }
+                if ($_POST['op'] === 'in' && $pm->getVar('to_userid') == $uid) {
                     $pm_handler->setTosave($pm);
-                } else {
-                    if ($_POST['op'] === 'out') {
-                        $pm_handler->setFromsave($pm);
-                    }
+                } elseif ($_POST['op'] === 'out' && $pm->getVar('from_userid') == $uid) {
+                    $pm_handler->setFromsave($pm);
                 }
                 unset($pm);
             }

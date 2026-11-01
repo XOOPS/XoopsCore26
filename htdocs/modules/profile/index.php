@@ -52,19 +52,13 @@ if ($op === 'main') {
         $xoops->tpl()->assign('mailpasswd_token', $xoops->security()->createToken());
         include __DIR__ . '/footer.php';
     }
-    if (!empty($_GET['xoops_redirect'])) {
-        $redirect = trim($_GET['xoops_redirect']);
-        $isExternal = false;
-        if ($pos = strpos($redirect, '://')) {
-            $xoopsLocation = substr(\XoopsBaseConfig::get('url'), strpos(\XoopsBaseConfig::get('url'), '://') + 3);
-            if (strcasecmp(substr($redirect, $pos + 3, strlen($xoopsLocation)), $xoopsLocation)) {
-                $isExternal = true;
-            }
-        }
-        if (!$isExternal) {
-            header('Location: ' . $redirect);
-            exit();
-        }
+    $redirect = \Xoops\Core\RedirectUrl::validate(
+        \Xmf\Request::getString('xoops_redirect', '', 'GET'),
+        (string) \XoopsBaseConfig::get('url')
+    );
+    if ('' !== $redirect) {
+        header('Location: ' . $redirect);
+        exit();
     }
     header('Location: ./userinfo.php?uid=' . $xoops->user->getVar('uid'));
     exit();
