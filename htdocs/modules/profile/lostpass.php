@@ -20,6 +20,8 @@
  * @author          Taiwen Jiang <phppp@users.sourceforge.net>
  */
 
+use Xoops\Core\Session\RememberMe;
+
 include __DIR__ . '/header.php';
 $xoops = Xoops::getInstance();
 $email = isset($_GET['email']) ? trim($_GET['email']) : '';
@@ -39,9 +41,20 @@ if (empty($user)) {
     $xoops->redirect("user.php", 2, $msg, false);
 } else {
     $code = isset($_GET['code']) ? trim($_GET['code']) : '';
-    $areyou = substr($user->getVar("pass"), 0, 5);
-    if ($code != '' && $areyou == $code) {
+    // full digest of the hash: a prefix of the hash itself is the same for every bcrypt user
+    $areyou = hash('sha256', $user->getVar("pass", 'n'));
+    if ($code != '' && hash_equals($areyou, $code)) {
         $newpass = $xoops->makePass();
+        // save first: never mail a password that was not stored
+        $user->setVar('pass', password_hash($newpass, PASSWORD_DEFAULT));
+        $user->setVar('last_pass_change', time());
+        if (!$member_handler->insertUser($user)) {
+            $xoops->header();
+            echo XoopsLocale::E_USER_NOT_UPDATED;
+            include __DIR__ . '/footer.php';
+            exit();
+        }
+        new RememberMe()->invalidateAllForUser($user->getVar('uid'));
         $xoopsMailer = $xoops->getMailer();
         $xoopsMailer->useMail();
         $xoopsMailer->setTemplate("lostpass2.tpl");
@@ -57,15 +70,6 @@ if (empty($user)) {
         if (!$xoopsMailer->send()) {
             echo $xoopsMailer->getErrors();
         }
-
-        // todo convert to handleer update and bcrypt
-        // Next step: add the new password to the database
-        $sql = sprintf("UPDATE %s SET pass = '%s' WHERE uid = %u", $xoopsDB->prefix("users"), md5($newpass), $user->getVar('uid'));
-        if (!$xoopsDB->queryF($sql)) {
-            $xoops->header();
-            echo XoopsLocale::E_USER_NOT_UPDATED;
-            include __DIR__ . '/footer.php';
-        }
         $xoops->redirect("user.php", 3, sprintf(XoopsLocale::SF_PASSWORD_SENT_TO, $user->getVar("uname")), false);
         // If no Code, send it
     } else {
@@ -76,7 +80,7 @@ if (empty($user)) {
         $xoopsMailer->assign("ADMINMAIL", $xoops->getConfig('adminmail'));
         $xoopsMailer->assign("SITEURL", \XoopsBaseConfig::get('url') . "/");
         $xoopsMailer->assign("IP", $_SERVER['REMOTE_ADDR']);
-        $xoopsMailer->assign("NEWPWD_LINK", \XoopsBaseConfig::get('url') . "/modules/profile/lostpass.php?email={$email}&code=" . $areyou);
+        $xoopsMailer->assign("NEWPWD_LINK", \XoopsBaseConfig::get('url') . "/modules/profile/lostpass.php?email=" . urlencode($email) . "&code=" . $areyou);
         $xoopsMailer->setToUsers($user);
         $xoopsMailer->setFromEmail($xoops->getConfig('adminmail'));
         $xoopsMailer->setFromName($xoops->getConfig('sitename'));

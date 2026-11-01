@@ -343,27 +343,35 @@ class XoopsMemberHandler
             return false;
         }
 
-        $hash = $user[0]->pass();
-        $type = substr($user[0]->pass(), 0, 1);
-        // see if we have a crypt like signature, old md5 hash is just hex digits
-        if ($type==='$') {
-            if (!password_verify($pwd, $hash)) {
-                return false;
-            }
-            // check if hash uses the best algorithm (i.e. after a PHP upgrade)
-            $rehash = password_needs_rehash($hash, PASSWORD_DEFAULT);
-        } else {
-            if ($hash!=md5($pwd)) {
-                return false;
-            }
-            $rehash = true; // automatically update old style
+        if (!$this->verifyPassword($user[0], $pwd)) {
+            return false;
         }
-        // hash used an old algorithm, so make it stronger
-        if ($rehash) {
+        // hash used an old algorithm (md5, or an older crypt after a PHP upgrade), so make it stronger
+        if (password_needs_rehash((string) $user[0]->pass(), PASSWORD_DEFAULT)) {
             $user[0]->setVar('pass', password_hash($pwd, PASSWORD_DEFAULT));
             $this->userHandler->insert($user[0]);
         }
         return $user[0];
+    }
+
+    /**
+     * check a password against the hash stored for a user
+     *
+     * @param XoopsUser $user user to check
+     * @param string    $pwd  password as entered
+     *
+     * @return bool true if the password matches
+     *
+     * @todo - md5 support should be completely removed eventually
+     */
+    public function verifyPassword(XoopsUser $user, $pwd): bool
+    {
+        $hash = (string) $user->pass();
+        // see if we have a crypt like signature, old md5 hash is just hex digits
+        if (str_starts_with($hash, '$')) {
+            return password_verify((string) $pwd, $hash);
+        }
+        return hash_equals($hash, md5((string) $pwd)); // NOSONAR verifies legacy md5 hashes; loginUser() rehashes them
     }
 
     /**

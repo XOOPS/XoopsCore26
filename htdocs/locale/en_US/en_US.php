@@ -175,6 +175,8 @@ class XoopsLocaleEn_US extends Xoops\Locale\AbstractLocale
     const CONTAINS = "Contains";
     const CONTENT = "Content";
     const CREDITS = "Credits";
+    const CURRENT_PASSWORD = "Current password";
+    const CURRENT_PASSWORD_DESC = "Required to change your password or email address";
     const C_AUTHOR = "Author:";
     const C_DESCRIPTION = "Description:";
     const C_ERRORS = "Error(s):";
@@ -381,6 +383,7 @@ class XoopsLocaleEn_US extends Xoops\Locale\AbstractLocale
     const E_USER_NOT_UPDATED = "User was not updated!";
     const E_VERIFY_USER_DATA_OR_SET_AUTOMATIC_PROVISIONING = "Please verify your user data or set on the automatic provisioning";
     const E_WE_ARE_CLOSED_FOR_REGISTRATION = "Sorry, we are currently closed for new user registrations!";
+    const E_WRONG_CURRENT_PASSWORD = "Your current password is not correct.";
     const E_YOU_ARE_NOT_REGISTERED = "Sorry, you are not a registered user!";
     const E_YOU_DO_NOT_HAVE_ANY_PRIVATE_MESSAGE = "You do not have any private messages!";
     const E_YOU_HAVE_TO_AGREE_TO_DISCLAIMER = "Sorry, you have to agree to our disclaimer to get registered!";

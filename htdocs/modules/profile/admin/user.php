@@ -9,7 +9,9 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 */
 
+use Xmf\Request;
 use Xoops\Core\FixedGroups;
+use Xoops\Core\Session\RememberMe;
 
 /**
  * Extended User Profile
@@ -133,14 +135,26 @@ switch ($op) {
         }
         $myts = \Xoops\Core\Text\Sanitizer::getInstance();
         $user->setVar('uname', $_POST['uname']);
-        $user->setVar('email', trim($_POST['email']));
+        // changing your own email address or password needs the current password
+        $email = Request::getString('email', '', 'POST', Request::MASK_ALLOW_RAW);
+        // a blank or whitespace-only password field means "no change"
+        $newPassword = Request::getString('password', '', 'POST', Request::MASK_ALLOW_RAW);
+        $wrongPassword = !$user->isNew() && $user->getVar('uid') == $xoops->user->getVar('uid')
+            && ($email !== $user->getVar('email', 'n') || '' !== $newPassword)
+            && !$xoops->getHandlerMember()->verifyPassword(
+                $user,
+                Request::getString('oldpass', '', 'POST', Request::MASK_ALLOW_RAW | Request::MASK_NO_TRIM)
+            );
+        if (!$wrongPassword) {
+            $user->setVar('email', $email);
+        }
         if (isset($_POST['level']) && $user->getVar('level') != (int)($_POST['level'])) {
             $user->setVar('level', (int)($_POST['level']));
         }
         $password = $vpass = null;
-        if (!empty($_POST['password'])) {
-            $password = trim($_POST['password']);
-            $vpass = trim($_POST['vpass']);
+        if ('' !== $newPassword && !$wrongPassword) {
+            $password = $newPassword;
+            $vpass = Request::getString('vpass', '', 'POST', Request::MASK_ALLOW_RAW);
             $user->setVar('pass', password_hash($password, PASSWORD_DEFAULT));
             $user->setVar('last_pass_change', time());
         } elseif ($user->isNew()) {
@@ -151,6 +165,9 @@ switch ($op) {
         $errors = array();
         if ($stop != "") {
             $errors[] = $stop;
+        }
+        if ($wrongPassword) {
+            $errors[] = XoopsLocale::E_WRONG_CURRENT_PASSWORD;
         }
 
         foreach (array_keys($fields) as $i) {
@@ -171,6 +188,9 @@ switch ($op) {
 
         if (count($errors) == 0) {
             if ($handler->insertUser($user)) {
+                if (null !== $password && '' !== $password) {
+                    new RememberMe()->invalidateAllForUser($user->getVar('uid'));
+                }
                 $profile->setVar('profile_id', $user->getVar('uid'));
                 $profile_handler->insert($profile);
                 include_once $xoops->path("/modules/system/constants.php");

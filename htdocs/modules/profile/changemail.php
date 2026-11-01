@@ -43,7 +43,7 @@ if (!isset($_POST['submit']) || !isset($_POST['passwd'])) {
     $pass = trim($_POST['passwd']);
     $email = trim($_POST['newmail']);
     $errors = array();
-    if (!password_verify($pass, $xoops->user->getVar('pass', 'n'))) {
+    if (!$xoops->getHandlerMember()->verifyPassword($xoops->user, $pass)) {
         $errors[] = _PROFILE_MA_WRONGPASSWORD;
     }
     if (!$xoops->checkEmail($email)) {

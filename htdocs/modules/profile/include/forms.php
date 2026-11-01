@@ -165,6 +165,14 @@ function profile_getUserForm(XoopsUser $user, ?ProfileProfile $profile = null, $
     $elements[0][] = array('element' => $email_tray, 'required' => 0);
     $weights[0][] = 0;
 
+    if (!$user->isNew() && $xoops->user->isAdmin() && $user->getVar('uid') == $xoops->user->getVar('uid')) {
+        // changing your own email address needs the current password
+        $oldpass_text = new Xoops\Form\Password(XoopsLocale::CURRENT_PASSWORD, 'oldpass');
+        $oldpass_text->setDescription(XoopsLocale::CURRENT_PASSWORD_DESC);
+        $elements[0][] = array('element' => $oldpass_text, 'required' => 0);
+        $weights[0][] = 0;
+    }
+
     if ($xoops->user->isAdmin() && $user->getVar('uid') != $xoops->user->getVar('uid')) {
         //If the user is an admin and is editing someone else
         $pwd_text = new Xoops\Form\Password('', 'password');
