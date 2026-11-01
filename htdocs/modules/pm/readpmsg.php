@@ -66,48 +66,30 @@ if (is_object($pm) && !empty($_POST['action'])) {
                && $pm_handler->getSavecount() >= $xoops->getModuleConfig('max_save')
     ) {
         $res_message = sprintf(_PM_SAVED_PART, $xoops->getModuleConfig('max_save'), 0);
-    } else {
+    } elseif (!empty($_REQUEST['delete_message'])) {
+        $res = (bool) $pm_handler->deleteFromFolder($pm, $xoops->user->getVar('uid'), $op);
+    } elseif (!empty($_REQUEST['move_message'])) {
+        $uid = $xoops->user->getVar('uid');
         switch ($op) {
             case 'out':
-                if ($pm->getVar('from_userid') != $xoops->user->getVar('uid')) {
-                    break;
-                }
-                if (!empty($_REQUEST['delete_message'])) {
-                    $res = $pm_handler->setFromDelete($pm);
-                } elseif (!empty($_REQUEST['move_message'])) {
+                if ($pm->getVar('from_userid') == $uid) {
                     $res = $pm_handler->setFromsave($pm);
                 }
                 break;
             case 'save':
                 // A message is in the save box of its recipient, its sender, or both.
                 $res1 = $res2 = null;
-                if ($pm->getVar('to_userid') == $xoops->user->getVar('uid')) {
-                    if (!empty($_REQUEST['delete_message'])) {
-                        $res1 = $pm_handler->setTodelete($pm);
-                        $res1 = ($res1) ? $pm_handler->setTosave($pm, 0) : false;
-                    } elseif (!empty($_REQUEST['move_message'])) {
-                        $res1 = $pm_handler->setTosave($pm, 0);
-                    }
+                if ($pm->getVar('to_userid') == $uid) {
+                    $res1 = $pm_handler->setTosave($pm, 0);
                 }
-                if ($pm->getVar('from_userid') == $xoops->user->getVar('uid')) {
-                    if (!empty($_REQUEST['delete_message'])) {
-                        $res2 = $pm_handler->setFromDelete($pm);
-                        $res2 = ($res2) ? $pm_handler->setFromsave($pm, 0) : false;
-                    } elseif (!empty($_REQUEST['move_message'])) {
-                        $res2 = $pm_handler->setFromsave($pm, 0);
-                    }
+                if ($pm->getVar('from_userid') == $uid) {
+                    $res2 = $pm_handler->setFromsave($pm, 0);
                 }
                 $res = (null !== $res1 || null !== $res2) && false !== $res1 && false !== $res2;
                 break;
-
             case 'in':
             default:
-                if ($pm->getVar('to_userid') != $xoops->user->getVar('uid')) {
-                    break;
-                }
-                if (!empty($_REQUEST['delete_message'])) {
-                    $res = $pm_handler->setTodelete($pm);
-                } elseif (!empty($_REQUEST['move_message'])) {
+                if ($pm->getVar('to_userid') == $uid) {
                     $res = $pm_handler->setTosave($pm);
                 }
                 break;

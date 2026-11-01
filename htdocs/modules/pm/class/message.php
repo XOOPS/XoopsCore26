@@ -110,6 +110,38 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
     }
 
     /**
+     * Delete the sides of a message that a user has in a folder
+     *
+     * A message to yourself has two sides: the inbox holds the recipient side,
+     * the outbox the sender side, and the save box each saved side. A side that
+     * is already deleted is skipped.
+     *
+     * @param PmMessage $pm
+     * @param int       $uid    user who deletes the message
+     * @param string    $folder 'in', 'out' or 'save'
+     * @return bool|null null when the user has no side of $pm in $folder
+     */
+    public function deleteFromFolder(PmMessage $pm, $uid, $folder)
+    {
+        $inFolder = static function ($side) use ($pm, $uid, $folder) {
+            $saved = (bool) $pm->getVar($side . '_save');
+
+            return $pm->getVar($side . '_userid') == $uid
+                && 0 == $pm->getVar($side . '_delete')
+                && ('save' === $folder ? $saved : !$saved && $folder === ('to' === $side ? 'in' : 'out'));
+        };
+        $to = $inFolder('to');
+        $from = $inFolder('from');
+        if (!$to && !$from) {
+            return null;
+        }
+        // setTodelete() updates the object, so setFromDelete() then removes the row
+        $res = !$to || $this->setTodelete($pm);
+
+        return $res && (!$from || $this->setFromDelete($pm));
+    }
+
+    /**
      * Mark a message as from_save = 1
      *
      * @param PmMessage $pm

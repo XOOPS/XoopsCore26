@@ -79,11 +79,28 @@ final class RedirectUrl
      */
     public static function isLocal(string $url, string $baseUrl): bool
     {
+        // A Location header reads the raw value, an HTML page the decoded one:
+        // "https://site.test&quest;@evil.test/" has host site.test only once decoded.
         $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        if (1 === preg_match('/[\x00-\x1F\x7F]/', $decoded) || self::headIsAmbiguous($decoded)) {
+
+        return self::readingIsLocal($decoded, $baseUrl)
+            && ($decoded === $url || self::readingIsLocal($url, $baseUrl));
+    }
+
+    /**
+     * isLocal() for one reading (raw or entity-decoded) of a URL.
+     *
+     * @param string $url     URL as one client reads it
+     * @param string $baseUrl site base URL
+     *
+     * @return bool
+     */
+    private static function readingIsLocal(string $url, string $baseUrl): bool
+    {
+        if (1 === preg_match('/[\x00-\x1F\x7F]/', $url) || self::headIsAmbiguous($url)) {
             return false;
         }
-        $parts = parse_url($decoded);
+        $parts = parse_url($url);
         if (false === $parts) {
             return false;
         }
@@ -91,7 +108,7 @@ final class RedirectUrl
             // "http:/evil.test" has a scheme but no host; browsers may still leave the site.
             return !isset($parts['scheme'])
                 && str_starts_with($parts['path'] ?? '', '/')
-                && !str_starts_with($decoded, '//');
+                && !str_starts_with($url, '//');
         }
         if (isset($parts['user']) || isset($parts['pass'])) {
             return false;
@@ -126,17 +143,19 @@ final class RedirectUrl
         if ('' === $redirect || !self::isLocal($redirect, $baseUrl)) {
             return '';
         }
-        $decoded = html_entity_decode($redirect, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        if (!str_starts_with($decoded, '/') && null === parse_url($decoded, PHP_URL_SCHEME)) {
-            return '';
-        }
-        $path = (string) (parse_url($decoded, PHP_URL_PATH) ?? '/');
-        if (in_array('..', explode('/', rawurldecode($path)), true)) {
-            return '';
-        }
         $basePath = rtrim((string) (parse_url($baseUrl, PHP_URL_PATH) ?? ''), '/');
-        if ('' !== $basePath && $path !== $basePath && !str_starts_with($path, $basePath . '/')) {
-            return '';
+        // Check the raw and the entity-decoded reading, as isLocal() does.
+        foreach ([$redirect, html_entity_decode($redirect, ENT_QUOTES | ENT_HTML5, 'UTF-8')] as $reading) {
+            if (!str_starts_with($reading, '/') && null === parse_url($reading, PHP_URL_SCHEME)) {
+                return '';
+            }
+            $path = (string) (parse_url($reading, PHP_URL_PATH) ?? '/');
+            if (in_array('..', explode('/', rawurldecode($path)), true)) {
+                return '';
+            }
+            if ('' !== $basePath && $path !== $basePath && !str_starts_with($path, $basePath . '/')) {
+                return '';
+            }
         }
 
         return $redirect;

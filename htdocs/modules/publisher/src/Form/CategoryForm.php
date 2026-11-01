@@ -72,7 +72,9 @@ class CategoryForm extends ThemeForm
         $memberHandler = $xoops->getHandlerMember();
         $userGroups = $memberHandler->getGroupList();
 
-        parent::__construct(_AM_PUBLISHER_CATEGORY, 'form', $xoops->getEnv('PHP_SELF'), 'post', true);
+        parent::__construct(_AM_PUBLISHER_CATEGORY, 'form', $xoops->getEnv('PHP_SELF'), 'post');
+        // long-lived token: editing a category can take longer than the 300 s default
+        $this->addElement(new \Xoops\Form\Token('XOOPS_TOKEN', 3600));
         $this->setExtra('enctype="multipart/form-data"');
 
         // Category

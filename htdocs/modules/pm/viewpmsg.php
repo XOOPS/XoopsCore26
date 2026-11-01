@@ -61,18 +61,8 @@ if (isset($_POST['delete_messages']) && (isset($_POST['msg_id']) || isset($_POST
             $size = count($msg);
             for ($i = 0; $i < $size; ++$i) {
                 $pm = $pm_handler->get($msg[$i]);
-                if (!is_object($pm)) {
-                    continue;
-                }
-                // A message to yourself has both sides: the inbox deletes the recipient
-                // side, the outbox the sender side, the save box both.
-                $isTo = $pm->getVar('to_userid') == $xoops->user->getVar('uid');
-                $isFrom = $pm->getVar('from_userid') == $xoops->user->getVar('uid');
-                if ($isTo && ('out' !== $op || !$isFrom)) {
-                    $pm_handler->setTodelete($pm);
-                }
-                if ($isFrom && ('in' !== $op || !$isTo)) {
-                    $pm_handler->setFromdelete($pm);
+                if (is_object($pm)) {
+                    $pm_handler->deleteFromFolder($pm, $xoops->user->getVar('uid'), $op);
                 }
                 unset($pm);
             }

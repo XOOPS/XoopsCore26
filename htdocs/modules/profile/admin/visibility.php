@@ -49,7 +49,7 @@ $fields = $field_handler->getList();
 $fieldId = Request::getInt('field_id', 0);
 $userGroup = Request::getInt('ug', 0);
 $profileGroup = Request::getInt('pg', 0);
-if (isset($_POST['submit'])) {
+if (Request::hasVar('submit', 'POST')) {
     if (!$xoops->security()->check()) {
         $xoops->redirect('visibility.php', 3, implode(',', $xoops->security()->getErrors()));
     }

@@ -31,6 +31,8 @@ class RedirectUrlTest extends \PHPUnit\Framework\TestCase
             'scheme without host'   => ['https:/evil.test/', self::BASE],
             'encoded slash in head' => ['/%2fevil.test/', self::BASE],
             'amp in query'          => ['https://site.test/a.php?x=1&amp;y=2', 'https://site.test/a.php?x=1&amp;y=2'],
+            'entity before userinfo' => ['https://site.test&quest;@evil.test/', self::BASE],
+            'entity hash userinfo'  => ['https://site.test&num;@evil.test/', self::BASE],
         ];
     }
 
@@ -66,6 +68,9 @@ class RedirectUrlTest extends \PHPUnit\Framework\TestCase
             'external'                => [self::BASE, 'https://evil.test/', ''],
             'empty'                   => [self::BASE, '  ', ''],
             'trimmed'                 => [self::BASE, ' /x.php ', '/x.php'],
+            'entity before userinfo'  => [self::BASE, 'https://site.test&quest;@evil.test/', ''],
+            'entity outside base'     => [self::SUB, '/xo&#x6f;ps/x.php', ''],
+            'entity dot dot'          => [self::SUB, '/xoops/&#46;&#46;/x.php', ''],
         ];
     }
 
@@ -89,6 +94,8 @@ class RedirectUrlTest extends \PHPUnit\Framework\TestCase
             'entity register'       => [self::BASE, '/&#x72;egister.php', 'https://site.test/index.php'],
             'double encoded reg'    => [self::BASE, '/%2572egister.php', 'https://site.test/index.php'],
             'absolute same site'    => [self::BASE, 'https://site.test/a.php', 'https://site.test/a.php'],
+            'exact base path'       => [self::SUB, '/xoops', 'https://site.test/xoops'],
+            'encoded CRLF in path'  => [self::SUB, '/xoops/a%0d%0aSet-Cookie:x=1', 'https://site.test/xoops/index.php'],
         ];
     }
 
