@@ -117,6 +117,7 @@ if ($xoops->isUser() && $xoops->user->isAdmin()) {
     $xoops->tpl()->assign('lang_editprofile', XoopsLocale::EDIT_PROFILE);
     $xoops->tpl()->assign('lang_deleteaccount', XoopsLocale::DELETE_ACCOUNT);
     $xoops->tpl()->assign('userlevel', $thisUser->isActive());
+    $xoops->tpl()->assign('token', $xoops->security()->getTokenHTML());
 }
 
 // Let extensions add navigation button

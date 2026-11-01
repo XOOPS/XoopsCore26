@@ -58,6 +58,7 @@ switch ($op) {
         $xoops->theme()->addScript('media/jquery/plugins/jquery.jeditable.js');
         $xoops->theme()->addScript('modules/system/js/admin.js');
         $xoops->theme()->addScript('modules/system/js/module.js');
+        system_addAjaxToken();
         // Define Breadcrumb and tips
         $admin_page = new \Xoops\Module\Admin();
         $admin_page->addBreadcrumbLink(SystemLocale::CONTROL_PANEL, \XoopsBaseConfig::get('url') . '/admin.php', true);
@@ -108,6 +109,7 @@ switch ($op) {
         break;
 
     case 'order':
+        $xoops->security()->requireAjaxToken();
         // Get Module Handler
         $module_handler = $xoops->getHandlerModule();
         if (isset($_POST['mod'])) {
@@ -131,6 +133,7 @@ switch ($op) {
 
     case 'active':
         $xoops->logger()->quiet();
+        $xoops->security()->requireAjaxToken();
         //$xoops->disableErrorReporting();
         // Get module handler
         $module_handler = $xoops->getHandlerModule();
@@ -159,6 +162,7 @@ switch ($op) {
 
     case 'display_in_menu':
         $xoops->logger()->quiet();
+        $xoops->security()->requireAjaxToken();
         //$xoops->disableErrorReporting();
         // Get module handler
         $module_handler = $xoops->getHandlerModule();

@@ -54,8 +54,8 @@ $sel = array(
     'selvis' => -1
 );
 foreach ($sel as $key => $value) {
-    $_{$key} = isset($_COOKIE[$key]) ? (int)($_COOKIE[$key]) : $value;
-    ${$key} = Request::getInt($key, $_{$key}, $method);
+    $default = isset($_COOKIE[$key]) ? (int)($_COOKIE[$key]) : $value;
+    ${$key} = Request::getInt($key, $default, $method);
     setcookie($key, ${$key});
 }
 
@@ -81,6 +81,7 @@ switch ($op) {
         // Define scripts
         $xoops->theme()->addScript('modules/system/js/admin.js');
         $xoops->theme()->addScript('modules/system/js/blocks.js');
+        system_addAjaxToken();
         // Define Breadcrumb and tips
         $admin_page = new \Xoops\Module\Admin();
         $admin_page->addBreadcrumbLink(SystemLocale::CONTROL_PANEL, \XoopsBaseConfig::get('url') . '/admin.php', true);
@@ -203,6 +204,7 @@ switch ($op) {
         $xoops->theme()->addScript('media/jquery/plugins/jquery.form.js');
         $xoops->theme()->addScript('modules/system/js/admin.js');
         $xoops->theme()->addScript('modules/system/js/blocks.js');
+        system_addAjaxToken();
         // Define Breadcrumb and tips
         $admin_page = new \Xoops\Module\Admin();
         $admin_page->addBreadcrumbLink(SystemLocale::CONTROL_PANEL, \XoopsBaseConfig::get('url') . '/admin.php', true);
@@ -223,6 +225,7 @@ switch ($op) {
         break;
 
     case 'display':
+        $xoops->security()->requireAjaxToken();
         // Initialize blocks handler
         $block_handler = $xoops->getHandlerBlock();
         // Get variable
@@ -238,6 +241,7 @@ switch ($op) {
         break;
 
     case 'drag':
+        $xoops->security()->requireAjaxToken();
         // Initialize blocks handler
         $block_handler = $xoops->getHandlerBlock();
         // Get variable
@@ -253,6 +257,7 @@ switch ($op) {
         break;
 
     case 'order':
+        $xoops->security()->requireAjaxToken();
         // Initialize blocks handler
         $block_handler = $xoops->getHandlerBlock();
         if (isset($_POST['blk'])) {

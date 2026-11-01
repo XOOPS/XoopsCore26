@@ -32,7 +32,7 @@
                 <td class="txtleft">{$smiley.smiley_emotion}</td>
                 <td class="xo-actions txtcenter width5">
                     <img id="loading_sml{$smiley.smiley_id}" src="{xoAppUrl 'media/xoops/images/spinner.gif'}" style="display:none;" alt="{translate key='LOADING'}" />
-                    <img class="cursorpointer" id="sml{$smiley.smiley_id}" onclick="Xoops.changeStatus( 'smilies.php', { op: 'smilies_update_display', smiley_id: {$smiley.smiley_id} }, 'sml{$smiley.smiley_id}', 'smilies.php' )" src="{if $smiley.smiley_display}{xoAdminIcons 'success.png'}{else}{xoAdminIcons 'cancel.png'}{/if}" alt="{if $smiley.smiley_display}{$smarty.const._AM_SMILIES_OFF}{else}{$smarty.const._AM_SMILIES_ON}{/if}" title="{if $smiley.smiley_display}{$smarty.const._AM_SMILIES_OFF}{else}{$smarty.const._AM_SMILIES_ON}{/if}" />
+                    <img class="cursorpointer" id="sml{$smiley.smiley_id}" onclick="Xoops.changeStatus( 'smilies.php', { op: 'smilies_update_display', smiley_id: {$smiley.smiley_id}, XOOPS_TOKEN_REQUEST: '{$token}' }, 'sml{$smiley.smiley_id}', 'smilies.php' )" src="{if $smiley.smiley_display}{xoAdminIcons 'success.png'}{else}{xoAdminIcons 'cancel.png'}{/if}" alt="{if $smiley.smiley_display}{$smarty.const._AM_SMILIES_OFF}{else}{$smarty.const._AM_SMILIES_ON}{/if}" title="{if $smiley.smiley_display}{$smarty.const._AM_SMILIES_OFF}{else}{$smarty.const._AM_SMILIES_ON}{/if}" />
                 </td>
                 <td class="xo-actions txtcenter width10">
                     <a href="smilies.php?op=edit&amp;smiley_id={$smiley.smiley_id}" title="{$smarty.const._AM_SMILIES_EDIT}">

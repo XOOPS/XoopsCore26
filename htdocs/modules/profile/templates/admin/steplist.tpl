@@ -26,7 +26,7 @@
             <td class="xo-actions txtcenter width10">
                 <img id="loading_sml{$step.step_id}" src="{xoAppUrl 'media/xoops/images/spinner.gif'}" style="display:none;" alt="{translate key='LOADING'}" />
                 <img class="cursorpointer" id="sml{$step.step_id}"
-                     onclick="Xoops.changeStatus( 'step.php', { op: 'step_update', id: {$step.step_id} }, 'sml{$step.step_id}', 'step.php' )"
+                     onclick="Xoops.changeStatus( 'step.php', { op: 'step_update', id: {$step.step_id}, XOOPS_TOKEN_REQUEST: '{$token}' }, 'sml{$step.step_id}', 'step.php' )"
                      src="{if $step.step_save}{xoAdminIcons 'success.png'}{else}{xoAdminIcons 'cancel.png'}{/if}"
                      alt="{if $step.step_save}{translate key='NO'}{else}{translate key='YES'}{/if}"
                      title="{if $step.step_save}{translate key='NO'}{else}{translate key='YES'}{/if}"/>

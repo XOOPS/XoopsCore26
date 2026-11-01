@@ -9,7 +9,7 @@
     </div>
     <div class="xo-blockaction xo-actions">
         <img id="loading_img<{$item.bid}>" src="./images/mimetypes/spinner.gif" style="display:none;" title="<{translate key='LOADING'}>" alt="<{translate key='LOADING'}>" />
-        <img class="xo-tooltip" id="img<{$item.bid}>" onclick="system_setStatus( { fct: 'blocksadmin', op: 'display', bid: <{$item.bid}>, visible: <{if $item.visible}>0<{else}>1<{/if}> }, 'img<{$item.bid}>', 'admin.php' )"
+        <img class="xo-tooltip" id="img<{$item.bid}>" onclick="system_setStatus( { fct: 'blocksadmin', op: 'display', bid: <{$item.bid}>, visible: <{if $item.visible}>0<{else}>1<{/if}>, XOOPS_TOKEN_REQUEST: XOOPS_TOKEN }, 'img<{$item.bid}>', 'admin.php' )"
              src="<{if $item.visible}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{if $item.visible}><{translate key='HIDE_BLOCK' dirname='system'}><{else}><{translate key='DISPLAY_BLOCK' dirname='system'}><{/if}>&nbsp;<{$item.name}>" title="<{if $item.visible}><{translate key='HIDE_BLOCK' dirname='system'}><{else}><{translate key='DISPLAY_BLOCK' dirname='system'}><{/if}>&nbsp;<{$item.name}>" />
         <a class="xo-tooltip" href="admin.php?fct=blocksadmin&amp;op=edit&amp;bid=<{$item.bid}>" title="<{translate key='A_EDIT'}>">
             <img src="<{xoAdminIcons 'edit.png'}>" alt="<{translate key='A_EDIT'}>" />

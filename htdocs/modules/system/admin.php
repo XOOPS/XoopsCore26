@@ -81,6 +81,7 @@ if (false != $error) {
     $op = Request::getString('op', '');
     if ($op === 'system_activate') {
         \Xoops::getInstance()->logger()->quiet();
+        $xoops->security()->requireAjaxToken();
         $part = Request::getString('type', '');
         $config_handler = $xoops->getHandlerConfig();
 
@@ -102,6 +103,7 @@ if (false != $error) {
     // Define scripts
     $xoops->theme()->addBaseScriptAssets('@jquery');
     $xoops->theme()->addBaseScriptAssets('modules/system/js/admin.js');
+    system_addAjaxToken();
     // Define Breadcrumb and tips
     $admin_page = new \Xoops\Module\Admin();
     $admin_page->addBreadcrumbLink(SystemLocale::CONTROL_PANEL, \XoopsBaseConfig::get('url') . '/admin.php', true);

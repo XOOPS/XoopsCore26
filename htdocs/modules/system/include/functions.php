@@ -124,6 +124,23 @@ function system_AdminIcons($img)
 }
 
 /**
+ * Give the page's AJAX scripts (admin.js, blocks.js, module.js) the token
+ * their state changes send, as the JS global XOOPS_TOKEN
+ *
+ * @return void
+ */
+function system_addAjaxToken()
+{
+    static $added = false;
+    if (!$added) {
+        $xoops = Xoops::getInstance();
+        $token = json_encode($xoops->security()->createToken(3600));
+        $xoops->theme()->addScript('', array('type' => 'text/javascript'), 'var XOOPS_TOKEN = ' . $token . ';');
+        $added = true;
+    }
+}
+
+/**
  * @param string $name
  * @return void
  */

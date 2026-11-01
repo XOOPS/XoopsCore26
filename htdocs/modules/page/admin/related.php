@@ -33,6 +33,7 @@ switch ($op) {
 
     case 'list':
     default:
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         $admin_page->addTips(PageLocale::RELATED_TIPS);
         $admin_page->addItemButton(PageLocale::A_ADD_RELATED, 'related.php?op=new', 'add');
         $admin_page->renderTips();
@@ -178,6 +179,7 @@ switch ($op) {
         break;
 
     case 'update_status':
+        $xoops->security()->requireAjaxToken();
         $related_id = Request::getInt('related_id', 0);
         if ($related_id > 0) {
             $obj = $related_Handler->get($related_id);

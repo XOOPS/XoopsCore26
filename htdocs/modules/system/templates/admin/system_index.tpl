@@ -29,7 +29,7 @@
         <td class="xo-actions width2">
             <{if $menuitem.used}>
                 <img id="loading_<{$menuitem.file}>" src="images/spinner.gif" style="display:none;" alt="<{translate key='LOADING'}>" />
-                <img class="xo-tooltip" id="<{$menuitem.file}>" onclick="system_setStatus( { op: 'system_activate', type: '<{$menuitem.file}>' }, '<{$menuitem.file}>', 'admin.php' )" src="<{if $menuitem.status}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{translate key='CHANGE_STATUS'}>" title="<{translate key='CHANGE_STATUS'}>" />
+                <img class="xo-tooltip" id="<{$menuitem.file}>" onclick="system_setStatus( { op: 'system_activate', type: '<{$menuitem.file}>', XOOPS_TOKEN_REQUEST: XOOPS_TOKEN }, '<{$menuitem.file}>', 'admin.php' )" src="<{if $menuitem.status}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{translate key='CHANGE_STATUS'}>" title="<{translate key='CHANGE_STATUS'}>" />
             <{/if}>
         </td>
     </tr>

@@ -96,12 +96,7 @@ switch ($op) {
         break;
 
     case 'update_view':
-        // keep the token valid for the next toggle on the same page
-        if ('POST' !== Request::getMethod() || !$xoops->security()->check(false)) {
-            // non-2xx so Xoops.changeStatus() does not flip the icon
-            http_response_code(403);
-            exit();
-        }
+        $xoops->security()->requireAjaxToken();
         $content_id = Request::getInt('content_id', 0, 'POST');
         $group = Request::getInt('group', 0, 'POST');
         $status = Request::getString('status', '', 'POST');

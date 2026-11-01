@@ -58,6 +58,7 @@ switch ($op) {
         $xoops->theme()->addScript('media/jquery/plugins/jquery.jeditable.js');
         $xoops->theme()->addScript('modules/system/js/admin.js');
         $xoops->theme()->addScript('modules/system/js/module.js');
+        system_addAjaxToken();
         // Define Breadcrumb and tips
         $admin_page = new \Xoops\Module\Admin();
         $admin_page->addBreadcrumbLink(SystemLocale::CONTROL_PANEL, \XoopsBaseConfig::get('url') . '/admin.php', true);

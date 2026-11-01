@@ -12,6 +12,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
 
     protected $SERVER_save;
     protected $SESSION_save;
+    protected $POST_save;
     protected $moduleConfig_save;
 
     /**
@@ -23,6 +24,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         $this->object = new Security();
         $this->SERVER_save = $_SERVER;
         $this->SESSION_save = $_SESSION;
+        $this->POST_save = $_POST;
         $this->moduleConfig_save = \Xoops::getInstance()->moduleConfig;
     }
 
@@ -34,6 +36,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
     {
         $_SERVER = $this->SERVER_save;
         $_SESSION = $this->SESSION_save;
+        $_POST = $this->POST_save;
         \Xoops::getInstance()->moduleConfig = $this->moduleConfig_save;
     }
 
@@ -74,6 +77,19 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         $err = $instance->getErrors();
         $this->assertTrue(is_array($err));
         $this->assertTrue(empty($_SESSION['XOOPS_TOKEN_SESSION']));
+    }
+
+    public function test_requireAjaxToken_keepsTokenForNextToggle()
+    {
+        unset($_SESSION['XOOPS_TOKEN_SESSION']);
+        $token = $this->object->createToken(3600);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST['XOOPS_TOKEN_REQUEST'] = $token;
+
+        // returns (does not exit) for a valid POST, twice with one token
+        $this->object->requireAjaxToken();
+        $this->object->requireAjaxToken();
+        $this->assertSame($token, $_SESSION['XOOPS_TOKEN_SESSION'][0]['id']);
     }
 
     public function test_createToken()

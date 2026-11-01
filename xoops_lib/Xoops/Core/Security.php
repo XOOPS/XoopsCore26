@@ -47,6 +47,28 @@ class Security
     }
 
     /**
+     * Stop an AJAX state change unless it is a POST carrying a valid token.
+     *
+     * The token is kept, so every toggle on a page can reuse the one token
+     * the page minted (use createToken() with a long timeout for it). A
+     * rejected request ends with HTTP 403, which keeps Xoops.changeStatus()
+     * from flipping its icon.
+     *
+     * @param string $name name of session variable
+     *
+     * @return void
+     */
+    public function requireAjaxToken($name = 'XOOPS_TOKEN')
+    {
+        // the token must come in the body, a query string leaks through logs and referers
+        $token = Request::getString($name . '_REQUEST', '', 'POST');
+        if ('POST' !== Request::getMethod() || !$this->check(false, $token, $name)) {
+            http_response_code(403);
+            exit();
+        }
+    }
+
+    /**
      * Create a token in the user's session
      *
      * @param int    $timeout time in seconds the token should be valid

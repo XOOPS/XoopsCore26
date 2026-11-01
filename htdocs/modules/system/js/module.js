@@ -64,7 +64,7 @@ $(function() {
         placeholder: 'ui-state-highlight',
         update: function(event, ui) {
             var list = $(this).sortable( 'serialize');
-            $.post( 'admin.php?fct=modulesadmin&op=order', list );
+            $.post( 'admin.php?fct=modulesadmin&op=order', list + '&XOOPS_TOKEN_REQUEST=' + XOOPS_TOKEN );
         }}
     );
     $( "#sortable" ).disableSelection();
@@ -94,7 +94,7 @@ function module_Detail(id){
 }
 
 function module_Disable(id, enable, disable){
-    $.post( 'admin.php', { fct: 'modulesadmin', op: 'active', mid: id } ,
+    $.post( 'admin.php', { fct: 'modulesadmin', op: 'active', mid: id, XOOPS_TOKEN_REQUEST: XOOPS_TOKEN } ,
     function(reponse, textStatus) {
         if (textStatus=='success') {
             if(reponse){
@@ -110,7 +110,7 @@ function module_Disable(id, enable, disable){
 }
 
 function module_Hide(id){
-    $.post( 'admin.php', { fct: 'modulesadmin', op: 'display_in_menu', mid: id } ,
+    $.post( 'admin.php', { fct: 'modulesadmin', op: 'display_in_menu', mid: id, XOOPS_TOKEN_REQUEST: XOOPS_TOKEN } ,
     function(reponse, textStatus) {
         if (textStatus=='success') {
             if(reponse != 0){
