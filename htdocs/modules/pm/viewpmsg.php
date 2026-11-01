@@ -83,12 +83,12 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
                 if (!is_object($pm)) {
                     continue;
                 }
-                if ($pm->getVar('to_userid') == $xoops->user->getVar('uid')) {
+                // a message to yourself can be saved on both sides
+                if ($pm->getVar('to_userid') == $uid) {
                     $pm_handler->setTosave($pm, 0);
-                } else {
-                    if ($pm->getVar('from_userid') == $xoops->user->getVar('uid')) {
-                        $pm_handler->setFromsave($pm, 0);
-                    }
+                }
+                if ($pm->getVar('from_userid') == $uid) {
+                    $pm_handler->setFromsave($pm, 0);
                 }
                 unset($pm);
             }

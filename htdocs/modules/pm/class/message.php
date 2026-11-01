@@ -87,7 +87,7 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
             $pm->setVar('from_delete', (int)($val));
             return $this->updateAll('from_delete', (int)($val), new Criteria('msg_id', $pm->getVar('msg_id')));
         } else {
-            return parent::delete($pm);
+            return $this->delete($pm);
         }
     }
 
@@ -105,7 +105,7 @@ class PmMessageHandler extends XoopsPersistableObjectHandler
             $pm->setVar('to_delete', (int)($val));
             return $this->updateAll('to_delete', (int)($val), new Criteria('msg_id', $pm->getVar('msg_id')));
         } else {
-            return parent::delete($pm);
+            return $this->delete($pm);
         }
     }
 

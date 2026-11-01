@@ -97,7 +97,8 @@ final class RedirectUrl
      */
     private static function readingIsLocal(string $url, string $baseUrl): bool
     {
-        if (1 === preg_match('/[\x00-\x1F\x7F]/', $url) || self::headIsAmbiguous($url)) {
+        // "//host" is scheme-relative even when host is this site; parse_url() gives it a host.
+        if (str_starts_with($url, '//') || 1 === preg_match('/[\x00-\x1F\x7F]/', $url) || self::headIsAmbiguous($url)) {
             return false;
         }
         $parts = parse_url($url);
@@ -107,8 +108,7 @@ final class RedirectUrl
         if (!isset($parts['host'])) {
             // "http:/evil.test" has a scheme but no host; browsers may still leave the site.
             return !isset($parts['scheme'])
-                && str_starts_with($parts['path'] ?? '', '/')
-                && !str_starts_with($url, '//');
+                && str_starts_with($parts['path'] ?? '', '/');
         }
         if (isset($parts['user']) || isset($parts['pass'])) {
             return false;
