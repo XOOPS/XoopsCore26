@@ -98,20 +98,27 @@ if (isset($_POST['move_messages']) && isset($_POST['msg_id'])) {
                 $total_save = $pm_handler->getSavecount();
                 $room = $xoops->getModuleConfig('max_save') - $total_save;
             }
-            // only a message actually saved uses a slot; skipped ids do not
+            // a message uses a slot only when it newly enters getSavecount(),
+            // which counts each message once whichever of its sides is saved
             $saved = 0;
             foreach ($msg as $msgId) {
-                if ($saved >= $room) {
-                    break;
-                }
                 $pm = $pm_handler->get($msgId);
                 if (!is_object($pm)) {
                     continue;
                 }
+                $counted = ($pm->getVar('to_userid') == $uid && $pm->getVar('to_save') && !$pm->getVar('to_delete'))
+                    || ($pm->getVar('from_userid') == $uid && $pm->getVar('from_save') && !$pm->getVar('from_delete'));
+                if (!$counted && $saved >= $room) {
+                    continue;
+                }
+                $done = false;
                 if ($_POST['op'] === 'in' && $pm->getVar('to_userid') == $uid) {
-                    $saved += $pm_handler->setTosave($pm) ? 1 : 0;
+                    $done = $pm_handler->setTosave($pm);
                 } elseif ($_POST['op'] === 'out' && $pm->getVar('from_userid') == $uid) {
-                    $saved += $pm_handler->setFromsave($pm) ? 1 : 0;
+                    $done = $pm_handler->setFromsave($pm);
+                }
+                if ($done && !$counted) {
+                    ++$saved;
                 }
                 unset($pm);
             }
