@@ -167,6 +167,8 @@ class RememberMe
      * their 30 day lifetime on every recall but the generation is never rewritten (a
      * rewrite could restore a revoked value), so it is kept for ten years; a null TTL
      * would mean the cache default of five days. If it is evicted, tagged tokens fail closed.
+     * The token map is cleared before the generation is published, so a writer that overlaps
+     * the revocation has read the old generation and its tokens are discarded.
      *
      * @param integer $userId id of user associated with the sessions/tokens to be invalidated
      *
@@ -174,10 +176,9 @@ class RememberMe
      */
     public function invalidateAllForUser($userId)
     {
-        $this->readUserTokens($userId);
-        $this->xoops->cache()->write("user/{$userId}/usercookie_gen", Random::generateKey(), 315360000);
         $this->clearUserTokens();
         $this->writeUserTokens($userId);
+        $this->xoops->cache()->write("user/{$userId}/usercookie_gen", Random::generateKey(), 315360000);
     }
 
     /**

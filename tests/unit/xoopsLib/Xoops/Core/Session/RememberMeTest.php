@@ -85,6 +85,26 @@ class RememberMeTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($next->recall());
     }
 
+    public function testInvalidateAllForUserRejectsConcurrentLogin()
+    {
+        $userId = $this->userId;
+        new RememberMeTestDouble()->createUserCookie($userId);
+
+        // a login reads the tokens while the revocation runs and writes them back after it
+        $login = new RememberMeTestDouble();
+        $login->deferWrite = true;
+        $revoke = new RememberMeTestDouble();
+        $revoke->beforeWrite = function () use ($login, $userId) {
+            $login->createUserCookie($userId);
+        };
+        $revoke->invalidateAllForUser($userId);
+        ($login->pendingWrite)();
+
+        $next = new RememberMeTestDouble();
+        $next->cookie = $login->cookie;
+        $this->assertFalse($next->recall());
+    }
+
     public function testCreateUserCookie()
     {
         // Remove the following lines when you implement this test.
@@ -101,6 +121,8 @@ class RememberMeTestDouble extends RememberMe
 {
     public $cookie = false;
     public $beforeWrite = null;
+    public $deferWrite = false;
+    public $pendingWrite = null;
 
     protected function readUserCookie()
     {
@@ -118,6 +140,13 @@ class RememberMeTestDouble extends RememberMe
             $callback = $this->beforeWrite;
             $this->beforeWrite = null;
             $callback();
+        }
+        if ($this->deferWrite) {
+            $this->deferWrite = false;
+            $this->pendingWrite = function () use ($userId) {
+                parent::writeUserTokens($userId);
+            };
+            return;
         }
         parent::writeUserTokens($userId);
     }

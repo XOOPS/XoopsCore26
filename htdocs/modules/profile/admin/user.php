@@ -184,7 +184,7 @@ switch ($op) {
 
         if (count($errors) == 0) {
             if ($handler->insertUser($user)) {
-                if (!empty($password)) {
+                if (null !== $password && '' !== $password) {
                     new RememberMe()->invalidateAllForUser($user->getVar('uid'));
                 }
                 $profile->setVar('profile_id', $user->getVar('uid'));
