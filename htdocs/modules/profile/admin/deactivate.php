@@ -26,7 +26,7 @@ include __DIR__ . '/header.php';
 $xoops = Xoops::getInstance();
 $xoops->header();
 
-if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
+if (!$xoops->security()->checkPost()) {
     $xoops->redirect('index.php', 3, implode('<br />', $xoops->security()->getErrors()));
 }
 $uid = Request::getInt('uid', 0, 'POST');

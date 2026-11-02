@@ -60,7 +60,7 @@ class Security
      */
     public function requireAjaxToken($name = 'XOOPS_TOKEN'): void
     {
-        if (!$this->checkAjaxToken($name)) {
+        if (!$this->checkPost(false, $name)) {
             http_response_code(403);
             // media/xoops/xoops.js reloads the page on this marker to get a fresh token
             header('X-Xoops-Token: rejected');
@@ -69,17 +69,23 @@ class Security
     }
 
     /**
-     * Is this a POST carrying a valid token in its body? The token is kept.
+     * Is this a POST carrying a valid token in its body?
      *
-     * @param string $name name of session variable
+     * Use it instead of check() for state changes: check() also accepts a
+     * token from the query string, which leaks through logs and referers.
+     *
+     * @param bool   $clearIfValid whether to clear the token after validation
+     * @param string $name         name of session variable
      *
      * @return bool
      */
-    public function checkAjaxToken($name = 'XOOPS_TOKEN'): bool
+    public function checkPost($clearIfValid = true, $name = 'XOOPS_TOKEN'): bool
     {
-        // the token must come in the body, a query string leaks through logs and referers
-        $token = Request::getString($name . '_REQUEST', '', 'POST');
-        return 'POST' === Request::getMethod() && '' !== $token && $this->check(false, $token, $name);
+        if ('POST' !== Request::getMethod()) {
+            $this->setErrors('Request must be sent by POST');
+            return false;
+        }
+        return $this->check($clearIfValid, Request::getString($name . '_REQUEST', '', 'POST'), $name);
     }
 
     /**

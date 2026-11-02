@@ -91,7 +91,10 @@ if (false != $error) {
             /* @var $conf XoopsConfigItem */
             if ($conf->getVar('conf_name') == 'active_' . $part) {
                 $conf->setVar('conf_value', !$conf->getVar('conf_value'));
-                $config_handler->insertConfig($conf);
+                if (!$config_handler->insertConfig($conf)) {
+                    // a non-2xx status keeps system_setStatus() from flipping the icon
+                    http_response_code(500);
+                }
             }
         }
         exit;

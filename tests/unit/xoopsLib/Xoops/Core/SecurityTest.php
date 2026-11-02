@@ -106,7 +106,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('rejectedAjaxRequests')]
-    public function test_checkAjaxToken_rejects(string $method, ?string $token, bool $expired)
+    public function test_checkPost_rejects(string $method, ?string $token, bool $expired)
     {
         unset($_SESSION['XOOPS_TOKEN_SESSION']);
         $valid = $this->object->createToken(3600);
@@ -126,7 +126,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         }
 
         try {
-            $this->assertFalse($this->object->checkAjaxToken());
+            $this->assertFalse($this->object->checkPost(false));
         } finally {
             $_GET = $savedGet;
             $_POST = $savedPost;
@@ -134,12 +134,22 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    public function test_checkAjaxToken_acceptsValidPost()
+    public function test_checkPost_acceptsValidPostAndKeepsToken()
     {
         unset($_SESSION['XOOPS_TOKEN_SESSION']);
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST['XOOPS_TOKEN_REQUEST'] = $this->object->createToken(3600);
-        $this->assertTrue($this->object->checkAjaxToken());
+        $this->assertTrue($this->object->checkPost(false));
+        $this->assertTrue($this->object->checkPost(false));
+    }
+
+    public function test_checkPost_consumesTokenByDefault()
+    {
+        unset($_SESSION['XOOPS_TOKEN_SESSION']);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST['XOOPS_TOKEN_REQUEST'] = $this->object->createToken();
+        $this->assertTrue($this->object->checkPost());
+        $this->assertFalse($this->object->checkPost());
     }
 
     public function test_createToken()

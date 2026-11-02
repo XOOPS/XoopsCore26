@@ -126,7 +126,7 @@ switch ($op) {
                     if ($module->getVar('weight') != 0) {
                         $module->setVar('weight', $i);
                         if (!$module_handler->insertModule($module)) {
-                            $error = true;
+                            http_response_code(500);
                         }
                         ++$i;
                     }
@@ -150,7 +150,9 @@ switch ($op) {
             // Set value
             $module->setVar('isactive', !$old);
             if (!$module_handler->insertModule($module)) {
-                $error = true;
+                // a non-2xx status keeps system_setStatus() from flipping the icon
+                http_response_code(500);
+                break;
             }
             $blocks = $block_handler->getByModule($module_id);
             /* @var $block XoopsBlock */
@@ -178,7 +180,7 @@ switch ($op) {
             // Set value
             $module->setVar('weight', !$old);
             if (!$module_handler->insertModule($module)) {
-                $error = true;
+                http_response_code(500);
             } else {
                 echo !$old;
             }

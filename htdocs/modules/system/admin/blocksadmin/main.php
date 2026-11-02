@@ -235,7 +235,8 @@ switch ($op) {
             $block = $block_handler->get($block_id);
             $block->setVar('visible', $visible);
             if (!$block_handler->insertBlock($block)) {
-                $error = true;
+                // a non-2xx status keeps system_setStatus() from flipping the icon
+                http_response_code(500);
             }
         }
         break;
@@ -251,7 +252,7 @@ switch ($op) {
             $block = $block_handler->get($block_id);
             $block->setVar('side', $side);
             if (!$block_handler->insertBlock($block)) {
-                $error = true;
+                http_response_code(500);
             }
         }
         break;
@@ -267,7 +268,7 @@ switch ($op) {
                     $block = $block_handler->get($order);
                     $block->setVar('weight', $i);
                     if (!$block_handler->insertBlock($block)) {
-                        $error = true;
+                        http_response_code(500);
                     }
                     ++$i;
                 }

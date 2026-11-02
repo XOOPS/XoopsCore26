@@ -105,7 +105,7 @@ if ($op === 'delete') {
             echo $xoops->confirm(array('op' => 'delete', 'ok' => 1), 'user.php', XoopsLocale::Q_ARE_YOU_SURE_TO_DELETE_ACCOUNT . '<br/>' . XoopsLocale::THIS_WILL_REMOVE_ALL_YOUR_INFO);
             include __DIR__ . '/footer.php';
         } else {
-            if (!$xoops->security()->check()) {
+            if (!$xoops->security()->checkPost()) {
                 $xoops->redirect('user.php', 3, implode('<br />', $xoops->security()->getErrors()));
             }
             $del_uid = $xoops->user->getVar("uid");

@@ -121,7 +121,7 @@ if ($op === 'delete') {
             );
             $xoops->footer();
         } else {
-            if (!$xoops->security()->check()) {
+            if (!$xoops->security()->checkPost()) {
                 $xoops->redirect('user.php', 3, implode('<br />', $xoops->security()->getErrors()));
             }
             $del_uid = $xoops->user->getVar("uid");
