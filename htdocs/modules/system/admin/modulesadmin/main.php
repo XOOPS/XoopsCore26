@@ -58,6 +58,7 @@ switch ($op) {
         $xoops->theme()->addScript('media/jquery/plugins/jquery.jeditable.js');
         $xoops->theme()->addScript('modules/system/js/admin.js');
         $xoops->theme()->addScript('modules/system/js/module.js');
+        system_addAjaxToken();
         // Define Breadcrumb and tips
         $admin_page = new \Xoops\Module\Admin();
         $admin_page->addBreadcrumbLink(SystemLocale::CONTROL_PANEL, \XoopsBaseConfig::get('url') . '/admin.php', true);
@@ -92,22 +93,28 @@ switch ($op) {
 
     case 'rename':
         $xoops->logger()->quiet();
-        //$xoops->disableErrorReporting();
+        $xoops->security()->requireAjaxToken();
 
         $mid = Request::getInt('id', 0, 'post');
         $value = Request::getString('value', '', 'post');
-        if ($mid != 0) {
-            $module_handler = $xoops->getHandlerModule();
-            $module = $module_handler->getById($mid);
-            $module->setVar('name', $value);
-            if ($module_handler->insertModule($module)) {
-                echo $value;
-
-            }
+        $module_handler = $xoops->getHandlerModule();
+        $module = $mid > 0 ? $module_handler->getById($mid) : null;
+        if (!is_object($module)) {
+            http_response_code(404);
+            break;
         }
+        $module->setVar('name', $value);
+        if (!$module_handler->insertModule($module)) {
+            // an error status makes jEditable restore the old name
+            http_response_code(500);
+            break;
+        }
+        // jEditable inserts the response as HTML
+        echo htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         break;
 
     case 'order':
+        $xoops->security()->requireAjaxToken();
         // Get Module Handler
         $module_handler = $xoops->getHandlerModule();
         if (isset($_POST['mod'])) {
@@ -119,7 +126,7 @@ switch ($op) {
                     if ($module->getVar('weight') != 0) {
                         $module->setVar('weight', $i);
                         if (!$module_handler->insertModule($module)) {
-                            $error = true;
+                            http_response_code(500);
                         }
                         ++$i;
                     }
@@ -131,6 +138,7 @@ switch ($op) {
 
     case 'active':
         $xoops->logger()->quiet();
+        $xoops->security()->requireAjaxToken();
         //$xoops->disableErrorReporting();
         // Get module handler
         $module_handler = $xoops->getHandlerModule();
@@ -142,7 +150,9 @@ switch ($op) {
             // Set value
             $module->setVar('isactive', !$old);
             if (!$module_handler->insertModule($module)) {
-                $error = true;
+                // a non-2xx status keeps system_setStatus() from flipping the icon
+                http_response_code(500);
+                break;
             }
             $blocks = $block_handler->getByModule($module_id);
             /* @var $block XoopsBlock */
@@ -159,6 +169,7 @@ switch ($op) {
 
     case 'display_in_menu':
         $xoops->logger()->quiet();
+        $xoops->security()->requireAjaxToken();
         //$xoops->disableErrorReporting();
         // Get module handler
         $module_handler = $xoops->getHandlerModule();
@@ -169,7 +180,7 @@ switch ($op) {
             // Set value
             $module->setVar('weight', !$old);
             if (!$module_handler->insertModule($module)) {
-                $error = true;
+                http_response_code(500);
             } else {
                 echo !$old;
             }

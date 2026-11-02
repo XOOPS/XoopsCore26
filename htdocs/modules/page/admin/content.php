@@ -33,6 +33,7 @@ switch ($op) {
 
     case 'list':
     default:
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         $admin_page->addTips(PageLocale::CONTENT_TIPS);
         $admin_page->addItemButton(PageLocale::A_ADD_CONTENT, 'content.php?op=new', 'add');
         $admin_page->renderTips();
@@ -206,6 +207,7 @@ switch ($op) {
         break;
 
     case 'update_status':
+        $xoops->security()->requireAjaxToken();
         $content_id = Request::getInt('content_id', 0);
         if ($content_id > 0) {
             $obj = $content_Handler->get($content_id);
@@ -214,11 +216,13 @@ switch ($op) {
             if ($content_Handler->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;
 
     case 'update_display':
+        $xoops->security()->requireAjaxToken();
         $content_id = Request::getInt('content_id', 0);
         if ($content_id > 0) {
             $obj = $content_Handler->get($content_id);
@@ -227,6 +231,7 @@ switch ($op) {
             if ($content_Handler->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;

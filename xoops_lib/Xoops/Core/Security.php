@@ -47,6 +47,48 @@ class Security
     }
 
     /**
+     * Stop an AJAX state change unless it is a POST carrying a valid token.
+     *
+     * The token is kept, so every toggle on a page can reuse the one token
+     * the page minted (use createToken() with a long timeout for it). A
+     * rejected request ends with HTTP 403, which keeps Xoops.changeStatus()
+     * from flipping its icon.
+     *
+     * @param string $name name of session variable
+     *
+     * @return void
+     */
+    public function requireAjaxToken($name = 'XOOPS_TOKEN'): void
+    {
+        if (!$this->checkPost(false, $name)) {
+            http_response_code(403);
+            // media/xoops/xoops.js reloads the page on this marker to get a fresh token
+            header('X-Xoops-Token: rejected');
+            exit();
+        }
+    }
+
+    /**
+     * Is this a POST carrying a valid token in its body?
+     *
+     * Use it instead of check() for state changes: check() also accepts a
+     * token from the query string, which leaks through logs and referers.
+     *
+     * @param bool   $clearIfValid whether to clear the token after validation
+     * @param string $name         name of session variable
+     *
+     * @return bool
+     */
+    public function checkPost($clearIfValid = true, $name = 'XOOPS_TOKEN'): bool
+    {
+        if ('POST' !== Request::getMethod()) {
+            $this->setErrors('Request must be sent by POST');
+            return false;
+        }
+        return $this->check($clearIfValid, Request::getString($name . '_REQUEST', '', 'POST'), $name);
+    }
+
+    /**
      * Create a token in the user's session
      *
      * @param int    $timeout time in seconds the token should be valid

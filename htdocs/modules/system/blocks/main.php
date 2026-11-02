@@ -80,6 +80,7 @@ function b_system_main_edit($options)
     // Define scripts
     $xoops->theme()->addScript('media/jquery/plugins/jquery.jeditable.js');
     $xoops->theme()->addScript('modules/system/js/module.js');
+    system_addAjaxToken();
 
     $admin_page->addTips(SystemLocale::MENU_TIPS);
     $admin_page->renderTips();

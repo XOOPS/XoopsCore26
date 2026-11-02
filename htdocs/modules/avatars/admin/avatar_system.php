@@ -84,6 +84,7 @@ switch ($op) {
             $avatar_list[$i]['count'] = count($avatar_Handler->getUser($avatars_arr[$i]));
         }
         $xoops->tpl()->assign('avatars_list', $avatar_list);
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         // Display Page Navigation
         if ($avatar_count > $nb_avatars) {
             $nav = new XoopsPageNav($avatar_count, $nb_avatars, $start, 'start', 'op=list');
@@ -219,16 +220,7 @@ switch ($op) {
         break;
 
     case "update_display":
-        $avatar_id = Request::getInt('avatar_id', 0);
-        if ($avatar_id > 0) {
-            $obj = $avatar_Handler->get($avatar_id);
-            $old = $obj->getVar('avatar_display');
-            $obj->setVar('avatar_display', !$old);
-            if ($avatar_Handler->insert($obj)) {
-                exit;
-            }
-            echo $obj->getHtmlErrors();
-        }
+        avatars_updateDisplay($avatar_Handler);
         break;
 }
 $xoops->footer();

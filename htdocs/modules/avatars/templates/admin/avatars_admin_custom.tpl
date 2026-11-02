@@ -27,7 +27,7 @@
                     <div class="xo-actions txtcenter">
                     <div class="spacer bold"><{$avatar.avatar_name}></div>
                     <img id="loading_avt<{$avatar.avatar_id}>" src="<{xoAppUrl 'media/xoops/images/spinner.gif'}>" style="display:none;" alt="<{translate key='LOADING'}>" />
-                    <img class="cursorpointer xo-tooltip" id="avt<{$avatar.avatar_id}>" onclick="Xoops.changeStatus( 'avatar_custom.php', { op: 'update_display', avatar_id: <{$avatar.avatar_id}> }, 'avt<{$avatar.avatar_id}>', 'avatar_custom.php' )" src="<{if $avatar.avatar_display}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>"
+                    <img class="cursorpointer xo-tooltip" id="avt<{$avatar.avatar_id}>" onclick="Xoops.changeStatus( 'avatar_custom.php', { op: 'update_display', avatar_id: <{$avatar.avatar_id}>, XOOPS_TOKEN_REQUEST: '<{$token}>' }, 'avt<{$avatar.avatar_id}>', 'avatar_custom.php' )" src="<{if $avatar.avatar_display}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>"
                          alt="<{if $avatar.avatar_display}><{translate key='DISPLAY_IN_FORM'}><{else}><{translate key='DO_NOT_DISPLAY_IN_FORM'}><{/if}>"
                          title="<{if $avatar.avatar_display}><{translate key='DISPLAY_IN_FORM'}><{else}><{translate key='DO_NOT_DISPLAY_IN_FORM'}><{/if}>" />
                     <a class="xo-tooltip" href="<{$xoops_url}>/userinfo.php?uid=<{$avatar.user}>" title="<{translate key='USERS' dirname='avatars'}>">

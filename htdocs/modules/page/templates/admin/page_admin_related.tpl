@@ -34,7 +34,7 @@
                 <td class="txtcenter width15"><{$item_r.navigation}></td>
                 <td class="xo-actions txtcenter width5">
                     <img id="loading_sml<{$item_r.related_id}>" src="<{xoAppUrl 'media/xoops/images/spinner.gif'}>" style="display:none;" alt="<{translate key="LOADING"}>" />
-                    <img class="cursorpointer" id="sml<{$item_r.related_id}>" onclick="Xoops.changeStatus( 'related.php', { op: 'update_status', related_id: <{$item_r.related_id}> }, 'sml<{$item_r.related_id}>', 'related.php' )" src="<{if $item_r.related_domenu}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{if $item_r.related_domenu}><{translate key="A_DISABLE"}><{else}><{translate key="A_ENABLE"}><{/if}>" title="<{if $item_r.related_domenu}><{translate key="A_DISABLE"}><{else}><{translate key="A_ENABLE"}><{/if}>" />
+                    <img class="cursorpointer" id="sml<{$item_r.related_id}>" onclick="Xoops.changeStatus( 'related.php', { op: 'update_status', related_id: <{$item_r.related_id}>, XOOPS_TOKEN_REQUEST: '<{$token}>' }, 'sml<{$item_r.related_id}>', 'related.php' )" src="<{if $item_r.related_domenu}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{if $item_r.related_domenu}><{translate key="A_DISABLE"}><{else}><{translate key="A_ENABLE"}><{/if}>" title="<{if $item_r.related_domenu}><{translate key="A_DISABLE"}><{else}><{translate key="A_ENABLE"}><{/if}>" />
                 </td>
                 <td class="xo-actions txtcenter width10">
                     <a href="related.php?op=edit&amp;related_id=<{$item_r.related_id}>" title="<{translate key="A_EDIT"}>">

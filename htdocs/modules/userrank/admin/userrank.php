@@ -43,6 +43,7 @@ switch ($op) {
 
     case 'list':
     default:
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         // Add Scripts
         $xoops->theme()->addScript('media/xoops/xoops.js');
 
@@ -178,6 +179,7 @@ switch ($op) {
 
     // Update userrank status
     case 'userrank_update_special':
+        $xoops->security()->requireAjaxToken();
         // Get rank id
         $rank_id = Request::getInt('rank_id', 0);
         if ($rank_id > 0) {
@@ -187,6 +189,7 @@ switch ($op) {
             if ($userrank_Handler->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;

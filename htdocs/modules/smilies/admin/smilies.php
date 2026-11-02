@@ -45,6 +45,7 @@ $start = Request::getInt('start', 0);
 switch ($op) {
     case 'list':
     default:
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         $admin_page->addTips(_AM_SMILIES_TIPS);
         $admin_page->addItemButton(_AM_SMILIES_ADD, 'smilies.php?op=add', 'add');
         $admin_page->renderTips();
@@ -162,6 +163,7 @@ switch ($op) {
 
     case 'smilies_update_display':
         $xoops->logger()->quiet();
+        $xoops->security()->requireAjaxToken();
         $smiley_id = Request::getInt('smiley_id', 0);
         if ($smiley_id > 0) {
             $obj = $helper->getHandlerSmilies()->get($smiley_id);
@@ -170,6 +172,7 @@ switch ($op) {
             if ($helper->getHandlerSmilies()->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;

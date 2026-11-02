@@ -39,6 +39,7 @@ $admin_page->renderNavigation('step.php');
 switch ($op) {
     case "list":
     default:
+        $xoops->tpl()->assign('token', $xoops->security()->createToken(3600));
         // Add Scripts
         $xoops->theme()->addScript('media/xoops/xoops.js');
         $admin_page->addItemButton(XoopsLocale::A_ADD . ' ' . _PROFILE_AM_STEP, 'step.php?op=new', 'add');
@@ -123,6 +124,7 @@ switch ($op) {
         break;
 
     case "step_update":
+        $xoops->security()->requireAjaxToken();
         $id = Request::getInt('id', 0, 'post');
         if ($id > 0) {
             $obj = $regstep_Handler->get($id);
@@ -131,6 +133,7 @@ switch ($op) {
             if ($regstep_Handler->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;

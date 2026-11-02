@@ -29,7 +29,7 @@
         <td class="txtcenter"><{$urank.rank_max}></td>
         <td class="xo-actions txtcenter">
             <img id="loading_sml<{$urank.rank_id}>" src="<{xoAppUrl 'media/xoops/images/spinner.gif'}>" style="display:none;" alt="<{translate key='LOADING'}>" />
-            <img class="cursorpointer xo-tooltip" id="sml<{$urank.rank_id}>" onclick="Xoops.changeStatus( 'userrank.php', { op: 'userrank_update_special', rank_id: <{$urank.rank_id}> }, 'sml<{$urank.rank_id}>' )" src="<{if $urank.rank_special}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{if $urank.rank_special}><{$smarty.const._AM_USERRANK_OFF}><{else}><{$smarty.const._AM_USERRANK_ON}><{/if}>" title="<{if $urank.rank_special}><{$smarty.const._AM_USERRANK_OFF}><{else}><{$smarty.const._AM_USERRANK_ON}><{/if}>" />
+            <img class="cursorpointer xo-tooltip" id="sml<{$urank.rank_id}>" onclick="Xoops.changeStatus( 'userrank.php', { op: 'userrank_update_special', rank_id: <{$urank.rank_id}>, XOOPS_TOKEN_REQUEST: '<{$token}>' }, 'sml<{$urank.rank_id}>' )" src="<{if $urank.rank_special}><{xoAdminIcons 'success.png'}><{else}><{xoAdminIcons 'cancel.png'}><{/if}>" alt="<{if $urank.rank_special}><{$smarty.const._AM_USERRANK_OFF}><{else}><{$smarty.const._AM_USERRANK_ON}><{/if}>" title="<{if $urank.rank_special}><{$smarty.const._AM_USERRANK_OFF}><{else}><{$smarty.const._AM_USERRANK_ON}><{/if}>" />
         </td>
         <td class="xo-actions txtcenter">
             <a class="xo-tooltip" href="./userrank.php?op=userrank_edit&amp;rank_id=<{$urank.rank_id}>" title="<{$smarty.const._AM_USERRANK_EDIT}>">

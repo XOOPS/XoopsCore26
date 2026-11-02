@@ -43,11 +43,8 @@ $groups = $xoops->getUserGroups();
 
 // check WRITE right by category before continue
 // (op names must match the controllers: categories.php and images.php)
-// the AJAX display toggle keeps its token valid for the next click on the same page
-if ($op === 'display' && ('POST' !== Request::getMethod() || !$xoops->security()->check(false))) {
-    // non-2xx so Xoops.changeStatus() does not flip the icon
-    http_response_code(403);
-    exit();
+if ($op === 'display') {
+    $xoops->security()->requireAjaxToken();
 }
 $write_cats = array();
 if ($redirect === 'categories.php' && $imgcat_id > 0 && in_array($op, array('edit', 'save', 'del', 'display'), true)) {

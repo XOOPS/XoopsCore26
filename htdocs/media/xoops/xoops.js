@@ -101,3 +101,14 @@ var Xoops = {
     }
 
 };
+
+// An admin toggle was refused by Security::requireAjaxToken(): its page token has
+// expired, so nothing was saved. Reload to show the real state and get a fresh
+// token, instead of leaving a changed icon or sorted list on screen.
+if (window.jQuery) {
+    jQuery(document).ajaxError(function (event, xhr) {
+        if (xhr.status === 403 && xhr.getResponseHeader('X-Xoops-Token') === 'rejected') {
+            window.location.reload();
+        }
+    });
+}
