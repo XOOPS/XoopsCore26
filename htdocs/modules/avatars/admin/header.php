@@ -42,6 +42,7 @@ function avatars_updateDisplay(XoopsPersistableObjectHandler $avatarHandler): vo
         if ($avatarHandler->insert($obj)) {
             exit;
         }
+        http_response_code(500);
         echo $obj->getHtmlErrors();
     }
 }

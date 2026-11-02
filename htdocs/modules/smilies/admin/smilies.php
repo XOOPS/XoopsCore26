@@ -172,6 +172,7 @@ switch ($op) {
             if ($helper->getHandlerSmilies()->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;

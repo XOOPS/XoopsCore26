@@ -133,6 +133,7 @@ switch ($op) {
             if ($regstep_Handler->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;

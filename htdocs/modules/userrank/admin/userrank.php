@@ -189,6 +189,7 @@ switch ($op) {
             if ($userrank_Handler->insert($obj)) {
                 exit;
             }
+            http_response_code(500);
             echo $obj->getHtmlErrors();
         }
         break;
