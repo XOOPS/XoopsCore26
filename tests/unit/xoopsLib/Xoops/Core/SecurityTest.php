@@ -115,8 +115,12 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         }
         $_SERVER['REQUEST_METHOD'] = $method;
         $savedGet = $_GET;
+        $savedPost = $_POST;
+        $savedRequest = $_REQUEST;
+        unset($_POST['XOOPS_TOKEN_REQUEST'], $_REQUEST['XOOPS_TOKEN_REQUEST']);
         if ('query' === $token) {
             $_GET['XOOPS_TOKEN_REQUEST'] = $valid;
+            $_REQUEST['XOOPS_TOKEN_REQUEST'] = $valid;
         } elseif (null !== $token) {
             $_POST['XOOPS_TOKEN_REQUEST'] = 'valid' === $token ? $valid : $token;
         }
@@ -125,6 +129,8 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
             $this->assertFalse($this->object->checkAjaxToken());
         } finally {
             $_GET = $savedGet;
+            $_POST = $savedPost;
+            $_REQUEST = $savedRequest;
         }
     }
 

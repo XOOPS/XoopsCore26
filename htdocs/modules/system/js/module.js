@@ -47,7 +47,8 @@ $(function() {
 
     $(".rename").editable("admin.php?fct=modulesadmin&op=rename", {
         indicator : "<img src='../../media/xoops/images/spinner.gif'>",
-        cssclass : 'span2'
+        cssclass : 'span2',
+        submitdata : function() { return { XOOPS_TOKEN_REQUEST: XOOPS_TOKEN }; }
     });
 
     $(".modal-backdrop").click(function(){

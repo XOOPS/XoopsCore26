@@ -93,19 +93,24 @@ switch ($op) {
 
     case 'rename':
         $xoops->logger()->quiet();
-        //$xoops->disableErrorReporting();
+        $xoops->security()->requireAjaxToken();
 
         $mid = Request::getInt('id', 0, 'post');
         $value = Request::getString('value', '', 'post');
-        if ($mid != 0) {
-            $module_handler = $xoops->getHandlerModule();
-            $module = $module_handler->getById($mid);
-            $module->setVar('name', $value);
-            if ($module_handler->insertModule($module)) {
-                echo $value;
-
-            }
+        $module_handler = $xoops->getHandlerModule();
+        $module = $mid > 0 ? $module_handler->getById($mid) : null;
+        if (!is_object($module)) {
+            http_response_code(404);
+            break;
         }
+        $module->setVar('name', $value);
+        if (!$module_handler->insertModule($module)) {
+            // an error status makes jEditable restore the old name
+            http_response_code(500);
+            break;
+        }
+        // jEditable inserts the response as HTML
+        echo htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         break;
 
     case 'order':
