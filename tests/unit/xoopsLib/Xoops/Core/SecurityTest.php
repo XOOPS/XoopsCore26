@@ -10,10 +10,10 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
      */
     protected $object;
 
-    protected $SERVER_save;
-    protected $SESSION_save;
-    protected $POST_save;
-    protected $moduleConfig_save;
+    protected $savedServer;
+    protected $savedSession;
+    protected $savedPost;
+    protected $savedModuleConfig;
 
     /**
      * Sets up the fixture, for example, opens a network connection.
@@ -22,10 +22,10 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
     protected function setUp(): void
     {
         $this->object = new Security();
-        $this->SERVER_save = $_SERVER;
-        $this->SESSION_save = $_SESSION;
-        $this->POST_save = $_POST;
-        $this->moduleConfig_save = \Xoops::getInstance()->moduleConfig;
+        $this->savedServer = $_SERVER;
+        $this->savedSession = $_SESSION;
+        $this->savedPost = $_POST;
+        $this->savedModuleConfig = \Xoops::getInstance()->moduleConfig;
     }
 
     /**
@@ -34,10 +34,10 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
      */
     protected function tearDown(): void
     {
-        $_SERVER = $this->SERVER_save;
-        $_SESSION = $this->SESSION_save;
-        $_POST = $this->POST_save;
-        \Xoops::getInstance()->moduleConfig = $this->moduleConfig_save;
+        $_SERVER = $this->savedServer;
+        $_SESSION = $this->savedSession;
+        $_POST = $this->savedPost;
+        \Xoops::getInstance()->moduleConfig = $this->savedModuleConfig;
     }
 
     public function test___construct()
@@ -114,7 +114,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
             $_SESSION['XOOPS_TOKEN_SESSION'][0]['expire'] = time() - 1;
         }
         $_SERVER['REQUEST_METHOD'] = $method;
-        $GET_save = $_GET;
+        $savedGet = $_GET;
         if ('query' === $token) {
             $_GET['XOOPS_TOKEN_REQUEST'] = $valid;
         } elseif (null !== $token) {
@@ -124,7 +124,7 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         try {
             $this->assertFalse($this->object->checkAjaxToken());
         } finally {
-            $_GET = $GET_save;
+            $_GET = $savedGet;
         }
     }
 

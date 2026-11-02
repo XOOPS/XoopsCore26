@@ -30,10 +30,12 @@ if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
     $xoops->redirect('index.php', 3, implode('<br />', $xoops->security()->getErrors()));
 }
 $uid = Request::getInt('uid', 0, 'POST');
-$level = Request::getInt('level', -1, 'POST');
-if (0 === $uid || !in_array($level, [0, 1], true)) {
+// exact "0" or "1" only: getInt() would turn "0.5" or "abc" into a valid level
+$level = Request::getString('level', '', 'POST');
+if (0 === $uid || !in_array($level, ['0', '1'], true)) {
     $xoops->redirect("index.php", 2, _PROFILE_AM_NOSELECTION);
 }
+$level = (int) $level;
 $member_handler = $xoops->getHandlerMember();
 $user = $member_handler->getUser($uid);
 if (!$user || $user->isNew()) {
