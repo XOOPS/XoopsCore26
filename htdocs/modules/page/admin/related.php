@@ -191,18 +191,5 @@ switch ($op) {
             echo $obj->getHtmlErrors();
         }
         break;
-
-    case 'view':
-        $related_id = Request::getInt('related_id', 0);
-        if ($related_id > 0) {
-            $obj = $related_Handler->get($related_id);
-            $old = $obj->getVar('related_domenu');
-            $obj->setVar('related_domenu', !$old);
-            if ($related_Handler->insert($obj)) {
-                exit;
-            }
-            echo $obj->getHtmlErrors();
-        }
-        break;
 }
 $xoops->footer();

@@ -79,6 +79,8 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(empty($_SESSION['XOOPS_TOKEN_SESSION']));
     }
 
+    // a wrongful exit() here would end the whole runner with status 0
+    #[\PHPUnit\Framework\Attributes\RunInSeparateProcess]
     public function test_requireAjaxToken_keepsTokenForNextToggle()
     {
         unset($_SESSION['XOOPS_TOKEN_SESSION']);
@@ -90,6 +92,48 @@ class SecurityTest extends \PHPUnit\Framework\TestCase
         $this->object->requireAjaxToken();
         $this->object->requireAjaxToken();
         $this->assertSame($token, $_SESSION['XOOPS_TOKEN_SESSION'][0]['id']);
+    }
+
+    public static function rejectedAjaxRequests(): array
+    {
+        return [
+            'GET with body token' => ['GET', 'valid', false],
+            'POST without token'  => ['POST', null, false],
+            'POST invalid token'  => ['POST', 'nope', false],
+            'POST expired token'  => ['POST', 'valid', true],
+            'POST token in query' => ['POST', 'query', false],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('rejectedAjaxRequests')]
+    public function test_checkAjaxToken_rejects(string $method, ?string $token, bool $expired)
+    {
+        unset($_SESSION['XOOPS_TOKEN_SESSION']);
+        $valid = $this->object->createToken(3600);
+        if ($expired) {
+            $_SESSION['XOOPS_TOKEN_SESSION'][0]['expire'] = time() - 1;
+        }
+        $_SERVER['REQUEST_METHOD'] = $method;
+        $GET_save = $_GET;
+        if ('query' === $token) {
+            $_GET['XOOPS_TOKEN_REQUEST'] = $valid;
+        } elseif (null !== $token) {
+            $_POST['XOOPS_TOKEN_REQUEST'] = 'valid' === $token ? $valid : $token;
+        }
+
+        try {
+            $this->assertFalse($this->object->checkAjaxToken());
+        } finally {
+            $_GET = $GET_save;
+        }
+    }
+
+    public function test_checkAjaxToken_acceptsValidPost()
+    {
+        unset($_SESSION['XOOPS_TOKEN_SESSION']);
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST['XOOPS_TOKEN_REQUEST'] = $this->object->createToken(3600);
+        $this->assertTrue($this->object->checkAjaxToken());
     }
 
     public function test_createToken()

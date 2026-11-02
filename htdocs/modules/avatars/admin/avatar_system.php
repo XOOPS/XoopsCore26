@@ -220,17 +220,7 @@ switch ($op) {
         break;
 
     case "update_display":
-        $xoops->security()->requireAjaxToken();
-        $avatar_id = Request::getInt('avatar_id', 0, 'POST');
-        $obj = $avatar_id > 0 ? $avatar_Handler->get($avatar_id) : null;
-        if (is_object($obj)) {
-            $old = $obj->getVar('avatar_display');
-            $obj->setVar('avatar_display', !$old);
-            if ($avatar_Handler->insert($obj)) {
-                exit;
-            }
-            echo $obj->getHtmlErrors();
-        }
+        avatars_updateDisplay($avatar_Handler);
         break;
 }
 $xoops->footer();

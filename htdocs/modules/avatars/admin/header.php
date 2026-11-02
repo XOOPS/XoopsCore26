@@ -20,3 +20,24 @@
  * @version         $Id$
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/include/cp_header.php';
+
+/**
+ * AJAX toggle of an avatar's display flag, shared by the system and custom avatar pages
+ *
+ * @param \Xoops\Core\Kernel\XoopsPersistableObjectHandler $avatarHandler avatar handler
+ *
+ * @return void
+ */
+function avatars_updateDisplay(\Xoops\Core\Kernel\XoopsPersistableObjectHandler $avatarHandler): void
+{
+    \Xoops::getInstance()->security()->requireAjaxToken();
+    $avatar_id = \Xmf\Request::getInt('avatar_id', 0, 'POST');
+    $obj = $avatar_id > 0 ? $avatarHandler->get($avatar_id) : null;
+    if (is_object($obj)) {
+        $obj->setVar('avatar_display', !$obj->getVar('avatar_display'));
+        if ($avatarHandler->insert($obj)) {
+            exit;
+        }
+        echo $obj->getHtmlErrors();
+    }
+}

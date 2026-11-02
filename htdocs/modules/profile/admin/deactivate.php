@@ -30,8 +30,8 @@ if ('POST' !== Request::getMethod() || !$xoops->security()->check()) {
     $xoops->redirect('index.php', 3, implode('<br />', $xoops->security()->getErrors()));
 }
 $uid = Request::getInt('uid', 0, 'POST');
-$level = Request::getInt('level', 0, 'POST') === 1 ? 1 : 0;
-if (0 === $uid) {
+$level = Request::getInt('level', -1, 'POST');
+if (0 === $uid || !in_array($level, [0, 1], true)) {
     $xoops->redirect("index.php", 2, _PROFILE_AM_NOSELECTION);
 }
 $member_handler = $xoops->getHandlerMember();

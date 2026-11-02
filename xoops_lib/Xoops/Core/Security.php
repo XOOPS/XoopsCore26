@@ -58,14 +58,28 @@ class Security
      *
      * @return void
      */
-    public function requireAjaxToken($name = 'XOOPS_TOKEN')
+    public function requireAjaxToken($name = 'XOOPS_TOKEN'): void
+    {
+        if (!$this->checkAjaxToken($name)) {
+            http_response_code(403);
+            // media/xoops/xoops.js reloads the page on this marker to get a fresh token
+            header('X-Xoops-Token: rejected');
+            exit();
+        }
+    }
+
+    /**
+     * Is this a POST carrying a valid token in its body? The token is kept.
+     *
+     * @param string $name name of session variable
+     *
+     * @return bool
+     */
+    public function checkAjaxToken($name = 'XOOPS_TOKEN'): bool
     {
         // the token must come in the body, a query string leaks through logs and referers
         $token = Request::getString($name . '_REQUEST', '', 'POST');
-        if ('POST' !== Request::getMethod() || !$this->check(false, $token, $name)) {
-            http_response_code(403);
-            exit();
-        }
+        return 'POST' === Request::getMethod() && '' !== $token && $this->check(false, $token, $name);
     }
 
     /**
