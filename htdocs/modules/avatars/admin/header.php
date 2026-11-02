@@ -19,19 +19,23 @@
  * @author          Mage Grégory (AKA Mage)
  * @version         $Id$
  */
+
+use Xmf\Request;
+use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
+
 require_once dirname(dirname(dirname(__DIR__))) . '/include/cp_header.php';
 
 /**
  * AJAX toggle of an avatar's display flag, shared by the system and custom avatar pages
  *
- * @param \Xoops\Core\Kernel\XoopsPersistableObjectHandler $avatarHandler avatar handler
+ * @param XoopsPersistableObjectHandler $avatarHandler avatar handler
  *
  * @return void
  */
-function avatars_updateDisplay(\Xoops\Core\Kernel\XoopsPersistableObjectHandler $avatarHandler): void
+function avatars_updateDisplay(XoopsPersistableObjectHandler $avatarHandler): void
 {
-    \Xoops::getInstance()->security()->requireAjaxToken();
-    $avatar_id = \Xmf\Request::getInt('avatar_id', 0, 'POST');
+    Xoops::getInstance()->security()->requireAjaxToken();
+    $avatar_id = Request::getInt('avatar_id', 0, 'POST');
     $obj = $avatar_id > 0 ? $avatarHandler->get($avatar_id) : null;
     if (is_object($obj)) {
         $obj->setVar('avatar_display', !$obj->getVar('avatar_display'));
