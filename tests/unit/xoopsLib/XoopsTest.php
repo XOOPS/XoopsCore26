@@ -770,6 +770,32 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
         $this->assertStringNotContainsString('<script>', $value);
     }
 
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function confirmActionProvider(): array
+    {
+        return [
+            'empty' => ['', ''],
+            'relative' => ['admin.php?fct=users&op=x', 'admin.php?fct=users&amp;op=x'],
+            'root relative' => ['/modules/pm/viewpmsg.php', '/modules/pm/viewpmsg.php'],
+            'javascript' => ['javascript:alert(1)', ''],
+            'history back' => ['javascript:history.go(-1)', ''],
+            'entity javascript' => ['java&#x73;cript:alert(1)', ''],
+            'data' => ['data:text/html,x', ''],
+            'scheme relative' => ['//evil.test/x', ''],
+            'other host' => ['https://evil.test/x', ''],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('confirmActionProvider')]
+    public function test_confirmKeepsOnlyLocalActions(string $action, string $expected)
+    {
+        defined('NWLINE') || define('NWLINE', "\n");
+        $value = Xoops::getInstance()->confirm(array('ok' => 1), $action, 'msg', '', false);
+        $this->assertStringContainsString('action="' . $expected . '"', $value);
+    }
+
     public function test_getUserTimestamp()
     {
         $instance = Xoops::getInstance();

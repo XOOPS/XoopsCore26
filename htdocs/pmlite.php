@@ -72,7 +72,7 @@ if (isset($_POST['op']) && $_POST['op'] === "submit") {
             $pm_handler = $xoops->getHandlerPrivateMessage();
             $pm = $pm_handler->create();
             $pm->setVar("msg_time", time());
-            $icon = (string) ($_POST['msg_image'] ?? '');
+            $icon = \Xmf\Request::getString('msg_image', '', 'POST');
             if (1 === preg_match('/^[\w-]{1,60}\.(?:gif|png|jpe?g)\z/i', $icon)) {
                 $pm->setVar("msg_image", $icon);
             }

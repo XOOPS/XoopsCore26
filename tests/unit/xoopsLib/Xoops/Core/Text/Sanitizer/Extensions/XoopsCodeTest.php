@@ -97,9 +97,7 @@ class XoopsCodeTest extends \PHPUnit\Framework\TestCase
         $this->assertStringStartsWith('<a href="http', $out);
     }
 
-    /**
-     * @dataProvider shortcodeProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('shortcodeProvider')]
     public function testShortcodeArgumentsCannotLeaveTheirAttribute(string $in, string $expected)
     {
         $this->sanitizer->enableComponentForTesting('xoopscode');

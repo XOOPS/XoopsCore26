@@ -876,13 +876,14 @@ class Protector
         }
 
         $query = ['f' => 'json', 'ip' => $_SERVER['REMOTE_ADDR']];
-        $email = \Xmf\Request::getString('email', '', 'POST');
-        if ('' !== $email) {
-            $query['email'] = $email;
-        }
-        $uname = \Xmf\Request::getString('uname', '', 'POST');
-        if ('' !== $uname) {
-            $query['username'] = $uname;
+        // bound the raw value before filtering: tag filtering is not linear on hostile input
+        foreach (['email' => 'email', 'uname' => 'username'] as $field => $param) {
+            if (isset($_POST[$field]) && is_string($_POST[$field]) && strlen($_POST[$field]) <= 255) {
+                $value = \Xmf\Request::getString($field, '', 'POST');
+                if ('' !== $value) {
+                    $query[$param] = $value;
+                }
+            }
         }
         $url = 'https://www.stopforumspam.com/api?' . http_build_query($query, '', '&');
         $ch = curl_init();
