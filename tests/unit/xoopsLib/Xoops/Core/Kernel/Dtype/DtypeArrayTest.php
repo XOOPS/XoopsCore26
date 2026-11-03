@@ -81,4 +81,25 @@ class DtypeArrayTest extends \PHPUnit\Framework\TestCase
         //var_dump($value);
         $this->assertEquals("a:5:{s:", substr($value, 0, 7));
     }
+
+    public function testStoredObjectIsNotInstantiated()
+    {
+        DtypeArrayProbe::$woken = false;
+        $this->xObject->vars['arraytest']['value'] = serialize(['x' => new DtypeArrayProbe()]);
+
+        $value = $this->xObject->getVar('arraytest', Dtype::FORMAT_SHOW);
+
+        $this->assertFalse(DtypeArrayProbe::$woken);
+        $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $value['x']);
+    }
+}
+
+class DtypeArrayProbe
+{
+    public static $woken = false;
+
+    public function __wakeup()
+    {
+        self::$woken = true;
+    }
 }

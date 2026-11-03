@@ -4,6 +4,7 @@ require_once(__DIR__.'/../init_new.php');
 use Xoops\Core\Kernel\Handlers\XoopsUser;
 use Xoops\Core\Kernel\Handlers\XoopsModule;
 use Xoops\Core\XoopsTpl;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class XoopsTest extends \PHPUnit\Framework\TestCase
 {
@@ -753,6 +754,52 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(strlen($value)>0);
     }
 
+    public function test_confirmEscapesNamesCaptionsAndAction()
+    {
+        defined('NWLINE') || define('NWLINE', "\n");
+        $value = Xoops::getInstance()->confirm(
+            array('a"b' => array('<img src=x onerror=alert(1)>' => 1)),
+            'x.php?a=1&b="><script>',
+            'msg',
+            '',
+            false
+        );
+        $this->assertStringContainsString('name="a&quot;b"', $value);
+        $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $value);
+        $this->assertStringContainsString('action="x.php?a=1&amp;b=&quot;&gt;&lt;script&gt;"', $value);
+        $this->assertStringNotContainsString('<img src=x', $value);
+        $this->assertStringNotContainsString('<script>', $value);
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function confirmActionProvider(): array
+    {
+        return [
+            'empty' => ['', ''],
+            'relative' => ['admin.php?fct=users&op=x', 'admin.php?fct=users&amp;op=x'],
+            'root relative' => ['/modules/pm/viewpmsg.php', '/modules/pm/viewpmsg.php'],
+            'javascript' => ['javascript:alert(1)', ''],
+            'history back' => ['javascript:history.go(-1)', ''],
+            'entity javascript' => ['java&#x73;cript:alert(1)', ''],
+            'carriage return entity' => ['java&#13;script:alert(1)', ''],
+            'pre-escaped ampersand' => ['a.php?x=1&amp;y=2', 'a.php?x=1&amp;y=2'],
+            'entity-like text' => ['a.php?q=&amp;lt;b&amp;gt;', 'a.php?q=&amp;lt;b&amp;gt;'],
+            'data' => ['data:text/html,x', ''],
+            'scheme relative' => ['//evil.test/x', ''],
+            'other host' => ['https://evil.test/x', ''],
+        ];
+    }
+
+    #[DataProvider('confirmActionProvider')]
+    public function test_confirmKeepsOnlyLocalActions(string $action, string $expected)
+    {
+        defined('NWLINE') || define('NWLINE', "\n");
+        $value = Xoops::getInstance()->confirm(array('ok' => 1), $action, 'msg', '', false);
+        $this->assertStringContainsString('action="' . $expected . '"', $value);
+    }
+
     public function test_getUserTimestamp()
     {
         $instance = Xoops::getInstance();
@@ -795,6 +842,8 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(is_string($value));
         $value = $instance->makePass();
         $this->assertTrue(is_string($value));
+        $this->assertMatchesRegularExpression('/^[a-km-np-zA-HJ-NP-Z2-9]{20}\z/', $value);
+        $this->assertNotSame($value, $instance->makePass());
     }
 
     public function test_checkEmail()

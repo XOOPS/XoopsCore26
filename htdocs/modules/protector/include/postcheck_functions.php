@@ -80,7 +80,7 @@ function protector_postcheck()
     }
 
     // reliable ips
-    $reliable_ips = @unserialize(@$conf['reliable_ips']);
+    $reliable_ips = @unserialize(@$conf['reliable_ips'], ['allowed_classes' => false]);
     if (is_array($reliable_ips)) {
         foreach ($reliable_ips as $reliable_ip) {
             if (!empty($reliable_ip) && preg_match('/' . $reliable_ip . '/', $_SERVER['REMOTE_ADDR'])) {
@@ -92,7 +92,7 @@ function protector_postcheck()
     // user information (uid and can be banned)
     if ($xoops->isUser()) {
         $uid = $xoops->user->getVar('uid');
-        $can_ban = count(@array_intersect($xoops->user->getGroups(), @unserialize(@$conf['bip_except']))) ? false : true;
+        $can_ban = count(@array_intersect($xoops->user->getGroups(), @unserialize(@$conf['bip_except'], ['allowed_classes' => false]))) ? false : true;
     } else {
         // login failed check
         if ((!empty($_POST['uname']) && !empty($_POST['pass'])) || (!empty($_COOKIE['autologin_uname']) && !empty($_COOKIE['autologin_pass']))) {
@@ -151,7 +151,7 @@ function protector_postcheck()
     $remote_numip = @$ips[0] * 0x1000000 + @$ips[1] * 0x10000 + @$ips[2] * 0x100 + @$ips[3];
     $shift = 32 - @$conf['session_fixed_topbit'];
     if ($shift < 32 && $shift >= 0 && !empty($_SESSION['protector_last_ip']) && $protector_last_numip >> $shift != $remote_numip >> $shift) {
-        if ($xoops->isUser() && count(array_intersect($xoops->user->getGroups(), unserialize($conf['groups_denyipmove'])))) {
+        if ($xoops->isUser() && count(array_intersect($xoops->user->getGroups(), unserialize($conf['groups_denyipmove'], ['allowed_classes' => false])))) {
             $protector->purge(true);
         }
     }

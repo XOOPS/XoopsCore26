@@ -77,8 +77,9 @@ if (isset($_POST['op']) && $_POST['op'] === "submit") {
             $pm_handler = $xoops->getModuleHandler('message', 'pm');
             $pm = $pm_handler->create();
             $pm->setVar("msg_time", time());
-            if (isset($_POST['icon'])) {
-                $pm->setVar("msg_image", $_POST['icon']);
+            $icon = \Xmf\Request::getString('icon', '', 'POST');
+            if (1 === preg_match('/^[\w-]{1,60}\.(?:gif|png|jpe?g)\z/i', $icon)) {
+                $pm->setVar("msg_image", $icon);
             }
             $pm->setVar("subject", $_POST['subject']);
             $pm->setVar("msg_text", $_POST['message']);

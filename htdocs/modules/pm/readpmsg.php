@@ -100,6 +100,7 @@ if (is_object($pm) && !empty($_POST['action'])) {
 }
 $start = !empty($_GET['start']) ? (int)($_GET['start']) : 0;
 $total_messages = !empty($_GET['total_messages']) ? (int)($_GET['total_messages']) : 0;
+$xoops->disableModuleCache(); // private content: the same URL shows each user their own message
 $xoops->header('module:pm/pm_readpmsg.tpl');
 
 if (!is_object($pm)) {

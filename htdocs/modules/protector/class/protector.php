@@ -92,7 +92,7 @@ class Protector
 
         // Preferences from configs/cache
         $this->_conf_serialized = @file_get_contents($this->get_filepath4confighcache());
-        $this->_conf = @unserialize($this->_conf_serialized);
+        $this->_conf = @unserialize($this->_conf_serialized, ['allowed_classes' => false]);
         if (empty($this->_conf)) {
             $this->_conf = array();
         }
@@ -344,7 +344,7 @@ class Protector
     function get_bad_ips($with_jailed_time = false)
     {
         list($bad_ips_serialized) = @file(Protector::get_filepath4badips());
-        $bad_ips = empty($bad_ips_serialized) ? array() : @unserialize($bad_ips_serialized);
+        $bad_ips = empty($bad_ips_serialized) ? array() : @unserialize($bad_ips_serialized, ['allowed_classes' => false]);
         if (!is_array($bad_ips) || isset($bad_ips[0])) {
             $bad_ips = array();
         }
@@ -374,7 +374,7 @@ class Protector
     function get_group1_ips($with_info = false)
     {
         list($group1_ips_serialized) = @file(Protector::get_filepath4group1ips());
-        $group1_ips = empty($group1_ips_serialized) ? array() : @unserialize($group1_ips_serialized);
+        $group1_ips = empty($group1_ips_serialized) ? array() : @unserialize($group1_ips_serialized, ['allowed_classes' => false]);
         if (!is_array($group1_ips)) {
             $group1_ips = array();
         }
@@ -865,6 +865,31 @@ class Protector
         return $this->_safe_union;
     }
 
+    /**
+     * Lookup parameters for the stopforumspam API from the current POST
+     *
+     * Each raw value is trimmed and cut to 255 bytes before it is filtered: tag
+     * filtering is not linear on hostile input, and padding must not let a listed
+     * value skip the lookup.
+     *
+     * @return array<string, string>
+     */
+    private function stopforumspamQuery(): array
+    {
+        $query = ['f' => 'json', 'ip' => (string) $_SERVER['REMOTE_ADDR']];
+        $raw = \Xmf\Request::MASK_ALLOW_RAW | \Xmf\Request::MASK_NO_TRIM;
+        foreach (['email' => 'email', 'uname' => 'username'] as $field => $param) {
+            $value = \Xmf\Request::getVar($field, '', 'POST', 'none', $raw);
+            $value = is_string($value)
+                ? \Xmf\FilterInput::clean(mb_strcut(trim($value), 0, 255, 'UTF-8'), 'string')
+                : '';
+            if ('' !== $value) {
+                $query[$param] = $value;
+            }
+        }
+        return $query;
+    }
+
     function stopforumspam($uid)
     {
         if (!function_exists('curl_init')) {
@@ -875,16 +900,16 @@ class Protector
             return false;
         }
 
-        $query = "f=serial&ip=" . $_SERVER['REMOTE_ADDR'];
-        $query .= isset($_POST['email']) ? "&email=" . $_POST['email'] : '';
-        $query .= isset($_POST['uname']) ? "&username=" . $_POST['uname'] : '';
-        $url = "http://www.stopforumspam.com/api?" . $query;
+        $url = 'https://www.stopforumspam.com/api?' . http_build_query($this->stopforumspamQuery(), '', '&');
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        $result = unserialize(curl_exec($ch));
+        $result = json_decode((string) curl_exec($ch), true, 4);
         curl_close($ch);
+        if (!is_array($result)) {
+            return false; // no answer or not the expected array: not a known spammer
+        }
 
         $spammer = false;
         if (isset($result['email']) && isset($result['email']['lastseen'])) {

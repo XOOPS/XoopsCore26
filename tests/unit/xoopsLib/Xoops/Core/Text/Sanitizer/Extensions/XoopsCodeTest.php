@@ -2,6 +2,7 @@
 namespace Xoops\Core\Text\Sanitizer\Extensions;
 
 use Xoops\Core\Text\Sanitizer;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 require_once __DIR__.'/../../../../../../init_new.php';
 
@@ -58,5 +59,70 @@ class XoopsCodeTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($this->sanitizer->getShortCodes()->hasShortcode('center'));
         $this->assertTrue($this->sanitizer->getShortCodes()->hasShortcode('left'));
         $this->assertTrue($this->sanitizer->getShortCodes()->hasShortcode('right'));
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function shortcodeProvider(): array
+    {
+        return [
+            'hex color' => ['[color=f00]x[/color]', '<span style="color: #f00">x</span>'],
+            'named color' => ['[color=red]x[/color]', '<span style="color: red">x</span>'],
+            'color quote escape' => ['[color=red\x22onmouseover=alert(1)]x[/color]', 'x'],
+            'color expression' => ['[color=red;background:url(x)]x[/color]', 'x'],
+            'size' => ['[size=12px]x[/size]', '<span style="font-size: 12px">x</span>'],
+            'size keyword' => ['[size=x-large]x[/size]', '<span style="font-size: x-large">x</span>'],
+            'size quote escape' => ['[size=1\x22onclick=alert(1)]x[/size]', 'x'],
+            'font' => ['[font=Arial,sans-serif]x[/font]', '<span style="font-family: Arial,sans-serif">x</span>'],
+            'font quote' => ["[font='Verdana']x[/font]", '<span style="font-family: &#039;Verdana&#039;">x</span>'],
+            'font quote escape' => ['[font=a\x22onclick=alert(1)]x[/font]', 'x'],
+            'url' => ['[url=https://example.com/a?b=1&c=2]x[/url]', '<a href="https://example.com/a?b=1&amp;c=2">x</a>'],
+            'url javascript' => ['[url=javascript://%0aalert(1)]x[/url]', 'x'],
+            'url javascript after scheme text' => ['[url=javascript:alert(1)//https://e.com]x[/url]', 'x'],
+            'url mailto' => ['[url=mailto:a@example.com]x[/url]', 'x'],
+            'url javascript mixed case' => ['[url=JaVaScRiPt:alert(1)]x[/url]', 'x'],
+            'url ftp' => ['[url=ftp://e.com/f]x[/url]', '<a href="ftp://e.com/f">x</a>'],
+            'siteurl javascript' => ['[siteurl=javascript:alert(1)]x[/siteurl]', 'x'],
+            'siteurl https' => ['[siteurl=https://e.com/a]x[/siteurl]', '<a href="https://e.com/a">x</a>'],
+            'url quote escape' => ['[url=https://e.com/\x22onclick=alert(1)]x[/url]', '<a href="https://e.com/&quot;onclick=alert(1)">x</a>'],
+            'email' => ['[email]a@example.com[/email]', '<a href="mailto:a@example.com">a@example.com</a>'],
+            'email invalid' => ['[email]a@b" onclick="x[/email]', 'a@b&quot; onclick=&quot;x'],
+        ];
+    }
+
+    public function testRelativeUrlWithAbsoluteQueryStaysALink()
+    {
+        $this->sanitizer->enableComponentForTesting('xoopscode');
+        $out = $this->sanitizer->getShortCodes()->process('[url=page.php?next=https://e.com]x[/url]');
+        $this->assertSame(
+            '<a href="' . \Xoops::getInstance()->path('page.php?next=https://e.com', true) . '">x</a>',
+            $out
+        );
+        $this->assertStringStartsWith('<a href="http', $out);
+    }
+
+    #[DataProvider('schemelessUrlProvider')]
+    public function testSchemelessUrlResolvesToSitePath(string $target)
+    {
+        $this->sanitizer->enableComponentForTesting('xoopscode');
+        $out = $this->sanitizer->getShortCodes()->process('[url=' . $target . ']x[/url]');
+        $this->assertSame('<a href="' . \Xoops::getInstance()->path($target, true) . '">x</a>', $out);
+        $this->assertStringStartsWith('<a href="' . \XoopsBaseConfig::get('url'), $out);
+    }
+
+    public static function schemelessUrlProvider(): array
+    {
+        return [
+            'protocol-relative host' => ['//e.com/a'],
+            'percent-encoded scheme' => ['%6aavascript:alert(1)'],
+        ];
+    }
+
+    #[DataProvider('shortcodeProvider')]
+    public function testShortcodeArgumentsCannotLeaveTheirAttribute(string $in, string $expected)
+    {
+        $this->sanitizer->enableComponentForTesting('xoopscode');
+        $this->assertSame($expected, $this->sanitizer->getShortCodes()->process($in));
     }
 }

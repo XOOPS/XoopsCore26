@@ -1003,7 +1003,7 @@ class Utils
             return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1');
         }
 
-        if ($unserialize = \unserialize($item)) {
+        if ($unserialize = \unserialize($item, ['allowed_classes' => false])) {
             foreach ($unserialize as $key => $value) {
                 $unserialize[$key] = @iconv('windows-1256', 'UTF-8', $value);
             }

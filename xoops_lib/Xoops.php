@@ -10,6 +10,7 @@
 */
 
 use Xoops\Core\HttpRequest;
+use Xoops\Core\RedirectUrl;
 use Xmf\Request;
 use Xoops\Core\FixedGroups;
 use Xoops\Core\Handler\Factory as HandlerFactory;
@@ -1330,14 +1331,25 @@ class Xoops
         $tpl = new XoopsTpl();
         $submit = ($submit != '') ? trim($submit) : XoopsLocale::A_SUBMIT;
         $tpl->assign('msg', $msg);
-        $tpl->assign('action', $action);
+        // callers pass request data as names, captions and the action (REQUEST_URI);
+        // the action is checked as the browser will read it (entities decoded) and
+        // one that is not a local URL posts back to the current page instead
+        $action = html_entity_decode((string) $action, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        if ($action !== RedirectUrl::sanitize($action, (string) \XoopsBaseConfig::get('url'))
+            || 1 === preg_match('/^\s*javascript:/i', $action)
+        ) {
+            $action = '';
+        }
+        $tpl->assign('action', htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->assign('submit', $submit);
         $str_hiddens = '';
         foreach ($hiddens as $name => $value) {
+            $name = htmlspecialchars((string) $name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             if (is_array($value)) {
                 foreach ($value as $caption => $newvalue) {
                     $str_hiddens .= '<input type="radio" name="' . $name . '" value="'
-                        . htmlspecialchars($newvalue) . '" > ' . $caption . NWLINE;
+                        . htmlspecialchars($newvalue) . '" > '
+                        . htmlspecialchars((string) $caption, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . NWLINE;
                 }
                 $str_hiddens .= '<br />' . NWLINE;
             } else {
@@ -1397,27 +1409,20 @@ class Xoops
     /**
      * generate a temporary password
      *
+     * 20 characters from a 56-symbol alphabet without look-alikes (0/O, 1/l/I),
+     * drawn with random_int(): about 116 bits.
+     *
      * @return string
      *
-     * @todo make better passwords
+     * @throws \Exception when no source of randomness is available
      */
     public function makePass()
     {
+        $alphabet = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $max = strlen($alphabet) - 1;
         $makepass = '';
-        $syllables = array(
-            'er', 'in', 'tia', 'wol', 'fe', 'pre', 'vet', 'jo', 'nes', 'al', 'len', 'son', 'cha', 'ir', 'ler', 'bo',
-            'ok', 'tio', 'nar', 'sim', 'ple', 'bla', 'ten', 'toe', 'cho', 'co', 'lat', 'spe', 'ak', 'er', 'po', 'co',
-            'lor', 'pen', 'cil', 'li', 'ght', 'wh', 'at', 'the', 'he', 'ck', 'is', 'mam', 'bo', 'no', 'fi', 've', 'any',
-            'way', 'pol', 'iti', 'cs', 'ra', 'dio', 'sou', 'rce', 'sea', 'rch', 'pa', 'per', 'com', 'bo', 'sp', 'eak',
-            'st', 'fi', 'rst', 'gr', 'oup', 'boy', 'ea', 'gle', 'tr', 'ail', 'bi', 'ble', 'brb', 'pri', 'dee', 'kay',
-            'en', 'be', 'se'
-        );
-        for ($count = 1; $count <= 4; ++$count) {
-            if (1 == mt_rand() % 10) {
-                $makepass .= sprintf('%0.0f', (rand() % 50) + 1);
-            } else {
-                $makepass .= sprintf('%s', $syllables[rand() % 62]);
-            }
+        for ($count = 0; $count < 20; ++$count) {
+            $makepass .= $alphabet[random_int(0, $max)];
         }
         return $makepass;
     }
