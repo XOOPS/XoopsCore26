@@ -19,6 +19,9 @@
  * @author          Taiwen Jiang <phppp@users.sourceforge.net>
  */
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
+
 /**
  * @param XoopsModule $module
  * @param null $oldversion
@@ -67,7 +70,7 @@ function xoops_module_update_profile(&$module, $oldversion = null)
                 $object->setVar('step_id', 2);
             }
             if (!empty($myrow['field_options'])) {
-                $object->setVar('field_options', unserialize($myrow['field_options'], ['allowed_classes' => false]));
+                $object->setVar('field_options', Serializer::tryFrom((string) $myrow['field_options'], false, Format::PHP));
             }
             $field_handler->insert($object, true);
 

@@ -19,6 +19,9 @@
  * @version         $Id$
  */
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
+
 class Protector
 {
     var $mydirname;
@@ -92,7 +95,7 @@ class Protector
 
         // Preferences from configs/cache
         $this->_conf_serialized = @file_get_contents($this->get_filepath4confighcache());
-        $this->_conf = @unserialize($this->_conf_serialized, ['allowed_classes' => false]);
+        $this->_conf = Serializer::tryFrom((string) $this->_conf_serialized, false, Format::PHP);
         if (empty($this->_conf)) {
             $this->_conf = array();
         }
@@ -344,7 +347,7 @@ class Protector
     function get_bad_ips($with_jailed_time = false)
     {
         list($bad_ips_serialized) = @file(Protector::get_filepath4badips());
-        $bad_ips = empty($bad_ips_serialized) ? array() : @unserialize($bad_ips_serialized, ['allowed_classes' => false]);
+        $bad_ips = empty($bad_ips_serialized) ? array() : Serializer::tryFrom($bad_ips_serialized, false, Format::PHP);
         if (!is_array($bad_ips) || isset($bad_ips[0])) {
             $bad_ips = array();
         }
@@ -374,7 +377,7 @@ class Protector
     function get_group1_ips($with_info = false)
     {
         list($group1_ips_serialized) = @file(Protector::get_filepath4group1ips());
-        $group1_ips = empty($group1_ips_serialized) ? array() : @unserialize($group1_ips_serialized, ['allowed_classes' => false]);
+        $group1_ips = empty($group1_ips_serialized) ? array() : Serializer::tryFrom($group1_ips_serialized, false, Format::PHP);
         if (!is_array($group1_ips)) {
             $group1_ips = array();
         }

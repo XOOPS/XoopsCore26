@@ -18,6 +18,8 @@
  * @version         $Id$
  */
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
 use Xoops\Core\Database\Connection;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
@@ -165,7 +167,7 @@ class UserconfigsItem extends XoopsObject
             return (int)($this->getVar('conf_value', 'n'));
             break;
         case 'array':
-            $value = @unserialize($this->getVar('conf_value', 'n'), ['allowed_classes' => false]);
+            $value = Serializer::tryFrom((string) $this->getVar('conf_value', 'n'), false, Format::PHP);
             return $value ? $value : array();
         case 'float':
             $value = $this->getVar('conf_value', 'n');

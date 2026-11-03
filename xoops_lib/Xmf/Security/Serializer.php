@@ -254,7 +254,6 @@ final class Serializer
 
         try {
             self::validateInput($payload);
-            self::validateSecurity($payload, empty($allowedClasses));
             $result = self::unserialize($payload, $allowedClasses);
 
             if (self::$debugMode) {
@@ -304,7 +303,6 @@ final class Serializer
     public static function fromLegacy(string $payload, array $allowedClasses = [])
     {
         self::validateInput($payload);
-        self::validateSecurity($payload, empty($allowedClasses));
 
         // Try plain PHP serialize first
         $result = self::tryUnserialize($payload, $allowedClasses);
@@ -333,7 +331,6 @@ final class Serializer
         }
 
         self::logLegacy($payload);
-        self::validateSecurity($decoded, empty($allowedClasses));
 
         return self::unserialize($decoded, $allowedClasses);
     }
@@ -716,28 +713,6 @@ final class Serializer
     }
 
     /**
-     * Secondary defense against object injection in scalar/array payloads.
-     *
-     * PHP serialized objects use NUL bytes to mark private/protected
-     * property visibility boundaries. Legitimate scalar/array payloads
-     * should never contain them. This complements allowed_classes=false
-     * set in unserialize().
-     *
-     * @param string $payload
-     * @param bool   $noObjects
-     *
-     * @return void
-     *
-     * @throws RuntimeException
-     */
-    private static function validateSecurity(string $payload, bool $noObjects): void
-    {
-        if ($noObjects && strpos($payload, "\0") !== false) {
-            throw new RuntimeException('NUL bytes detected in scalar/array payload');
-        }
-    }
-
-    /**
      * Core unserialize with error handling
      *
      * @param string                   $payload
@@ -745,10 +720,15 @@ final class Serializer
      *
      * @return mixed
      *
+     * @throws RuntimeException On an object, class or enum token without allowed classes
      * @throws UnexpectedValueException
      */
     private static function unserialize(string $payload, array $allowedClasses)
     {
+        if ($allowedClasses === []) {
+            self::assertNoObjects($payload);
+        }
+
         /** @var array{allowed_classes: array<int, class-string>|false} $options */
         $options = ['allowed_classes' => $allowedClasses !== [] ? array_values($allowedClasses) : false];
 
@@ -774,6 +754,54 @@ final class Serializer
         }
 
         return $result;
+    }
+
+    /**
+     * Reject object (O:), custom class (C:) and enum (E:) tokens.
+     *
+     * allowed_classes=false does not cover enums: PHP 8.1+ still autoloads the
+     * enum class and returns the case. Walking the serialize() grammar, with
+     * string bodies skipped by their declared length, finds every token without
+     * false positives on text inside strings. Like unserialize(), the walk ends
+     * after the first complete value, so trailing bytes (a newline) pass.
+     * Anything the walk does not recognise is refused rather than handed on.
+     *
+     * @param string $payload
+     *
+     * @return void
+     *
+     * @throws RuntimeException On an object, class or enum token
+     * @throws UnexpectedValueException On a token outside the scalar/array grammar
+     */
+    private static function assertNoObjects(string $payload): void
+    {
+        $length = \strlen($payload);
+        $pos = 0;
+        $depth = 0;
+        $scalar = '/\G(?:i:[-+]?\d+|d:(?:[-+]?[0-9.]+(?:[eE][-+]?\d+)?|NAN|-?INF)|b:[01]|[rR]:\d+|N);/';
+        do {
+            $token = $pos < $length ? $payload[$pos] : '';
+            if ($token === 'O' || $token === 'C' || $token === 'E') {
+                throw new RuntimeException('Objects and enums are not allowed in this payload');
+            }
+            if ($token === '}' && $depth > 0) {
+                ++$pos;
+                --$depth;
+            } elseif ($token === 'a' && preg_match('/\Ga:\d+:\{/', $payload, $m, 0, $pos)) {
+                $pos += \strlen($m[0]);
+                ++$depth;
+            } elseif (
+                $token === 's'
+                && preg_match('/\Gs:(\d+):"/', $payload, $m, 0, $pos)
+                && substr($payload, $pos + \strlen($m[0]) + (int) $m[1], 2) === '";'
+            ) {
+                $pos += \strlen($m[0]) + (int) $m[1] + 2;
+            } elseif (preg_match($scalar, $payload, $m, 0, $pos)) {
+                $pos += \strlen($m[0]);
+            } else {
+                throw new UnexpectedValueException('Failed to unserialize payload');
+            }
+        } while ($depth > 0);
     }
 
     /**

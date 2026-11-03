@@ -12,6 +12,9 @@
 
 namespace Xmf\Module\Helper;
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
+
 /**
  * Manage session variables for a module. Session variable will be
  * prefixed with the module name to separate it from variables set
@@ -60,18 +63,21 @@ class Session extends AbstractHelper
     /**
      * Sets a named session variable respecting our module prefix
      *
-     * Store scalars and arrays only: get() does not restore objects, which
-     * come back as __PHP_Incomplete_Class.
+     * Store scalars and arrays only: get() returns false for a value holding
+     * an object or enum, or one it cannot read; $default is not used then.
      *
      * @param string $name  name of variable
      * @param mixed  $value value of variable
      *
      * @return void
+     *
+     * @throws \InvalidArgumentException When $value holds a resource or closure
+     * @throws \RuntimeException When the serialized value exceeds the Serializer size limit
      */
     public function set($name, $value)
     {
         $prefixedName = $this->prefix($name);
-        $_SESSION[$prefixedName] = serialize($value);
+        $_SESSION[$prefixedName] = Serializer::toPhp($value);
     }
 
     /**
@@ -86,7 +92,7 @@ class Session extends AbstractHelper
     {
         $prefixedName = $this->prefix($name);
         if (isset($_SESSION[$prefixedName])) {
-            return unserialize($_SESSION[$prefixedName], ['allowed_classes' => false]);
+            return Serializer::tryFrom((string) $_SESSION[$prefixedName], false, Format::PHP);
         } else {
             return $default;
         }

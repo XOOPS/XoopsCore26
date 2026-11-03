@@ -150,17 +150,78 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::fromPhp('a:1:{i:0;');
     }
 
-    public function testFromPhpRejectsNulBytesWithoutAllowedClasses(): void
+    public function testFromPhpKeepsNulBytesInStrings(): void
     {
-        $this->expectException(\RuntimeException::class);
-        Serializer::fromPhp(serialize("a\0b"));
+        // binary data such as random_bytes() round-trips; only object tokens are refused
+        $value = ['token' => "a\0b", "k\0" => ["\0"]];
+
+        $this->assertSame($value, Serializer::fromPhp(serialize($value)));
     }
 
-    public function testFromPhpDoesNotRestoreObjectsByDefault(): void
+    public function testFromPhpRejectsObjectWithPrivateProperty(): void
     {
-        $result = Serializer::fromPhp(serialize(new \ArrayObject([1])));
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp(serialize(['e' => new \Exception('x')]));
+    }
 
-        $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $result);
+    /**
+     * @return array<string, array{string}> payloads holding an object, class or enum token
+     */
+    public static function objectPayloads(): array
+    {
+        return [
+            'object'        => [serialize(new \ArrayObject([1]))],
+            'custom class'  => ['C:11:"ArrayObject":21:{x:i:0;a:0:{};m:a:0:{}}'],
+            'enum'          => ['E:22:"Xmf\Test\NoSuchEnum:One";'],
+            'nested enum'   => ['a:2:{i:0;s:1:"x";s:1:"k";a:1:{i:0;E:22:"Xmf\Test\NoSuchEnum:One";}}'],
+            'nested object' => ['a:1:{i:0;O:8:"stdClass":0:{}}'],
+        ];
+    }
+
+    #[DataProvider('objectPayloads')]
+    public function testFromPhpRejectsObjectTokensBeforeAutoloading(string $payload): void
+    {
+        // allowed_classes=false still autoloads and builds enum cases, so the
+        // payload must be refused before unserialize() resolves any class.
+        $loaded = [];
+        $spy = static function (string $class) use (&$loaded): void {
+            $loaded[] = $class;
+        };
+        spl_autoload_register($spy);
+        $error = 'accepted';
+        try {
+            Serializer::fromPhp($payload);
+        } catch (\RuntimeException $e) {
+            $error = $e->getMessage();
+        } finally {
+            spl_autoload_unregister($spy);
+        }
+        $this->assertSame('Objects and enums are not allowed in this payload', $error);
+        $this->assertSame([], $loaded);
+    }
+
+    public function testFromLegacyRejectsEncodedEnum(): void
+    {
+        $this->assertSame('d', Serializer::tryFrom(base64_encode('E:22:"Xmf\Test\NoSuchEnum:One";'), 'd', Format::LEGACY));
+    }
+
+    public function testFromPhpKeepsTokenLikeTextInsideStrings(): void
+    {
+        $value = ['O:8:"stdClass":0:{}' => 'E:22:"Xmf\Test\NoSuchEnum:One";', 'n' => [1.5e-7, -INF, true, null, 'C:']];
+
+        $this->assertSame(serialize($value), serialize(Serializer::fromPhp(serialize($value))));
+    }
+
+    public function testFromPhpIgnoresTrailingBytesLikeUnserialize(): void
+    {
+        // Protector writes its IP lists as serialize($list) . "\n"
+        $this->assertSame(['1.2.3.4' => 5], Serializer::fromPhp(serialize(['1.2.3.4' => 5]) . "\n"));
+    }
+
+    public function testFromPhpRejectsUnknownTokens(): void
+    {
+        $this->expectException(\UnexpectedValueException::class);
+        Serializer::fromPhp('S:1:"\61";');
     }
 
     public function testFromPhpRestoresAllowedClasses(): void
@@ -234,10 +295,11 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::fromLegacy('not a serialized or base64 value');
     }
 
-    public function testFromLegacyRejectsNulBytesInDecodedPayload(): void
+    public function testFromLegacyKeepsNulBytesInStrings(): void
     {
-        $this->expectException(\RuntimeException::class);
-        Serializer::fromLegacy(base64_encode(serialize("abc\0def-padding")));
+        $value = ['k' => "abc\0def-padding"];
+
+        $this->assertSame($value, Serializer::fromLegacy(base64_encode(serialize($value))));
     }
 
     #[RequiresPhpExtension('zlib')]
