@@ -45,7 +45,7 @@ class DtypeArray extends DtypeAbstract
             default:
                 if (!is_array($value)) {
                     if ($value != '') {
-                        $value = unserialize($value);
+                        $value = unserialize($value, ['allowed_classes' => false]);
                     }
                     $value = is_array($value) ? $value : array();
                 }

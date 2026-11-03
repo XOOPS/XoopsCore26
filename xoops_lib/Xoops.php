@@ -1330,14 +1330,17 @@ class Xoops
         $tpl = new XoopsTpl();
         $submit = ($submit != '') ? trim($submit) : XoopsLocale::A_SUBMIT;
         $tpl->assign('msg', $msg);
-        $tpl->assign('action', $action);
+        // callers pass request data as names, captions and the action (REQUEST_URI)
+        $tpl->assign('action', htmlspecialchars((string) $action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false));
         $tpl->assign('submit', $submit);
         $str_hiddens = '';
         foreach ($hiddens as $name => $value) {
+            $name = htmlspecialchars((string) $name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             if (is_array($value)) {
                 foreach ($value as $caption => $newvalue) {
                     $str_hiddens .= '<input type="radio" name="' . $name . '" value="'
-                        . htmlspecialchars($newvalue) . '" > ' . $caption . NWLINE;
+                        . htmlspecialchars($newvalue) . '" > '
+                        . htmlspecialchars((string) $caption, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . NWLINE;
                 }
                 $str_hiddens .= '<br />' . NWLINE;
             } else {
@@ -1397,27 +1400,18 @@ class Xoops
     /**
      * generate a temporary password
      *
-     * @return string
+     * 20 characters from a 56-symbol alphabet without look-alikes (0/O, 1/l/I),
+     * drawn with random_int(): about 116 bits.
      *
-     * @todo make better passwords
+     * @return string
      */
     public function makePass()
     {
+        $alphabet = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $max = strlen($alphabet) - 1;
         $makepass = '';
-        $syllables = array(
-            'er', 'in', 'tia', 'wol', 'fe', 'pre', 'vet', 'jo', 'nes', 'al', 'len', 'son', 'cha', 'ir', 'ler', 'bo',
-            'ok', 'tio', 'nar', 'sim', 'ple', 'bla', 'ten', 'toe', 'cho', 'co', 'lat', 'spe', 'ak', 'er', 'po', 'co',
-            'lor', 'pen', 'cil', 'li', 'ght', 'wh', 'at', 'the', 'he', 'ck', 'is', 'mam', 'bo', 'no', 'fi', 've', 'any',
-            'way', 'pol', 'iti', 'cs', 'ra', 'dio', 'sou', 'rce', 'sea', 'rch', 'pa', 'per', 'com', 'bo', 'sp', 'eak',
-            'st', 'fi', 'rst', 'gr', 'oup', 'boy', 'ea', 'gle', 'tr', 'ail', 'bi', 'ble', 'brb', 'pri', 'dee', 'kay',
-            'en', 'be', 'se'
-        );
-        for ($count = 1; $count <= 4; ++$count) {
-            if (1 == mt_rand() % 10) {
-                $makepass .= sprintf('%0.0f', (rand() % 50) + 1);
-            } else {
-                $makepass .= sprintf('%s', $syllables[rand() % 62]);
-            }
+        for ($count = 0; $count < 20; ++$count) {
+            $makepass .= $alphabet[random_int(0, $max)];
         }
         return $makepass;
     }

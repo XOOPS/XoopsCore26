@@ -34,6 +34,9 @@ class RedirectUrlTest extends \PHPUnit\Framework\TestCase
             'amp in query'          => ['https://site.test/a.php?x=1&amp;y=2', 'https://site.test/a.php?x=1&amp;y=2'],
             'entity before userinfo' => ['https://site.test&quest;@evil.test/', self::BASE],
             'entity hash userinfo'  => ['https://site.test&num;@evil.test/', self::BASE],
+            'single quote prefix'   => ["'https://evil.test/", self::BASE],
+            'double quote prefix'   => ['"//evil.test/', self::BASE],
+            'entity quote prefix'   => ['&#39;https://evil.test/', self::BASE],
         ];
     }
 

@@ -23,7 +23,7 @@
                 {/if}
             </div>
             <div class="col-md-8">
-                <h4>{if $message.msg_image != ""}<img src='{$xoops_url}/images/subject/{$message.msg_image}' alt='' />{/if}
+                <h4>{if $message.msg_image != ""}<img src='{$xoops_url}/images/subject/{$message.msg_image|escape:'html'}' alt='' />{/if}
                     {$message.subject}
                 </h4>
                 <div class="text-muted text-right"><small>{translate key='C_SENT'}&nbsp;{$message.msg_time|datetime}</small></div>

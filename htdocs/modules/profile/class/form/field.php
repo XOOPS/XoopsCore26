@@ -146,7 +146,7 @@ class ProfileFieldForm extends Xoops\Form\ThemeForm
                 case "checkbox":
                 case "select_multi":
                     $def_value = $obj->getVar('field_default', 'e') != null
-                            ? unserialize($obj->getVar('field_default', 'n')) : null;
+                            ? unserialize($obj->getVar('field_default', 'n'), ['allowed_classes' => false]) : null;
                     $element = new Xoops\Form\Select(_PROFILE_AM_DEFAULT, 'field_default', $def_value, 8, true);
                     $options = $obj->getVar('field_options');
                     asort($options);
@@ -201,7 +201,7 @@ class ProfileFieldForm extends Xoops\Form\ThemeForm
                     break;
 
                 case "group_multi":
-                    $this->addElement(new Xoops\Form\SelectGroup(_PROFILE_AM_DEFAULT, 'field_default', true, unserialize($obj->getVar('field_default', 'n')), 5, true));
+                    $this->addElement(new Xoops\Form\SelectGroup(_PROFILE_AM_DEFAULT, 'field_default', true, unserialize($obj->getVar('field_default', 'n'), ['allowed_classes' => false]), 5, true));
                     break;
 
                 case "theme":

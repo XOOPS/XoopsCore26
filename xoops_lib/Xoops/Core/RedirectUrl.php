@@ -54,8 +54,9 @@ final class RedirectUrl
         if ($allowExternal) {
             return $url;
         }
-        // Browsers read "\" as "/", so "/\host" is scheme-relative.
-        $probe = ltrim(str_replace('\\', '/', $decoded));
+        // Browsers read "\" as "/", so "/\host" is scheme-relative; a meta Refresh
+        // URL drops a leading quote, so "'https://host" is absolute there.
+        $probe = ltrim(str_replace('\\', '/', $decoded), " \t\n\r\0\x0B\"'");
         if ((null !== parse_url($probe, PHP_URL_SCHEME) || str_starts_with($probe, '/'))
             && !self::isLocal($url, $baseUrl)
         ) {

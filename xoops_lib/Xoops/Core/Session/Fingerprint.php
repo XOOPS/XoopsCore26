@@ -80,7 +80,7 @@ class Fingerprint implements FingerprintInterface
         $score = 0;   // combined levenshtein distance of changes
         $changes = 0; // number of changed fields
         $currentFingerprint = $this->takePrint();
-        $savedFingerprint = unserialize($session->get('SESSION_FINGERPRINT'));
+        $savedFingerprint = unserialize((string) $session->get('SESSION_FINGERPRINT'), ['allowed_classes' => false]);
         if ($savedFingerprint === false) {
             $savedFingerprint = $currentFingerprint;
             $changes = empty($_SESSION) ? 0 : 3; // in a populated session - force fail;

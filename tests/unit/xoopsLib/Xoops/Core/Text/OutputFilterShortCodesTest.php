@@ -65,7 +65,7 @@ class OutputFilterShortCodesTest extends \PHPUnit\Framework\TestCase
     public function testHeldMarkupCopiedIntoGeneratedAttributeIsDropped()
     {
         $this->assertSame(
-            '<p>x<img src="a">z</a></p>',
+            '<p>x<img src="a">z</p>',
             $this->filter('<p>[email]x<img src="a">z[/email]</p>')
         );
     }

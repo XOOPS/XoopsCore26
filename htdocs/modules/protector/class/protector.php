@@ -92,7 +92,7 @@ class Protector
 
         // Preferences from configs/cache
         $this->_conf_serialized = @file_get_contents($this->get_filepath4confighcache());
-        $this->_conf = @unserialize($this->_conf_serialized);
+        $this->_conf = @unserialize($this->_conf_serialized, ['allowed_classes' => false]);
         if (empty($this->_conf)) {
             $this->_conf = array();
         }
@@ -344,7 +344,7 @@ class Protector
     function get_bad_ips($with_jailed_time = false)
     {
         list($bad_ips_serialized) = @file(Protector::get_filepath4badips());
-        $bad_ips = empty($bad_ips_serialized) ? array() : @unserialize($bad_ips_serialized);
+        $bad_ips = empty($bad_ips_serialized) ? array() : @unserialize($bad_ips_serialized, ['allowed_classes' => false]);
         if (!is_array($bad_ips) || isset($bad_ips[0])) {
             $bad_ips = array();
         }
@@ -374,7 +374,7 @@ class Protector
     function get_group1_ips($with_info = false)
     {
         list($group1_ips_serialized) = @file(Protector::get_filepath4group1ips());
-        $group1_ips = empty($group1_ips_serialized) ? array() : @unserialize($group1_ips_serialized);
+        $group1_ips = empty($group1_ips_serialized) ? array() : @unserialize($group1_ips_serialized, ['allowed_classes' => false]);
         if (!is_array($group1_ips)) {
             $group1_ips = array();
         }
@@ -883,7 +883,7 @@ class Protector
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        $result = unserialize(curl_exec($ch));
+        $result = unserialize((string) curl_exec($ch), ['allowed_classes' => false]);
         curl_close($ch);
 
         $spammer = false;

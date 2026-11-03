@@ -753,6 +753,23 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(strlen($value)>0);
     }
 
+    public function test_confirmEscapesNamesCaptionsAndAction()
+    {
+        defined('NWLINE') or define('NWLINE', "\n");
+        $value = Xoops::getInstance()->confirm(
+            array('a"b' => array('<img src=x onerror=alert(1)>' => 1)),
+            'x.php?a=1&b="><script>',
+            'msg',
+            '',
+            false
+        );
+        $this->assertStringContainsString('name="a&quot;b"', $value);
+        $this->assertStringContainsString('&lt;img src=x onerror=alert(1)&gt;', $value);
+        $this->assertStringContainsString('action="x.php?a=1&amp;b=&quot;&gt;&lt;script&gt;"', $value);
+        $this->assertStringNotContainsString('<img src=x', $value);
+        $this->assertStringNotContainsString('<script>', $value);
+    }
+
     public function test_getUserTimestamp()
     {
         $instance = Xoops::getInstance();
@@ -795,6 +812,8 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue(is_string($value));
         $value = $instance->makePass();
         $this->assertTrue(is_string($value));
+        $this->assertMatchesRegularExpression('/^[a-km-np-zA-HJ-NP-Z2-9]{20}\z/', $value);
+        $this->assertNotSame($value, $instance->makePass());
     }
 
     public function test_checkEmail()

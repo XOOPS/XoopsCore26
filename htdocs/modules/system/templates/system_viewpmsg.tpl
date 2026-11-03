@@ -49,7 +49,7 @@
             {/if}
             <td class='width5' style="text-align: center;">
                 {if $message.msg_image != ""}
-                    <img src='{$xoops_url}/images/subject/{$message.msg_image}' alt='' />
+                    <img src='{$xoops_url}/images/subject/{$message.msg_image|escape:'html'}' alt='' />
                 {/if}
             </td>
             <td class='width10'>
