@@ -39,6 +39,7 @@ final class Serializer
     private const MAX_SIZE = 5000000; // 5MB
     private const JSON_DEPTH = 512;
     private const JSON_FLAGS = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR;
+    private const MALFORMED = 'Failed to unserialize payload';
 
     /** @var \Closure|null Optional logger for legacy format detection */
     private static $legacyLogger = null;
@@ -748,7 +749,7 @@ final class Serializer
         }
 
         if ($result === false && $payload !== 'b:0;') {
-            throw new UnexpectedValueException('Failed to unserialize payload');
+            throw new UnexpectedValueException(self::MALFORMED);
         }
 
         return $result;
@@ -803,7 +804,7 @@ final class Serializer
             } elseif (preg_match($scalar, $payload, $m, 0, $pos)) {
                 $pos += \strlen($m[0]);
             } else {
-                throw new UnexpectedValueException('Failed to unserialize payload');
+                throw new UnexpectedValueException(self::MALFORMED);
             }
         } while ($depth > 0);
     }
@@ -828,7 +829,7 @@ final class Serializer
         $token = $payload[$pos];
         // declared lengths beyond the payload are refused before any offset arithmetic
         if (!preg_match('/\G[OCE]:(\d+):"/', $payload, $m, 0, $pos) || (int) $m[1] > \strlen($payload)) {
-            throw new UnexpectedValueException('Failed to unserialize payload');
+            throw new UnexpectedValueException(self::MALFORMED);
         }
         $nameStart = $pos + \strlen($m[0]);
         $name = (string) substr($payload, $nameStart, (int) $m[1]);
@@ -841,13 +842,13 @@ final class Serializer
         }
         if ($token === 'E') {
             if (substr($payload, $pos, 2) !== '";') {
-                throw new UnexpectedValueException('Failed to unserialize payload');
+                throw new UnexpectedValueException(self::MALFORMED);
             }
             return $pos + 2;
         }
         if ($token === 'O') {
             if (!preg_match('/\G":\d+:\{/', $payload, $m, 0, $pos)) {
-                throw new UnexpectedValueException('Failed to unserialize payload');
+                throw new UnexpectedValueException(self::MALFORMED);
             }
             ++$depth;
             return $pos + \strlen($m[0]);
@@ -856,19 +857,37 @@ final class Serializer
             || (int) $m[1] > \strlen($payload)
             || substr($payload, $pos + \strlen($m[0]) + (int) $m[1], 1) !== '}'
         ) {
-            throw new UnexpectedValueException('Failed to unserialize payload');
+            throw new UnexpectedValueException(self::MALFORMED);
         }
-        // the class decodes its own body, and allowed_classes does not stop an enum
-        // inside it from autoloading; the format is the class's own, so every
-        // enum-like token in it, even inside a string, must name an allowed class
-        $body = (string) substr($payload, $pos + \strlen($m[0]), (int) $m[1]);
+        self::assertBodyEnumsAllowed((string) substr($payload, $pos + \strlen($m[0]), (int) $m[1]), $allowed);
+        return $pos + \strlen($m[0]) + (int) $m[1] + 1;
+    }
+
+    /**
+     * Check every enum-like token in a C: body against the allowed classes.
+     *
+     * The class decodes its own body, and allowed_classes does not stop an enum
+     * inside it from autoloading. The body format is the class's own, so string
+     * values in it cannot be skipped safely: a declared string length the class
+     * reads differently could hide a real enum token. Every match counts, even
+     * one inside a string, so a rare valid payload is refused rather than an
+     * enum let through.
+     *
+     * @param string             $body    the C: token's data
+     * @param array<int, string> $allowed lower-case allowed class names
+     *
+     * @return void
+     *
+     * @throws UnexpectedValueException On an enum-like token whose class is not allowed
+     */
+    private static function assertBodyEnumsAllowed(string $body, array $allowed): void
+    {
         preg_match_all('/E:\d+:"([^":]*):/', $body, $enums);
         foreach ($enums[1] as $enum) {
             if (!\in_array(strtolower(ltrim($enum, '\\')), $allowed, true)) {
                 throw new UnexpectedValueException('Objects and enums are not allowed in this payload');
             }
         }
-        return $pos + \strlen($m[0]) + (int) $m[1] + 1;
     }
 
     /**

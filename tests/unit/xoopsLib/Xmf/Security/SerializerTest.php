@@ -277,6 +277,16 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame([], $loaded);
     }
 
+    public function testAllowListRefusesEnumLikeTextInsideClassDataStrings(): void
+    {
+        // the C: body is the class's own format, so its strings are not skipped: fail closed
+        $body = 'x:i:0;a:1:{i:0;s:31:"E:23:"Xmf\Test\NoSuchEnum:One";";};m:a:0:{}';
+        $payload = 'C:11:"ArrayObject":' . \strlen($body) . ':{' . $body . '}';
+
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp($payload, [\ArrayObject::class]);
+    }
+
     public function testFromPhpKeepsTokenLikeTextInsideStrings(): void
     {
         $value = ['O:8:"stdClass":0:{}' => 'E:23:"Xmf\Test\NoSuchEnum:One";', 'n' => [1.5e-7, -INF, true, null, 'C:']];

@@ -363,7 +363,7 @@ class Protector
      *
      * @return array
      */
-    function get_bad_ips($with_jailed_time = false, &$readable = null)
+    public function get_bad_ips($with_jailed_time = false, &$readable = null)
     {
         list($bad_ips_serialized) = @file(Protector::get_filepath4badips());
         $bad_ips = empty($bad_ips_serialized) ? array() : Serializer::tryFrom($bad_ips_serialized, false, Format::PHP);

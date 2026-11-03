@@ -96,7 +96,7 @@ function protector_postcheck()
     if ($xoops->isUser()) {
         $uid = $xoops->user->getVar('uid');
         $bip_except = Serializer::tryFrom((string) ($conf['bip_except'] ?? ''), [], Format::PHP);
-        $can_ban = count(array_intersect($xoops->user->getGroups(), is_array($bip_except) ? $bip_except : [])) ? false : true;
+        $can_ban = !array_intersect($xoops->user->getGroups(), is_array($bip_except) ? $bip_except : []);
     } else {
         // login failed check
         if ((!empty($_POST['uname']) && !empty($_POST['pass'])) || (!empty($_COOKIE['autologin_uname']) && !empty($_COOKIE['autologin_pass']))) {
