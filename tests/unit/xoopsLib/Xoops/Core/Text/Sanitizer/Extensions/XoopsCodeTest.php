@@ -81,6 +81,10 @@ class XoopsCodeTest extends \PHPUnit\Framework\TestCase
             'url javascript' => ['[url=javascript://%0aalert(1)]x[/url]', 'x'],
             'url javascript after scheme text' => ['[url=javascript:alert(1)//https://e.com]x[/url]', 'x'],
             'url mailto' => ['[url=mailto:a@example.com]x[/url]', 'x'],
+            'url javascript mixed case' => ['[url=JaVaScRiPt:alert(1)]x[/url]', 'x'],
+            'url ftp' => ['[url=ftp://e.com/f]x[/url]', '<a href="ftp://e.com/f">x</a>'],
+            'siteurl javascript' => ['[siteurl=javascript:alert(1)]x[/siteurl]', 'x'],
+            'siteurl https' => ['[siteurl=https://e.com/a]x[/siteurl]', '<a href="https://e.com/a">x</a>'],
             'url quote escape' => ['[url=https://e.com/\x22onclick=alert(1)]x[/url]', '<a href="https://e.com/&quot;onclick=alert(1)">x</a>'],
             'email' => ['[email]a@example.com[/email]', '<a href="mailto:a@example.com">a@example.com</a>'],
             'email invalid' => ['[email]a@b" onclick="x[/email]', 'a@b&quot; onclick=&quot;x'],
@@ -96,6 +100,23 @@ class XoopsCodeTest extends \PHPUnit\Framework\TestCase
             $out
         );
         $this->assertStringStartsWith('<a href="http', $out);
+    }
+
+    #[DataProvider('schemelessUrlProvider')]
+    public function testSchemelessUrlResolvesToSitePath(string $target)
+    {
+        $this->sanitizer->enableComponentForTesting('xoopscode');
+        $out = $this->sanitizer->getShortCodes()->process('[url=' . $target . ']x[/url]');
+        $this->assertSame('<a href="' . \Xoops::getInstance()->path($target, true) . '">x</a>', $out);
+        $this->assertStringStartsWith('<a href="' . \XoopsBaseConfig::get('url'), $out);
+    }
+
+    public static function schemelessUrlProvider(): array
+    {
+        return [
+            'protocol-relative host' => ['//e.com/a'],
+            'percent-encoded scheme' => ['%6aavascript:alert(1)'],
+        ];
     }
 
     #[DataProvider('shortcodeProvider')]
