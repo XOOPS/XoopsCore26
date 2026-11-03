@@ -24,6 +24,9 @@ use Xmf\Security\Serializer;
 
 class Protector
 {
+    /** the bad-IP file stays below the 5 MB the Serializer reads, so it never reads back empty */
+    const BADIPS_MAX_BYTES = 4000000;
+
     var $mydirname;
 
     var $_conn = null;
@@ -316,11 +319,17 @@ class Protector
     function write_file_badips($bad_ips)
     {
         asort($bad_ips);
+        $data = serialize($bad_ips);
+        // sorted by expiry, so trimming from the front drops the bans that end first
+        while (strlen($data) > self::BADIPS_MAX_BYTES && $bad_ips !== array()) {
+            $bad_ips = array_slice($bad_ips, intdiv(count($bad_ips), 10) + 1, null, true);
+            $data = serialize($bad_ips);
+        }
 
         $fp = @fopen($this->get_filepath4badips(), 'w');
         if ($fp) {
             @flock($fp, LOCK_EX);
-            fwrite($fp, serialize($bad_ips) . "\n");
+            fwrite($fp, $data . "\n");
             @flock($fp, LOCK_UN);
             fclose($fp);
             return true;
@@ -338,16 +347,27 @@ class Protector
             return false;
         }
 
-        $bad_ips = $this->get_bad_ips(true);
+        $bad_ips = $this->get_bad_ips(true, $readable);
+        if (!$readable) {
+            // never replace a stored list that could not be read with this one entry
+            return false;
+        }
         $bad_ips[$ip] = $jailed_time ? $jailed_time : 0x7fffffff;
 
         return $this->write_file_badips($bad_ips);
     }
 
-    function get_bad_ips($with_jailed_time = false)
+    /**
+     * @param bool      $with_jailed_time return ip => expiry instead of the ip list
+     * @param bool|null $readable         set to false when the stored list exists but could not be read
+     *
+     * @return array
+     */
+    function get_bad_ips($with_jailed_time = false, &$readable = null)
     {
         list($bad_ips_serialized) = @file(Protector::get_filepath4badips());
         $bad_ips = empty($bad_ips_serialized) ? array() : Serializer::tryFrom($bad_ips_serialized, false, Format::PHP);
+        $readable = is_array($bad_ips);
         if (!is_array($bad_ips) || isset($bad_ips[0])) {
             $bad_ips = array();
         }

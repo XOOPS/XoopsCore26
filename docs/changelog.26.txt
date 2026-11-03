@@ -16,7 +16,11 @@ Security:
    before unserialize() runs (allowed_classes => false alone still builds enums).
    BC: a value holding an object or enum now reads as unset (false, or an empty array for
    array fields); store scalar arrays instead. Strings containing NUL bytes are no longer
-   rejected (mamba)
+   rejected. With a class allow-list, objects, classes and enums not on the list are also
+   refused before unserialize() runs. Xmf Session::set() refuses values get() cannot read
+   back (mamba)
+ - Protector keeps its bad-IP file under the size the Serializer reads (dropping the bans
+   that expire first) and never overwrites a stored list it could not read (mamba)
 
 ==================================
 2013/04/15: Version 2.6.0 Alpha 3

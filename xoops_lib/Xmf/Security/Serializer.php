@@ -720,14 +720,12 @@ final class Serializer
      *
      * @return mixed
      *
-     * @throws RuntimeException On an object, class or enum token without allowed classes
-     * @throws UnexpectedValueException
+     * @throws UnexpectedValueException On an object, class or enum token of a class that is not
+     *                                  allowed, or a payload that does not unserialize
      */
     private static function unserialize(string $payload, array $allowedClasses)
     {
-        if ($allowedClasses === []) {
-            self::assertNoObjects($payload);
-        }
+        self::assertAllowedTokens($payload, $allowedClasses);
 
         /** @var array{allowed_classes: array<int, class-string>|false} $options */
         $options = ['allowed_classes' => $allowedClasses !== [] ? array_values($allowedClasses) : false];
@@ -757,24 +755,30 @@ final class Serializer
     }
 
     /**
-     * Reject object (O:), custom class (C:) and enum (E:) tokens.
+     * Reject object (O:), custom class (C:) and enum (E:) tokens whose class is not allowed.
      *
-     * allowed_classes=false does not cover enums: PHP 8.1+ still autoloads the
-     * enum class and returns the case. Walking the serialize() grammar, with
-     * string bodies skipped by their declared length, finds every token without
-     * false positives on text inside strings. Like unserialize(), the walk ends
-     * after the first complete value, so trailing bytes (a newline) pass.
-     * Anything the walk does not recognise is refused rather than handed on.
+     * allowed_classes does not cover enums: PHP 8.1+ still autoloads an enum
+     * class that is not on the list (or when the option is false) and returns
+     * the case. Walking the serialize() grammar, with string and class-name
+     * bodies skipped by their declared length, finds every token without false
+     * positives on text inside strings. Like unserialize(), the walk ends after
+     * the first complete value, so trailing bytes (a newline) pass. Anything the
+     * walk does not recognise is refused rather than handed on.
      *
-     * @param string $payload
+     * @param string             $payload
+     * @param array<int, string> $allowedClasses classes that may appear (empty = none)
      *
      * @return void
      *
-     * @throws RuntimeException On an object, class or enum token
-     * @throws UnexpectedValueException On a token outside the scalar/array grammar
+     * @throws UnexpectedValueException On an object, class or enum token of a class that is not
+     *                                  allowed, or a token outside the serialize() grammar
      */
-    private static function assertNoObjects(string $payload): void
+    private static function assertAllowedTokens(string $payload, array $allowedClasses): void
     {
+        $allowed = array_map(
+            static fn($class): string => strtolower(ltrim((string) $class, '\\')),
+            $allowedClasses
+        );
         $length = \strlen($payload);
         $pos = 0;
         $depth = 0;
@@ -782,7 +786,8 @@ final class Serializer
         do {
             $token = $pos < $length ? $payload[$pos] : '';
             if ($token === 'O' || $token === 'C' || $token === 'E') {
-                throw new RuntimeException('Objects and enums are not allowed in this payload');
+                $pos = self::skipClassToken($payload, $pos, $allowed, $depth);
+                continue;
             }
             if ($token === '}' && $depth > 0) {
                 ++$pos;
@@ -790,9 +795,8 @@ final class Serializer
             } elseif ($token === 'a' && preg_match('/\Ga:\d+:\{/', $payload, $m, 0, $pos)) {
                 $pos += \strlen($m[0]);
                 ++$depth;
-            } elseif (
-                $token === 's'
-                && preg_match('/\Gs:(\d+):"/', $payload, $m, 0, $pos)
+            } elseif ($token === 's' && preg_match('/\Gs:(\d+):"/', $payload, $m, 0, $pos)
+                && (int) $m[1] <= $length
                 && substr($payload, $pos + \strlen($m[0]) + (int) $m[1], 2) === '";'
             ) {
                 $pos += \strlen($m[0]) + (int) $m[1] + 2;
@@ -802,6 +806,59 @@ final class Serializer
                 throw new UnexpectedValueException('Failed to unserialize payload');
             }
         } while ($depth > 0);
+    }
+
+    /**
+     * Check one O:, C: or E: token against the allowed classes and step past its header.
+     *
+     * O: opens a property list walked like an array, C: carries opaque data of
+     * a declared length, and E: is a complete "Class:Case" value.
+     *
+     * @param string             $payload
+     * @param int                $pos     offset of the token letter
+     * @param array<int, string> $allowed lower-case allowed class names
+     * @param int                $depth   open array/object bodies, raised for O:
+     *
+     * @return int offset after the token's header (O:) or the whole token (C:, E:)
+     *
+     * @throws UnexpectedValueException On a class that is not allowed, or a malformed token
+     */
+    private static function skipClassToken(string $payload, int $pos, array $allowed, int &$depth): int
+    {
+        $token = $payload[$pos];
+        // declared lengths beyond the payload are refused before any offset arithmetic
+        if (!preg_match('/\G[OCE]:(\d+):"/', $payload, $m, 0, $pos) || (int) $m[1] > \strlen($payload)) {
+            throw new UnexpectedValueException('Failed to unserialize payload');
+        }
+        $nameStart = $pos + \strlen($m[0]);
+        $name = (string) substr($payload, $nameStart, (int) $m[1]);
+        $pos = $nameStart + (int) $m[1];
+        // an enum names "Class:Case"; class names cannot contain a colon
+        $class = $token === 'E' ? strstr($name, ':', true) : $name;
+        if ($class === false || !\in_array(strtolower($class), $allowed, true)) {
+            // UnexpectedValueException is a RuntimeException, and what toObject() reports for a wrong class
+            throw new UnexpectedValueException('Objects and enums are not allowed in this payload');
+        }
+        if ($token === 'E') {
+            if (substr($payload, $pos, 2) !== '";') {
+                throw new UnexpectedValueException('Failed to unserialize payload');
+            }
+            return $pos + 2;
+        }
+        if ($token === 'O') {
+            if (!preg_match('/\G":\d+:\{/', $payload, $m, 0, $pos)) {
+                throw new UnexpectedValueException('Failed to unserialize payload');
+            }
+            ++$depth;
+            return $pos + \strlen($m[0]);
+        }
+        if (!preg_match('/\G":(\d+):\{/', $payload, $m, 0, $pos)
+            || (int) $m[1] > \strlen($payload)
+            || substr($payload, $pos + \strlen($m[0]) + (int) $m[1], 1) !== '}'
+        ) {
+            throw new UnexpectedValueException('Failed to unserialize payload');
+        }
+        return $pos + \strlen($m[0]) + (int) $m[1] + 1;
     }
 
     /**

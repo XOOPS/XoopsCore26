@@ -14,21 +14,25 @@ class SessionTest extends \PHPUnit\Framework\TestCase
      * Sets up the fixture, for example, opens a network connection.
      * This method is called before a test is executed.
      */
-    /** @var array<string, mixed> */
-    private $savedSession = [];
+    /** @var array<string, mixed>|null $_SESSION before the test, null when it was not set */
+    private $savedSession = null;
 
     protected function setUp(): void
     {
-        $this->savedSession = $_SESSION ?? [];
+        $this->savedSession = isset($_SESSION) ? $_SESSION : null;
         $this->object = new Session;
     }
 
     /**
-     * Restores $_SESSION, also when an assertion failed.
+     * Restores $_SESSION (including its absence), also when an assertion failed.
      */
     protected function tearDown(): void
     {
-        $_SESSION = $this->savedSession;
+        if ($this->savedSession === null) {
+            unset($_SESSION);
+        } else {
+            $_SESSION = $this->savedSession;
+        }
     }
 
     public function testInit()
@@ -54,9 +58,16 @@ class SessionTest extends \PHPUnit\Framework\TestCase
 
         $this->assertSame('dflt', $this->object->get('never-set', 'dflt'));
 
-        // a stored enum or object is refused, not restored
-        $this->object->set('enum', [SessionTestEnum::On]);
+        // an enum already in the session (written by older code) is refused, not restored
+        $prefix = new \ReflectionMethod($this->object, 'prefix');
+        $_SESSION[$prefix->invoke($this->object, 'enum')] = serialize([SessionTestEnum::On]);
         $this->assertFalse($this->object->get('enum', 'dflt'));
+    }
+
+    public function testSetRefusesEnumGetCouldNotRead()
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->object->set('enum', [SessionTestEnum::On]);
     }
 
     public function testDel()
