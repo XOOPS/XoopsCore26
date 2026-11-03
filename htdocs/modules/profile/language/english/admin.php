@@ -119,4 +119,4 @@ define("_PROFILE_AM_CATEGORY_LIST", "List of categories");
 define("_PROFILE_AM_STEP_LIST", "List of registration step");
 define("_PROFILE_AM_FIELD_LIST", "List of fields");
 define("_PROFILE_AM_ERROR_WEIGHT","You need a positive integer");
-define("_PROFILE_AM_FIELDNAME_INVALID", "The field name must start with a letter, use only letters, digits and underscores (at most 64), and must not be uid, uname, email, pass, level, actkey or profile_id");
+define("_PROFILE_AM_FIELDNAME_INVALID", "The field name must start with a letter and use only letters, digits and underscores (at most 64), and must not be a reserved account name such as uid, pass, level or password");

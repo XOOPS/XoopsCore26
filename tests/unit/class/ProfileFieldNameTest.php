@@ -1,6 +1,6 @@
 <?php
-require_once(__DIR__.'/../init_new.php');
-require_once(XOOPS_ROOT_PATH.'/modules/profile/class/field.php');
+require_once __DIR__ . '/../init_new.php';
+require_once XOOPS_ROOT_PATH . '/modules/profile/class/field.php';
 
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -22,6 +22,9 @@ class ProfileFieldNameTest extends \PHPUnit\Framework\TestCase
             'email'                  => ['email', false],
             'activation key'         => ['actkey', false],
             'profile row id'         => ['profile_id', false],
+            'password control'       => ['password', false],
+            'password confirmation'  => ['vpass', false],
+            'groups control'         => ['groups', false],
             'leading digit'          => ['1field', false],
             'script breakout'        => ['a;alert(1)//', false],
             'backtick'               => ['a`b', false],

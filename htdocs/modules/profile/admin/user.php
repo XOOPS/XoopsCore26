@@ -121,7 +121,7 @@ switch ($op) {
             if (count($fields) > 0) {
                 foreach (array_keys($fields) as $i) {
                     $fieldname = $fields[$i]->getVar('field_name');
-                    if (in_array($fieldname, $userfields)) {
+                    if (in_array($fieldname, $userfields) && ProfileFieldHandler::isValidFieldName($fieldname)) {
                         $default = $fields[$i]->getVar('field_default');
                         if ($default === '' || $default === null) {
                             continue;

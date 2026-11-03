@@ -82,7 +82,7 @@ function install_acceptUser($hash = '')
         return false;
     }
     // the cookie proves who the user is, not what they may do: only a current webmaster gets the installer
-    if (!in_array(\Xoops\Core\FixedGroups::ADMIN, $user->getGroups())) {
+    if (!$user->isActive() || !in_array(\Xoops\Core\FixedGroups::ADMIN, $user->getGroups())) {
         return false;
     }
     $xoops->user = $user;

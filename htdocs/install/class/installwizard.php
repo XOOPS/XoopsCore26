@@ -123,7 +123,7 @@ class XoopsInstallWizard
             $xoops->redirect($xoops->url('user.php'));
         }
         // site setup is webmaster work: a delegated system administrator is not enough
-        return in_array(\Xoops\Core\FixedGroups::ADMIN, $xoops->user->getGroups());
+        return $xoops->user->isActive() && in_array(\Xoops\Core\FixedGroups::ADMIN, $xoops->user->getGroups());
     }
 
     /**

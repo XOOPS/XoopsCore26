@@ -48,12 +48,7 @@ class Factory
                 $xoops_auth_method = $authConfig['auth_method'];
             }
             // Verify if uname allow to bypass LDAP auth
-            // compare the account name the directory backends resolve: AD drops a DOMAIN\ prefix,
-            // and the local user lookup ignores case
-            $parts = explode('\\', (string) $uname);
-            $bypassName = strtolower((string) end($parts));
-            $bypassList = array_map('strtolower', array_map('strval', (array) ($authConfig['ldap_users_bypass'] ?? [])));
-            if (in_array($bypassName, $bypassList, true)) {
+            if ($xoops_auth_method !== 'xoops' && self::isBypassed($xoops_auth_method, (string) $uname, $authConfig)) {
                 $xoops_auth_method = 'xoops';
             }
 
@@ -77,5 +72,48 @@ class Factory
             $auth_instance = new $class($dao);
         }
         return $auth_instance;
+    }
+
+    /**
+     * Whether the account a directory login would resolve to is reserved for native login.
+     *
+     * Compares the name the backend looks up locally: AD drops a DOMAIN\ prefix, and the
+     * local user lookup uses the database collation, so names it treats as equal also match.
+     *
+     * @param string $method     configured directory backend (ldap or ads)
+     * @param string $uname      submitted user name
+     * @param array  $authConfig site configuration
+     *
+     * @return bool
+     */
+    private static function isBypassed($method, $uname, array $authConfig)
+    {
+        $bypassList = array_filter(array_map(
+            'mb_strtolower',
+            array_map('strval', (array) ($authConfig['ldap_users_bypass'] ?? []))
+        ), 'strlen');
+        if ($bypassList === [] || $uname === '') {
+            return false;
+        }
+        if ($method === 'ads') {
+            $parts = explode('\\', $uname);
+            $uname = (string) end($parts);
+        }
+        if (in_array(mb_strtolower($uname), $bypassList, true)) {
+            return true;
+        }
+        // a spelling the collation folds onto a reserved account (admín -> admin) is that account
+        try {
+            $users = \Xoops::getInstance()->getHandlerMember()->getUsers(new \Xoops\Core\Kernel\Criteria('uname', $uname));
+        } catch (\Doctrine\DBAL\Exception $e) {
+            // no database: there is no local account to protect, and the login cannot complete anyway
+            return false;
+        }
+        foreach ($users as $user) {
+            if (in_array(mb_strtolower((string) $user->getVar('uname', 'n')), $bypassList, true)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

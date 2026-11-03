@@ -175,8 +175,9 @@ class PagePage_contentHandler extends XoopsPersistableObjectHandler
     public function getViewable($content_id)
     {
         $helper = Page::getInstance();
-        $content = parent::get((int) $content_id);
-        if (!is_object($content) || 0 == $content->getVar('content_status')) {
+        // get(0) returns a new, active-by-default object: never treat that as a page
+        $content = (int) $content_id > 0 ? parent::get((int) $content_id) : null;
+        if (!is_object($content) || $content->isNew() || 0 == $content->getVar('content_status')) {
             return null;
         }
         $allowed = $helper->getGrouppermHandler()->checkRight(

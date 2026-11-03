@@ -423,10 +423,13 @@ class ProfileField extends XoopsObject
 class ProfileFieldHandler extends XoopsPersistableObjectHandler
 {
     /**
-     * Account columns a profile field must never be bound to: the forms handle them
-     * separately, and a field with one of these names would rebind or take over the account.
+     * Account columns and the account forms' own controls: the forms handle them separately,
+     * and a field with one of these names would rebind the account or override those controls.
      */
-    public const RESERVED_NAMES = ['uid', 'uname', 'email', 'pass', 'level', 'actkey', 'profile_id'];
+    public const RESERVED_NAMES = [
+        'uid', 'uname', 'email', 'pass', 'level', 'actkey', 'profile_id',
+        'password', 'vpass', 'oldpass', 'groups', 'op', 'step', 'reg_disclaimer', 'submit', 'xoops_token_request',
+    ];
 
     /**
      * A field name becomes a database column, a form element name and a JavaScript
@@ -619,9 +622,12 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     {
         $xoops = Xoops::getInstance();
         $profile_handler = \Xoops::getModuleHelper('profile')->getHandler('profile');
-        // remove column from table
-        $sql = "ALTER TABLE " . $profile_handler->table . " DROP `" . $obj->getVar('field_name', 'n') . "`";
-        if ($this->db2->query($sql)) {
+        // remove the profile column, but only for a field that owns one: a user-table field, or a
+        // malformed or reserved name stored before names were validated, only loses its record
+        $name = (string) $obj->getVar('field_name', 'n');
+        $ownsColumn = self::isValidFieldName($name) && !in_array($name, $this->getUserVars(), true);
+        $sql = "ALTER TABLE " . $profile_handler->table . " DROP `" . $name . "`";
+        if (!$ownsColumn || $this->db2->query($sql)) {
             //change this to update the cached field information storage
             if (!parent::delete($obj, $force)) {
                 return false;
