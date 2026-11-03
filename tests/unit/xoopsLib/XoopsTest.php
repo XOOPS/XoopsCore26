@@ -755,7 +755,7 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
 
     public function test_confirmEscapesNamesCaptionsAndAction()
     {
-        defined('NWLINE') or define('NWLINE', "\n");
+        defined('NWLINE') || define('NWLINE', "\n");
         $value = Xoops::getInstance()->confirm(
             array('a"b' => array('<img src=x onerror=alert(1)>' => 1)),
             'x.php?a=1&b="><script>',

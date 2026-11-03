@@ -875,16 +875,25 @@ class Protector
             return false;
         }
 
-        $query = "f=serial&ip=" . $_SERVER['REMOTE_ADDR'];
-        $query .= isset($_POST['email']) ? "&email=" . $_POST['email'] : '';
-        $query .= isset($_POST['uname']) ? "&username=" . $_POST['uname'] : '';
-        $url = "http://www.stopforumspam.com/api?" . $query;
+        $query = ['f' => 'json', 'ip' => $_SERVER['REMOTE_ADDR']];
+        $email = \Xmf\Request::getString('email', '', 'POST');
+        if ('' !== $email) {
+            $query['email'] = $email;
+        }
+        $uname = \Xmf\Request::getString('uname', '', 'POST');
+        if ('' !== $uname) {
+            $query['username'] = $uname;
+        }
+        $url = 'https://www.stopforumspam.com/api?' . http_build_query($query, '', '&');
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-        $result = unserialize((string) curl_exec($ch), ['allowed_classes' => false]);
+        $result = json_decode((string) curl_exec($ch), true, 4);
         curl_close($ch);
+        if (!is_array($result)) {
+            return false; // no answer or not the expected array: not a known spammer
+        }
 
         $spammer = false;
         if (isset($result['email']) && isset($result['email']['lastseen'])) {

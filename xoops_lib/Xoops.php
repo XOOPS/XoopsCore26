@@ -1404,6 +1404,8 @@ class Xoops
      * drawn with random_int(): about 116 bits.
      *
      * @return string
+     *
+     * @throws \Exception when no source of randomness is available
      */
     public function makePass()
     {

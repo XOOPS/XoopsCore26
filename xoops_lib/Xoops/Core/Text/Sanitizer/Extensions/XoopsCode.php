@@ -42,15 +42,8 @@ class XoopsCode extends ExtensionAbstract
 
         // Attribute values are unescaped by stripcslashes() in ShortCodes, so "\x22"
         // arrives here as a real quote: every value is validated, then escaped.
-        // a target with a scheme must be a web link; any other target is made
-        // site-relative, so it cannot start with a scheme once rendered
         $link = function ($attributes, $content) use ($shortcodes) {
-            $target = ltrim($attributes[0] ?? '', '=');
-            if (1 === preg_match('#^[a-z][a-z0-9+.-]*:#i', $target)) {
-                $url = 1 === preg_match('#^(?:https?|ftps?)://#i', $target) ? $target : '';
-            } else {
-                $url = \Xoops::getInstance()->path($target, true);
-            }
+            $url = self::linkUrl(ltrim($attributes[0] ?? '', '='));
             if ('' === $url) {
                 return $shortcodes->process($content);
             }
@@ -59,25 +52,19 @@ class XoopsCode extends ExtensionAbstract
         $shortcodes->addShortcode('siteurl', $link);
         $shortcodes->addShortcode('url', $link);
 
-        $style = function ($property, $pattern) use ($shortcodes) {
-            return function ($attributes, $content) use ($shortcodes, $property, $pattern) {
-                $value = trim(ltrim($attributes[0] ?? '', '='));
-                if ('color' === $property && 1 === preg_match('/^(?:[a-f0-9]{3}|[a-f0-9]{6})\z/i', $value)) {
-                    $value = '#' . $value;
+        foreach (['color' => 'color', 'size' => 'font-size', 'font' => 'font-family'] as $tag => $property) {
+            $shortcodes->addShortcode(
+                $tag,
+                function ($attributes, $content) use ($shortcodes, $property) {
+                    $value = self::cssValue($property, ltrim($attributes[0] ?? '', '='));
+                    if ('' === $value) {
+                        return $shortcodes->process($content);
+                    }
+                    return '<span style="' . $property . ': ' . self::attr($value) . '">'
+                        . $shortcodes->process($content) . '</span>';
                 }
-                if (1 !== preg_match($pattern, $value)) {
-                    return $shortcodes->process($content);
-                }
-                return '<span style="' . $property . ': ' . self::attr($value) . '">'
-                    . $shortcodes->process($content) . '</span>';
-            };
-        };
-        $shortcodes->addShortcode('color', $style('color', '/^(?:#[a-f0-9]{3}|#[a-f0-9]{6}|[a-z]{3,20})\z/i'));
-        $shortcodes->addShortcode(
-            'size',
-            $style('font-size', '/^(?:[a-z-]{3,10}|\d{1,3}(?:\.\d{1,2})?(?:px|pt|em|rem|%))\z/i')
-        );
-        $shortcodes->addShortcode('font', $style('font-family', '/^[a-z0-9\'][a-z0-9 ,\'-]{0,63}\z/i'));
+            );
+        }
 
         $shortcodes->addShortcode(
             'email',
@@ -145,6 +132,44 @@ class XoopsCode extends ExtensionAbstract
                 return $newcontent;
             }
         );
+    }
+
+    /**
+     * Resolve a [url] target: one with a scheme must be a web link, any other is
+     * made site-relative, so it cannot start with a scheme once rendered
+     *
+     * @param string $target shortcode argument
+     *
+     * @return string URL, or '' when the target is not allowed
+     */
+    private static function linkUrl(string $target): string
+    {
+        if (1 !== preg_match('#^[a-z][a-z0-9+.-]*:#i', $target)) {
+            return \Xoops::getInstance()->path($target, true);
+        }
+        return 1 === preg_match('#^(?:https?|ftps?)://#i', $target) ? $target : '';
+    }
+
+    /**
+     * Validate a [color], [size] or [font] argument as a plain CSS value
+     *
+     * @param string $property CSS property the value is for
+     * @param string $value    shortcode argument
+     *
+     * @return string value, or '' when it is not allowed
+     */
+    private static function cssValue(string $property, string $value): string
+    {
+        $patterns = [
+            'color' => '/^(?:#[a-f0-9]{3}|#[a-f0-9]{6}|[a-z]{3,20})\z/i',
+            'font-size' => '/^(?:[a-z-]{3,10}|\d{1,3}(?:\.\d{1,2})?(?:px|pt|em|rem|%))\z/i',
+            'font-family' => '/^[a-z0-9\'][a-z0-9 ,\'-]{0,63}\z/i',
+        ];
+        $value = trim($value);
+        if ('color' === $property && 1 === preg_match('/^(?:[a-f0-9]{3}|[a-f0-9]{6})\z/i', $value)) {
+            $value = '#' . $value;
+        }
+        return 1 === preg_match($patterns[$property], $value) ? $value : '';
     }
 
     /**
