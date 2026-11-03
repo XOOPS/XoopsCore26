@@ -1332,14 +1332,15 @@ class Xoops
         $submit = ($submit != '') ? trim($submit) : XoopsLocale::A_SUBMIT;
         $tpl->assign('msg', $msg);
         // callers pass request data as names, captions and the action (REQUEST_URI);
-        // an action that is not a local URL posts back to the current page instead
-        $action = (string) $action;
+        // the action is checked as the browser will read it (entities decoded) and
+        // one that is not a local URL posts back to the current page instead
+        $action = html_entity_decode((string) $action, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         if ($action !== RedirectUrl::sanitize($action, (string) \XoopsBaseConfig::get('url'))
-            || 1 === preg_match('/^\s*javascript:/i', html_entity_decode($action, ENT_QUOTES | ENT_HTML5, 'UTF-8'))
+            || 1 === preg_match('/^\s*javascript:/i', $action)
         ) {
             $action = '';
         }
-        $tpl->assign('action', htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false));
+        $tpl->assign('action', htmlspecialchars($action, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->assign('submit', $submit);
         $str_hiddens = '';
         foreach ($hiddens as $name => $value) {

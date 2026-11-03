@@ -4,6 +4,7 @@ require_once(__DIR__.'/../init_new.php');
 use Xoops\Core\Kernel\Handlers\XoopsUser;
 use Xoops\Core\Kernel\Handlers\XoopsModule;
 use Xoops\Core\XoopsTpl;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class XoopsTest extends \PHPUnit\Framework\TestCase
 {
@@ -782,13 +783,16 @@ class XoopsTest extends \PHPUnit\Framework\TestCase
             'javascript' => ['javascript:alert(1)', ''],
             'history back' => ['javascript:history.go(-1)', ''],
             'entity javascript' => ['java&#x73;cript:alert(1)', ''],
+            'carriage return entity' => ['java&#13;script:alert(1)', ''],
+            'pre-escaped ampersand' => ['a.php?x=1&amp;y=2', 'a.php?x=1&amp;y=2'],
+            'entity-like text' => ['a.php?q=&amp;lt;b&amp;gt;', 'a.php?q=&amp;lt;b&amp;gt;'],
             'data' => ['data:text/html,x', ''],
             'scheme relative' => ['//evil.test/x', ''],
             'other host' => ['https://evil.test/x', ''],
         ];
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('confirmActionProvider')]
+    #[DataProvider('confirmActionProvider')]
     public function test_confirmKeepsOnlyLocalActions(string $action, string $expected)
     {
         defined('NWLINE') || define('NWLINE', "\n");

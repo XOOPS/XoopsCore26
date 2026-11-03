@@ -865,6 +865,31 @@ class Protector
         return $this->_safe_union;
     }
 
+    /**
+     * Lookup parameters for the stopforumspam API from the current POST
+     *
+     * Each raw value is trimmed and cut to 255 bytes before it is filtered: tag
+     * filtering is not linear on hostile input, and padding must not let a listed
+     * value skip the lookup.
+     *
+     * @return array<string, string>
+     */
+    private function stopforumspamQuery(): array
+    {
+        $query = ['f' => 'json', 'ip' => (string) $_SERVER['REMOTE_ADDR']];
+        $raw = \Xmf\Request::MASK_ALLOW_RAW | \Xmf\Request::MASK_NO_TRIM;
+        foreach (['email' => 'email', 'uname' => 'username'] as $field => $param) {
+            $value = \Xmf\Request::getVar($field, '', 'POST', 'none', $raw);
+            $value = is_string($value)
+                ? \Xmf\FilterInput::clean(mb_strcut(trim($value), 0, 255, 'UTF-8'), 'string')
+                : '';
+            if ('' !== $value) {
+                $query[$param] = $value;
+            }
+        }
+        return $query;
+    }
+
     function stopforumspam($uid)
     {
         if (!function_exists('curl_init')) {
@@ -875,17 +900,7 @@ class Protector
             return false;
         }
 
-        $query = ['f' => 'json', 'ip' => $_SERVER['REMOTE_ADDR']];
-        // bound the raw value before filtering: tag filtering is not linear on hostile input
-        foreach (['email' => 'email', 'uname' => 'username'] as $field => $param) {
-            if (isset($_POST[$field]) && is_string($_POST[$field]) && strlen($_POST[$field]) <= 255) {
-                $value = \Xmf\Request::getString($field, '', 'POST');
-                if ('' !== $value) {
-                    $query[$param] = $value;
-                }
-            }
-        }
-        $url = 'https://www.stopforumspam.com/api?' . http_build_query($query, '', '&');
+        $url = 'https://www.stopforumspam.com/api?' . http_build_query($this->stopforumspamQuery(), '', '&');
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

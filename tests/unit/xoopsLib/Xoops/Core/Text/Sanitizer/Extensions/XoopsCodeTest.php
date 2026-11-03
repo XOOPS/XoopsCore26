@@ -2,6 +2,7 @@
 namespace Xoops\Core\Text\Sanitizer\Extensions;
 
 use Xoops\Core\Text\Sanitizer;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 require_once __DIR__.'/../../../../../../init_new.php';
 
@@ -97,7 +98,7 @@ class XoopsCodeTest extends \PHPUnit\Framework\TestCase
         $this->assertStringStartsWith('<a href="http', $out);
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('shortcodeProvider')]
+    #[DataProvider('shortcodeProvider')]
     public function testShortcodeArgumentsCannotLeaveTheirAttribute(string $in, string $expected)
     {
         $this->sanitizer->enableComponentForTesting('xoopscode');
