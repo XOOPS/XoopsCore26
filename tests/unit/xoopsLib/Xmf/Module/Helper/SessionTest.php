@@ -62,6 +62,10 @@ class SessionTest extends \PHPUnit\Framework\TestCase
         $prefix = new \ReflectionMethod($this->object, 'prefix');
         $_SESSION[$prefix->invoke($this->object, 'enum')] = serialize([SessionTestEnum::On]);
         $this->assertFalse($this->object->get('enum', 'dflt'));
+
+        // set() always stores a string; an array written around it is not read
+        $_SESSION[$prefix->invoke($this->object, 'raw')] = ['not', 'serialized'];
+        $this->assertFalse($this->object->get('raw', 'dflt'));
     }
 
     public function testSetRefusesEnumGetCouldNotRead()

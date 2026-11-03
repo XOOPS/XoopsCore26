@@ -858,6 +858,16 @@ final class Serializer
         ) {
             throw new UnexpectedValueException('Failed to unserialize payload');
         }
+        // the class decodes its own body, and allowed_classes does not stop an enum
+        // inside it from autoloading; the format is the class's own, so every
+        // enum-like token in it, even inside a string, must name an allowed class
+        $body = (string) substr($payload, $pos + \strlen($m[0]), (int) $m[1]);
+        preg_match_all('/E:\d+:"([^":]*):/', $body, $enums);
+        foreach ($enums[1] as $enum) {
+            if (!\in_array(strtolower(ltrim($enum, '\\')), $allowed, true)) {
+                throw new UnexpectedValueException('Objects and enums are not allowed in this payload');
+            }
+        }
         return $pos + \strlen($m[0]) + (int) $m[1] + 1;
     }
 

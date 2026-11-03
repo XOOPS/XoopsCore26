@@ -266,6 +266,17 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::fromPhp(serialize([new \ArrayObject([1])]), [\SplStack::class]);
     }
 
+    public function testAllowListRejectsUnlistedEnumInsideClassDataBeforeAutoloading(): void
+    {
+        // ArrayObject decodes its own C: body, where allowed_classes does not stop an enum autoloading
+        $body = 'x:i:0;a:1:{i:0;E:23:"Xmf\Test\NoSuchEnum:One";};m:a:0:{}';
+        $payload = 'C:11:"ArrayObject":' . \strlen($body) . ':{' . $body . '}';
+        [$result, $loaded] = self::readWithAutoloadSpy(static fn() => Serializer::fromPhp($payload, [\ArrayObject::class]));
+
+        $this->assertSame('Objects and enums are not allowed in this payload', $result);
+        $this->assertSame([], $loaded);
+    }
+
     public function testFromPhpKeepsTokenLikeTextInsideStrings(): void
     {
         $value = ['O:8:"stdClass":0:{}' => 'E:23:"Xmf\Test\NoSuchEnum:One";', 'n' => [1.5e-7, -INF, true, null, 'C:']];

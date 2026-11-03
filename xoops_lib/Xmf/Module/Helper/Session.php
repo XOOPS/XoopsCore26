@@ -89,13 +89,15 @@ class Session extends AbstractHelper
      * @param string $name    name of variable
      * @param mixed  $default default value to return if config $name is not set
      *
-     * @return mixed  $value value of session variable or false if not set
+     * @return mixed  $value value of session variable, $default if not set, or false if unreadable
      */
     public function get($name, $default = false)
     {
         $prefixedName = $this->prefix($name);
         if (isset($_SESSION[$prefixedName])) {
-            return Serializer::tryFrom((string) $_SESSION[$prefixedName], false, Format::PHP);
+            $stored = $_SESSION[$prefixedName];
+            // set() stores a string; anything else was written around it and is not read
+            return \is_string($stored) ? Serializer::tryFrom($stored, false, Format::PHP) : false;
         } else {
             return $default;
         }
