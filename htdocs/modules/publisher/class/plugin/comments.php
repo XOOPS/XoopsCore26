@@ -104,6 +104,10 @@ class PublisherCommentsPlugin extends PluginAbstract implements CommentsPluginIn
 
         /* @var Publisher\Item $itemObj */
         $itemObj = Helper::getInstance()->getItemHandler()->get((int)$item_id);
+        // same rule as item.php: published, in a category this visitor may read
+        if (!\is_object($itemObj) || $itemObj->isNew() || !$itemObj->accessGranted()) {
+            return $ret;
+        }
         $ret['text'] = '';
         $summary = $itemObj->summary();
         if ('' != $summary) {

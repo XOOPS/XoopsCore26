@@ -78,7 +78,11 @@ function install_acceptUser($hash = '')
     if (!($user instanceof \Xoops\Core\Kernel\Handlers\XoopsUser)) {
         return false;
     }
-    if ($hash_login != md5($user->getVar('pass') . XOOPS_DB_NAME . XOOPS_DB_PASS . XOOPS_DB_PREFIX)) {
+    if (!hash_equals(md5($user->getVar('pass') . XOOPS_DB_NAME . XOOPS_DB_PASS . XOOPS_DB_PREFIX), $hash_login)) {
+        return false;
+    }
+    // the cookie proves who the user is, not what they may do: only a current webmaster gets the installer
+    if (!in_array(\Xoops\Core\FixedGroups::ADMIN, $user->getGroups())) {
         return false;
     }
     $xoops->user = $user;

@@ -48,7 +48,12 @@ class Factory
                 $xoops_auth_method = $authConfig['auth_method'];
             }
             // Verify if uname allow to bypass LDAP auth
-            if (isset($authConfig['ldap_users_bypass']) && in_array($uname, $authConfig['ldap_users_bypass'])) {
+            // compare the account name the directory backends resolve: AD drops a DOMAIN\ prefix,
+            // and the local user lookup ignores case
+            $parts = explode('\\', (string) $uname);
+            $bypassName = strtolower((string) end($parts));
+            $bypassList = array_map('strtolower', array_map('strval', (array) ($authConfig['ldap_users_bypass'] ?? [])));
+            if (in_array($bypassName, $bypassList, true)) {
                 $xoops_auth_method = 'xoops';
             }
 

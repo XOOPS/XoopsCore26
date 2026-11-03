@@ -172,7 +172,10 @@ switch ($op) {
 
         foreach (array_keys($fields) as $i) {
             $fieldname = $fields[$i]->getVar('field_name');
-            if (in_array($fields[$i]->getVar('field_id'), $editable_fields) && isset($_REQUEST[$fieldname])) {
+            // a field must never rebind the account columns this script validated
+            if (in_array($fields[$i]->getVar('field_id'), $editable_fields) && isset($_REQUEST[$fieldname])
+                && ProfileFieldHandler::isValidFieldName($fieldname)
+            ) {
                 if (in_array($fieldname, $userfields)) {
                     $value = $fields[$i]->getValueForSave($_REQUEST[$fieldname], $user->getVar($fieldname, 'n'));
                     $user->setVar($fieldname, $value);

@@ -142,8 +142,11 @@ class ProfileField extends XoopsObject
                     $element->addOption('', XoopsLocale::NONE);
 
                     $eltmsg = empty($caption) ? sprintf(XoopsLocale::F_ENTER, $name) : sprintf(XoopsLocale::F_ENTER, $caption);
-                    $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-                    $element->addCustomValidationCode("\nvar hasSelected = false; var selectBox = myform.{$name};" . "for (i = 0; i < selectBox.options.length; i++  ) { if ( selectBox.options[i].selected == true && selectBox.options[i].value != '' ) { hasSelected = true; break; } }" . "if ( !hasSelected ) { window.alert(\"{$eltmsg}\"); selectBox.focus(); return false; }");
+                    // name and message are data here: JSON-encode them for the script
+                    $jsFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE;
+                    $jsName = json_encode((string) $this->getVar('field_name', 'n'), $jsFlags);
+                    $jsMsg = json_encode((string) $eltmsg, $jsFlags);
+                    $element->addCustomValidationCode("\nvar hasSelected = false; var selectBox = myform.elements[{$jsName}];" . "for (i = 0; i < selectBox.options.length; i++  ) { if ( selectBox.options[i].selected == true && selectBox.options[i].value != '' ) { hasSelected = true; break; } }" . "if ( !hasSelected ) { window.alert({$jsMsg}); selectBox.focus(); return false; }");
                 }
                 $element->addOptionArray($options);
                 break;
@@ -420,6 +423,27 @@ class ProfileField extends XoopsObject
 class ProfileFieldHandler extends XoopsPersistableObjectHandler
 {
     /**
+     * Account columns a profile field must never be bound to: the forms handle them
+     * separately, and a field with one of these names would rebind or take over the account.
+     */
+    public const RESERVED_NAMES = ['uid', 'uname', 'email', 'pass', 'level', 'actkey', 'profile_id'];
+
+    /**
+     * A field name becomes a database column, a form element name and a JavaScript
+     * identifier, so it must be a plain identifier and not a reserved account column.
+     *
+     * @param string $name field name
+     *
+     * @return bool
+     */
+    public static function isValidFieldName($name)
+    {
+        return is_string($name)
+            && preg_match('/^[a-z][a-z0-9_]{0,63}\z/i', $name) === 1
+            && !in_array(strtolower($name), self::RESERVED_NAMES, true);
+    }
+
+    /**
      * @param null|Connection $db database
      */
     public function __construct(?Connection $db = null)
@@ -460,7 +484,11 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     public function insertFields(XoopsObject $obj, $force = false)
     {
         $profile_handler = \Xoops::getModuleHelper('profile')->getHandler('profile');
-        $obj->setVar('field_name', str_replace(' ', '_', $obj->getVar('field_name')));
+        $obj->setVar('field_name', str_replace(' ', '_', $obj->getVar('field_name', 'n')));
+        if (!self::isValidFieldName($obj->getVar('field_name', 'n'))) {
+            $obj->setErrors(_PROFILE_AM_FIELDNAME_INVALID);
+            return false;
+        }
         $obj->cleanVars(); //Don't quote
         switch ($obj->getVar('field_type')) {
             case "datetime":

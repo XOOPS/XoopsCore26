@@ -14,6 +14,14 @@ Security:
  - Stored serialized values (array object vars, config items, module data) are now
    unserialized with allowed_classes => false. BC: a module that stored objects in an
    array field gets __PHP_Incomplete_Class back and must store scalar arrays instead (mamba)
+ - Profile field names must be plain identifiers and may not be uid, uname, email, pass,
+   level, actkey or profile_id; fields with such names are no longer saved onto the account (mamba)
+ - Comment forms for Page and Publisher items, and the Page "selected page" block, now apply
+   the item's read permission and publication status (mamba)
+ - The installer accepts only current webmasters; its login cookie no longer grants rights
+   that were since revoked (mamba)
+ - ldap_users_bypass now also matches DOMAIN\name and any letter case (mamba)
+ - Publisher clone checks the lowercase module name it writes for an existing module (mamba)
 
 ==================================
 2013/04/15: Version 2.6.0 Alpha 3

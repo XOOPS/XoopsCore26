@@ -122,10 +122,8 @@ class XoopsInstallWizard
         if (!$xoops->isUser()) {
             $xoops->redirect($xoops->url('user.php'));
         }
-        if (!$xoops->isAdmin()) {
-            return false;
-        }
-        return true;
+        // site setup is webmaster work: a delegated system administrator is not enough
+        return in_array(\Xoops\Core\FixedGroups::ADMIN, $xoops->user->getGroups());
     }
 
     /**

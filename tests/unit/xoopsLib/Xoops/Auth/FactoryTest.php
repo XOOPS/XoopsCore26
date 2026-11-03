@@ -53,6 +53,31 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
 		$this->assertInstanceOf('Xoops\Auth\Xoops', $instance);
 	}
 
+	public function test_getAuthConnectionBypassIgnoresDomainAndCase()
+	{
+		$class = $this->myClass;
+
+		$xoops = \Xoops::getInstance();
+		$xoops->setConfig('auth_method', 'ads');
+		$xoops->setConfig('ldap_users_bypass', array('admin'));
+
+		// AD strips the domain and the user lookup ignores case, so both still name 'admin'
+		$this->assertInstanceOf('Xoops\Auth\Xoops', $class::getAuthConnection('CORP\\admin', true));
+		$this->assertInstanceOf('Xoops\Auth\Xoops', $class::getAuthConnection('Admin', true));
+	}
+
+	public function test_getAuthConnectionOtherDomainUserUsesAds()
+	{
+		$class = $this->myClass;
+		if (!extension_loaded('ldap')) $this->markTestSkipped();
+
+		$xoops = \Xoops::getInstance();
+		$xoops->setConfig('auth_method', 'ads');
+		$xoops->setConfig('ldap_users_bypass', array('admin'));
+
+		$this->assertInstanceOf('Xoops\Auth\Ads', $class::getAuthConnection('CORP\\bob', true));
+	}
+
     /**
      *
      */
