@@ -98,7 +98,7 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
 
             public function getUsers($criteria)
             {
-                $this->lookups[] = $criteria->column . '=' . $criteria->value;
+                $this->lookups[] = $criteria->column . ' ' . $criteria->operator . ' ' . $criteria->value;
                 $user = new \Xoops\Core\Kernel\Handlers\XoopsUser();
                 $user->setVar('uname', 'admin');
                 return [$user];
@@ -115,7 +115,7 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
         }
 
         $this->assertInstanceOf('Xoops\Auth\Xoops', $instance);
-        $this->assertSame(["uname=adm\u{00ED}n"], $member->lookups);
+        $this->assertSame(["uname = adm\u{00ED}n"], $member->lookups);
     }
 
 	public function test_getAuthConnectionOtherDomainUserUsesDirectory()
