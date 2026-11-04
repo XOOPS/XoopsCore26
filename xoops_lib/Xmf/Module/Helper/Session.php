@@ -18,8 +18,11 @@ use Xmf\Security\Serializer;
 /**
  * Manage session variables for a module. Session variable will be
  * prefixed with the module name to separate it from variables set
- * by other modules or system functions. All data is serialized, so
- * any arbitrary data (i.e. array) can be stored.
+ * by other modules or system functions. Values are serialized, so
+ * scalars, null and arrays of them can be stored. set() throws for an
+ * object, enum or closure anywhere in the value and for a resource passed
+ * directly (PHP serializes one inside an array as 0), and get() returns
+ * false for a stored value it cannot read back safely.
  *
  * @category  Xmf\Module\Helper\Session
  * @package   Xmf

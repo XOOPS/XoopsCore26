@@ -377,6 +377,14 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::fromLegacy('not a serialized or base64 value');
     }
 
+    public function testFromLegacyReportsClassRejectionForPlainPayload(): void
+    {
+        // the plain path reports the same rejection the base64 path does
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromLegacy(serialize(new \ArrayObject([1])), [\SplStack::class]);
+    }
+
     public function testFromLegacyKeepsNulBytesInStrings(): void
     {
         $value = ['k' => "abc\0def-padding"];

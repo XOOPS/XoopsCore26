@@ -306,7 +306,7 @@ final class Serializer
         self::validateInput($payload);
 
         // Try plain PHP serialize first
-        $result = self::tryUnserialize($payload, $allowedClasses);
+        $result = self::tryUnserialize($payload, $allowedClasses, $error);
         if ($result !== null) {
             self::logLegacy($payload);
             return $result;
@@ -314,6 +314,10 @@ final class Serializer
 
         // Check if it looks like base64 before attempting decode
         if (!self::isLikelyBase64($payload)) {
+            // a well-formed payload refused for its classes reports that, as the base64 path does
+            if ($error instanceof UnexpectedValueException && $error->getMessage() !== self::MALFORMED) {
+                throw $error;
+            }
             throw new RuntimeException('Invalid legacy format: not serialized or base64');
         }
 
@@ -895,14 +899,17 @@ final class Serializer
      *
      * @param string                   $payload
      * @param array<int, string> $allowedClasses
+     * @param \Throwable|null    $error          set to the failure, or null on success
      *
      * @return mixed|null
      */
-    private static function tryUnserialize(string $payload, array $allowedClasses)
+    private static function tryUnserialize(string $payload, array $allowedClasses, &$error = null)
     {
+        $error = null;
         try {
             return self::unserialize($payload, $allowedClasses);
         } catch (\Throwable $e) {
+            $error = $e;
             return null;
         }
     }
