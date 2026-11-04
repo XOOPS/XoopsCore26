@@ -85,6 +85,39 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
 		$this->assertInstanceOf('Xoops\Auth\Xoops', $class::getAuthConnection('Admin', true));
 	}
 
+    public function testBypassMatchesAccountTheLookupResolves(): void
+    {
+        $xoops = \Xoops::getInstance();
+        $xoops->setConfig('auth_method', 'ads');
+        $xoops->setConfig('ldap_users_bypass', ['admin']);
+
+        // the database collation folds the submitted spelling onto the local 'admin' account
+        $member = new class {
+            /** @var array<int, string> */
+            public $lookups = [];
+
+            public function getUsers($criteria)
+            {
+                $this->lookups[] = $criteria->column . '=' . $criteria->value;
+                $user = new \Xoops\Core\Kernel\Handlers\XoopsUser();
+                $user->setVar('uname', 'admin');
+                return [$user];
+            }
+        };
+        $handlers = new \ReflectionProperty(\Xoops::class, 'kernelHandlers');
+        $handlers->setAccessible(true);
+        $saved = $handlers->getValue($xoops);
+        $handlers->setValue($xoops, ['Member' => $member] + $saved);
+        try {
+            $instance = \Xoops\Auth\Factory::getAuthConnection("CORP\\adm\u{00ED}n", true);
+        } finally {
+            $handlers->setValue($xoops, $saved);
+        }
+
+        $this->assertInstanceOf('Xoops\Auth\Xoops', $instance);
+        $this->assertSame(["uname=adm\u{00ED}n"], $member->lookups);
+    }
+
 	public function test_getAuthConnectionOtherDomainUserUsesDirectory()
 	{
 		$class = $this->myClass;

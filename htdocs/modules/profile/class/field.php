@@ -428,7 +428,7 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
      */
     public const RESERVED_NAMES = [
         'uid', 'uname', 'email', 'pass', 'level', 'actkey', 'profile_id',
-        'password', 'vpass', 'oldpass', 'groups', 'op', 'step', 'reg_disclaimer', 'submit', 'xoops_token_request',
+        'password', 'vpass', 'oldpass', 'groups', 'op', 'step', 'reg_disclaimer', 'agree_disc', 'submit', 'xoops_token_request',
     ];
 
     /**

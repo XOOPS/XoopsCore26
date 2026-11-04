@@ -25,6 +25,7 @@ class ProfileFieldNameTest extends \PHPUnit\Framework\TestCase
             'password control'       => ['password', false],
             'password confirmation'  => ['vpass', false],
             'groups control'         => ['groups', false],
+            'disclaimer checkbox'    => ['agree_disc', false],
             'leading digit'          => ['1field', false],
             'script breakout'        => ['a;alert(1)//', false],
             'backtick'               => ['a`b', false],
