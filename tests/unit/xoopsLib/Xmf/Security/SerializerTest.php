@@ -277,6 +277,16 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         $this->assertSame([], $loaded);
     }
 
+    public function testAllowListRejectsUnlistedObjectInsideClassData(): void
+    {
+        // unserialize() would hand back an ArrayObject holding a __PHP_Incomplete_Class
+        $body = 'x:i:0;a:1:{i:0;O:8:"stdClass":1:{s:1:"x";i:1;}};m:a:0:{}';
+        $payload = 'C:11:"ArrayObject":' . \strlen($body) . ':{' . $body . '}';
+
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp($payload, [\ArrayObject::class]);
+    }
+
     public function testAllowListRefusesEnumLikeTextInsideClassDataStrings(): void
     {
         // the C: body is the class's own format, so its strings are not skipped: fail closed
@@ -302,6 +312,7 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
 
     public function testFromPhpRejectsUnknownTokens(): void
     {
+        // serialize() never writes the escaped-string form S:, so it stays outside the grammar
         $this->expectException(\UnexpectedValueException::class);
         Serializer::fromPhp('S:1:"\61";');
     }

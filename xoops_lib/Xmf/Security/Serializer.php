@@ -768,7 +768,9 @@ final class Serializer
      * bodies skipped by their declared length, finds every token without false
      * positives on text inside strings. Like unserialize(), the walk ends after
      * the first complete value, so trailing bytes (a newline) pass. Anything the
-     * walk does not recognise is refused rather than handed on.
+     * walk does not recognise is refused rather than handed on; that includes the
+     * escaped-string form S:, which serialize() never writes, so no XOOPS data
+     * carries it.
      *
      * @param string             $payload
      * @param array<int, string> $allowedClasses classes that may appear (empty = none)
@@ -863,32 +865,33 @@ final class Serializer
         ) {
             throw new UnexpectedValueException(self::MALFORMED);
         }
-        self::assertBodyEnumsAllowed((string) substr($payload, $pos + \strlen($m[0]), (int) $m[1]), $allowed);
+        self::assertBodyClassesAllowed((string) substr($payload, $pos + \strlen($m[0]), (int) $m[1]), $allowed);
         return $pos + \strlen($m[0]) + (int) $m[1] + 1;
     }
 
     /**
-     * Check every enum-like token in a C: body against the allowed classes.
+     * Check every class-bearing token (O:, C:, E:) in a C: body against the allowed classes.
      *
      * The class decodes its own body, and allowed_classes does not stop an enum
-     * inside it from autoloading. The body format is the class's own, so string
-     * values in it cannot be skipped safely: a declared string length the class
-     * reads differently could hide a real enum token. Every match counts, even
-     * one inside a string, so a rare valid payload is refused rather than an
-     * enum let through.
+     * inside it from autoloading; an unlisted object inside it comes back as a
+     * __PHP_Incomplete_Class instead of the exception the top level throws. The
+     * body format is the class's own, so string values in it cannot be skipped
+     * safely: a declared string length the class reads differently could hide a
+     * real token. Every match counts, even one inside a string, so a rare valid
+     * payload is refused rather than a class let through.
      *
      * @param string             $body    the C: token's data
      * @param array<int, string> $allowed lower-case allowed class names
      *
      * @return void
      *
-     * @throws UnexpectedValueException On an enum-like token whose class is not allowed
+     * @throws UnexpectedValueException On a class-bearing token whose class is not allowed
      */
-    private static function assertBodyEnumsAllowed(string $body, array $allowed): void
+    private static function assertBodyClassesAllowed(string $body, array $allowed): void
     {
-        preg_match_all('/E:\d+:"([^":]*):/', $body, $enums);
-        foreach ($enums[1] as $enum) {
-            if (!\in_array(strtolower(ltrim($enum, '\\')), $allowed, true)) {
+        preg_match_all('/[OCE]:\d+:"([^":]*)[":]/', $body, $classes);
+        foreach ($classes[1] as $class) {
+            if (!\in_array(strtolower(ltrim($class, '\\')), $allowed, true)) {
                 throw new UnexpectedValueException('Objects and enums are not allowed in this payload');
             }
         }
