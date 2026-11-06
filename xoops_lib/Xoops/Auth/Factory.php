@@ -11,6 +11,8 @@
 
 namespace Xoops\Auth;
 
+use Xoops\Core\Kernel\Criteria;
+
 /**
  * Authentication class factory
  *
@@ -48,7 +50,7 @@ class Factory
                 $xoops_auth_method = $authConfig['auth_method'];
             }
             // Verify if uname allow to bypass LDAP auth
-            if (isset($authConfig['ldap_users_bypass']) && in_array($uname, $authConfig['ldap_users_bypass'])) {
+            if ($xoops_auth_method !== 'xoops' && self::isBypassed($xoops_auth_method, (string) $uname, $authConfig)) {
                 $xoops_auth_method = 'xoops';
             }
 
@@ -72,5 +74,49 @@ class Factory
             $auth_instance = new $class($dao);
         }
         return $auth_instance;
+    }
+
+    /**
+     * Whether the account a directory login would resolve to is reserved for native login.
+     *
+     * Compares the name the backend looks up locally: AD drops a DOMAIN\ prefix, and the
+     * local user lookup uses the database collation, so names it treats as equal also match.
+     *
+     * @param string $method     configured directory backend (ldap or ads)
+     * @param string $uname      submitted user name
+     * @param array  $authConfig site configuration
+     *
+     * @return bool
+     */
+    private static function isBypassed($method, $uname, array $authConfig)
+    {
+        $bypassList = array_filter(array_map(
+            'mb_strtolower',
+            array_map('strval', (array) ($authConfig['ldap_users_bypass'] ?? []))
+        ), 'strlen');
+        if ($bypassList === [] || $uname === '') {
+            return false;
+        }
+        if ($method === 'ads') {
+            $parts = explode('\\', $uname);
+            $uname = (string) end($parts);
+        }
+        if (in_array(mb_strtolower($uname), $bypassList, true)) {
+            return true;
+        }
+        // a spelling the collation folds onto a reserved account (admín -> admin) is that account
+        try {
+            $criteria = new Criteria('uname', $uname);
+            $users = \Xoops::getInstance()->getHandlerMember()->getUsers($criteria);
+        } catch (\Doctrine\DBAL\Exception $e) {
+            // the lookup failed, so a reserved account cannot be ruled out: fail closed to native login
+            return true;
+        }
+        foreach ($users as $user) {
+            if (in_array(mb_strtolower((string) $user->getVar('uname', 'n')), $bypassList, true)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

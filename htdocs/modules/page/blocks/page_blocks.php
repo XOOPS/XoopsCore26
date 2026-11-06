@@ -29,7 +29,11 @@ function page_blocks_show($options)
 
     $block = [];
     if ($options[0] === 'id') {
-        $view_content = $page->getContentHandler()->get($options[1]);
+        // same rule as viewpage.php: active, and readable by this visitor's groups
+        $view_content = $page->getContentHandler()->getViewable($options[1]);
+        if (null === $view_content) {
+            return [];
+        }
 
         // content
         $content = $view_content->getValues();

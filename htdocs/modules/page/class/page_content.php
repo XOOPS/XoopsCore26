@@ -165,6 +165,31 @@ class PagePage_contentHandler extends XoopsPersistableObjectHandler
         parent::__construct($db, 'page_content', 'pagepage_content', 'content_id', 'content_title');
     }
 
+    /**
+     * Get a page the current visitor may read: it exists, is active and their groups hold the view right.
+     *
+     * @param int $content_id page id
+     *
+     * @return PagePage_content|null
+     */
+    public function getViewable($content_id)
+    {
+        $helper = Page::getInstance();
+        // get(0) returns a new, active-by-default object: never treat that as a page
+        $content = (int) $content_id > 0 ? parent::get((int) $content_id) : null;
+        if (!is_object($content) || $content->isNew() || 0 == $content->getVar('content_status')) {
+            return null;
+        }
+        $allowed = $helper->getGrouppermHandler()->checkRight(
+            'page_view_item',
+            (int) $content_id,
+            $helper->xoops()->getUserGroups(),
+            $helper->getModule()->getVar('mid'),
+            false
+        );
+        return $allowed ? $content : null;
+    }
+
     public function getPagePublished($start = 0, $limit = 0, $sort = 'content_weight ASC, content_title', $order = 'ASC')
     {
         $helper = Page::getInstance();

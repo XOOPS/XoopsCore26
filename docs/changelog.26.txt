@@ -21,6 +21,16 @@ Security:
    back (mamba)
  - Protector keeps its bad-IP file under the size the Serializer reads (dropping the bans
    that expire first) and never overwrites a stored list it could not read (mamba)
+ - Profile field names must be plain identifiers and may not name an account column or an
+   account form control (uid, pass, level, password, groups, ...); fields stored with such
+   names are no longer shown, saved onto the account, or dropped as columns when deleted (mamba)
+ - Comment forms for Page and Publisher items, and the Page "selected page" block, now apply
+   the item's read permission and publication status (mamba)
+ - The installer accepts only active, current webmasters; its login cookie no longer grants
+   rights that were since revoked (mamba)
+ - ldap_users_bypass now matches the account a directory login resolves to: any letter case
+   or collation-equal spelling, and for AD also DOMAIN\name (mamba)
+ - Publisher clone checks the lowercase module name it writes for an existing module (mamba)
 
 ==================================
 2013/04/15: Version 2.6.0 Alpha 3

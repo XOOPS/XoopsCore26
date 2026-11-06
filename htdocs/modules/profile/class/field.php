@@ -142,8 +142,11 @@ class ProfileField extends XoopsObject
                     $element->addOption('', XoopsLocale::NONE);
 
                     $eltmsg = empty($caption) ? sprintf(XoopsLocale::F_ENTER, $name) : sprintf(XoopsLocale::F_ENTER, $caption);
-                    $eltmsg = str_replace('"', '\"', stripslashes($eltmsg));
-                    $element->addCustomValidationCode("\nvar hasSelected = false; var selectBox = myform.{$name};" . "for (i = 0; i < selectBox.options.length; i++  ) { if ( selectBox.options[i].selected == true && selectBox.options[i].value != '' ) { hasSelected = true; break; } }" . "if ( !hasSelected ) { window.alert(\"{$eltmsg}\"); selectBox.focus(); return false; }");
+                    // name and message are data here: JSON-encode them for the script
+                    $jsFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE;
+                    $jsName = json_encode((string) $this->getVar('field_name', 'n'), $jsFlags);
+                    $jsMsg = json_encode((string) $eltmsg, $jsFlags);
+                    $element->addCustomValidationCode("\nvar hasSelected = false; var selectBox = myform.elements[{$jsName}];" . "for (i = 0; i < selectBox.options.length; i++  ) { if ( selectBox.options[i].selected == true && selectBox.options[i].value != '' ) { hasSelected = true; break; } }" . "if ( !hasSelected ) { window.alert({$jsMsg}); selectBox.focus(); return false; }");
                 }
                 $element->addOptionArray($options);
                 break;
@@ -420,6 +423,31 @@ class ProfileField extends XoopsObject
 class ProfileFieldHandler extends XoopsPersistableObjectHandler
 {
     /**
+     * Account columns and the account forms' own controls: the forms handle them separately,
+     * and a field with one of these names would rebind the account or override those controls.
+     */
+    public const RESERVED_NAMES = [
+        'uid', 'uname', 'email', 'pass', 'level', 'actkey', 'profile_id',
+        'password', 'vpass', 'oldpass', 'groups', 'op', 'step', 'reg_disclaimer', 'agree_disc',
+        'submit', 'submitbutton', 'elements', 'xoops_token_request',
+    ];
+
+    /**
+     * A field name becomes a database column, a form element name and a JavaScript
+     * identifier, so it must be a plain identifier and not a reserved account column.
+     *
+     * @param string $name field name
+     *
+     * @return bool
+     */
+    public static function isValidFieldName($name)
+    {
+        return is_string($name)
+            && preg_match('/^[a-z][a-z0-9_]{0,63}\z/i', $name) === 1
+            && !in_array(strtolower($name), self::RESERVED_NAMES, true);
+    }
+
+    /**
      * @param null|Connection $db database
      */
     public function __construct(?Connection $db = null)
@@ -429,6 +457,11 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
 
     /**
      * Read field information from cached storage
+     *
+     * A field stored before names were validated is left out: every consumer (forms, save
+     * loops, profile display, search) would otherwise read or write an account column or
+     * interpolate the name into SQL. The admin field list reads getObjects() directly, so
+     * such a field can still be deleted there.
      *
      * @param bool   $force_update   read fields from database and not cached storage
      *
@@ -444,7 +477,10 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
             $field_objs = $this->getByLink($criteria, array('o.*'), true, 'cat_id', 'cat_id');
             /* @var ProfileField $field */
             foreach ($field_objs as $field) {
-                $fields[$field->getVar('field_name')] = $field;
+                $name = $field->getVar('field_name', 'n');
+                if (self::isValidFieldName($name)) {
+                    $fields[$name] = $field;
+                }
             }
         }
         return $fields;
@@ -460,7 +496,11 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     public function insertFields(XoopsObject $obj, $force = false)
     {
         $profile_handler = \Xoops::getModuleHelper('profile')->getHandler('profile');
-        $obj->setVar('field_name', str_replace(' ', '_', $obj->getVar('field_name')));
+        $obj->setVar('field_name', str_replace(' ', '_', $obj->getVar('field_name', 'n')));
+        if (!self::isValidFieldName($obj->getVar('field_name', 'n'))) {
+            $obj->setErrors(_PROFILE_AM_FIELDNAME_INVALID);
+            return false;
+        }
         $obj->cleanVars(); //Don't quote
         switch ($obj->getVar('field_type')) {
             case "datetime":
@@ -591,9 +631,16 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     {
         $xoops = Xoops::getInstance();
         $profile_handler = \Xoops::getModuleHelper('profile')->getHandler('profile');
-        // remove column from table
-        $sql = "ALTER TABLE " . $profile_handler->table . " DROP `" . $obj->getVar('field_name', 'n') . "`";
-        if ($this->db2->query($sql)) {
+        // remove the profile column, but only for a field that owns one: a user-table field never
+        // has one, while a name stored before names were validated (such as "_phone") still may
+        $name = strtolower((string) $obj->getVar('field_name', 'n'));
+        $columns = $this->db2->createSchemaManager()->listTableColumns($profile_handler->table);
+        $columnNames = array_map(static function ($column) {
+            return strtolower($column->getName());
+        }, $columns);
+        $ownsColumn = $name !== 'profile_id' && in_array($name, $columnNames, true);
+        $sql = 'ALTER TABLE `' . $profile_handler->table . '` DROP `' . str_replace('`', '``', $name) . '`';
+        if (!$ownsColumn || $this->db2->query($sql)) {
             //change this to update the cached field information storage
             if (!parent::delete($obj, $force)) {
                 return false;
