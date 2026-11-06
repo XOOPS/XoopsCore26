@@ -109,8 +109,8 @@ class Factory
             $criteria = new Criteria('uname', $uname);
             $users = \Xoops::getInstance()->getHandlerMember()->getUsers($criteria);
         } catch (\Doctrine\DBAL\Exception $e) {
-            // no database: there is no local account to protect, and the login cannot complete anyway
-            return false;
+            // the lookup failed, so a reserved account cannot be ruled out: fail closed to native login
+            return true;
         }
         foreach ($users as $user) {
             if (in_array(mb_strtolower((string) $user->getVar('uname', 'n')), $bypassList, true)) {

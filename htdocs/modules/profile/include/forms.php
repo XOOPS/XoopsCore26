@@ -42,6 +42,9 @@ function profile_getRegisterForm(XoopsUser $user, $profile, $step = null)
         $reg_form->addElement(new Xoops\Form\Label('', $step['step_desc']));
     }
 
+    // a step may hold no fields (none configured, or only names loadFields() filters out)
+    $elements = array();
+    $weights = array();
     if ($step_no == 1) {
         //$uname_size = $GLOBALS['xoopsConfigUser']['maxuname'] < 35 ? $GLOBALS['xoopsConfigUser']['maxuname'] : 35;
 
@@ -70,7 +73,6 @@ function profile_getRegisterForm(XoopsUser $user, $profile, $step = null)
     $profile_handler = \Xoops::getModuleHelper('profile')->getHandler('profile');
     $fields = $profile_handler->loadFields();
     $_SESSION['profile_required'] = array();
-    $weights = array();
     /* @var ProfileField $field */
     foreach ($fields as $field) {
         if ($field->getVar('step_id') == $step['step_id']) {

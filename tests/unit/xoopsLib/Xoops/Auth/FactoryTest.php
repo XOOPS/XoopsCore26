@@ -104,18 +104,33 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
                 return [$user];
             }
         };
-        $handlers = new \ReflectionProperty(\Xoops::class, 'kernelHandlers');
-        $handlers->setAccessible(true);
-        $saved = $handlers->getValue($xoops);
-        $handlers->setValue($xoops, ['Member' => $member] + $saved);
-        try {
-            $instance = \Xoops\Auth\Factory::getAuthConnection("CORP\\adm\u{00ED}n", true);
-        } finally {
-            $handlers->setValue($xoops, $saved);
-        }
+        $instance = $this->withMemberHandler($member, static function () {
+            return \Xoops\Auth\Factory::getAuthConnection("CORP\\adm\u{00ED}n", true);
+        });
 
         $this->assertInstanceOf('Xoops\Auth\Xoops', $instance);
         $this->assertSame(["uname = adm\u{00ED}n"], $member->lookups);
+    }
+
+    public function testBypassFailsClosedWhenTheLookupFails(): void
+    {
+        $xoops = \Xoops::getInstance();
+        $xoops->setConfig('auth_method', 'ads');
+        $xoops->setConfig('ldap_users_bypass', ['admin']);
+
+        $member = new class {
+            public function getUsers($criteria)
+            {
+                throw new class ('gone away') extends \RuntimeException implements \Doctrine\DBAL\Exception {
+                };
+            }
+        };
+        $instance = $this->withMemberHandler($member, static function () {
+            return \Xoops\Auth\Factory::getAuthConnection('CORP\\bob', true);
+        });
+
+        // a reserved account cannot be ruled out, so the directory backend is not selected
+        $this->assertInstanceOf('Xoops\Auth\Xoops', $instance);
     }
 
 	public function test_getAuthConnectionOtherDomainUserUsesDirectory()
@@ -128,14 +143,42 @@ class Xoops_Auth_FactoryTest extends \PHPUnit\Framework\TestCase
 		$xoops = \Xoops::getInstance();
 		$xoops->setConfig('ldap_users_bypass', array('admin'));
 
-		$xoops->setConfig('auth_method', 'ads');
-		$this->assertInstanceOf('Xoops\Auth\Ads', $class::getAuthConnection('CORP\\bob', true));
+		// no local account matches the submitted name
+		$member = new class {
+			public function getUsers($criteria)
+			{
+				return [];
+			}
+		};
+		$this->withMemberHandler($member, function () use ($class, $xoops) {
+			$xoops->setConfig('auth_method', 'ads');
+			$this->assertInstanceOf('Xoops\Auth\Ads', $class::getAuthConnection('CORP\\bob', true));
 
-		// plain LDAP looks the qualified name up as given, so it is a different directory account
-		$xoops->setConfig('auth_method', 'ldap');
-		$this->assertInstanceOf('Xoops\Auth\Ldap', $class::getAuthConnection('CORP\\admin', true));
-		$this->assertInstanceOf('Xoops\Auth\Xoops', $class::getAuthConnection('Admin', true));
+			// plain LDAP looks the qualified name up as given, so it is a different directory account
+			$xoops->setConfig('auth_method', 'ldap');
+			$this->assertInstanceOf('Xoops\Auth\Ldap', $class::getAuthConnection('CORP\\admin', true));
+			$this->assertInstanceOf('Xoops\Auth\Xoops', $class::getAuthConnection('Admin', true));
+		});
 	}
+
+    /**
+     * Run $run with $member installed as the Member kernel handler, then restore the real one.
+     *
+     * @return mixed the value $run returns
+     */
+    private function withMemberHandler(object $member, callable $run)
+    {
+        $xoops = \Xoops::getInstance();
+        $handlers = new \ReflectionProperty(\Xoops::class, 'kernelHandlers');
+        $handlers->setAccessible(true);
+        $saved = $handlers->getValue($xoops);
+        $handlers->setValue($xoops, ['Member' => $member] + $saved);
+        try {
+            return $run();
+        } finally {
+            $handlers->setValue($xoops, $saved);
+        }
+    }
 
     /**
      *

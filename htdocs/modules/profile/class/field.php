@@ -631,11 +631,15 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     {
         $xoops = Xoops::getInstance();
         $profile_handler = \Xoops::getModuleHelper('profile')->getHandler('profile');
-        // remove the profile column, but only for a field that owns one: a user-table field, or a
-        // malformed or reserved name stored before names were validated, only loses its record
-        $name = (string) $obj->getVar('field_name', 'n');
-        $ownsColumn = self::isValidFieldName($name) && !in_array($name, $this->getUserVars(), true);
-        $sql = "ALTER TABLE " . $profile_handler->table . " DROP `" . $name . "`";
+        // remove the profile column, but only for a field that owns one: a user-table field never
+        // has one, while a name stored before names were validated (such as "_phone") still may
+        $name = strtolower((string) $obj->getVar('field_name', 'n'));
+        $columns = $this->db2->createSchemaManager()->listTableColumns($profile_handler->table);
+        $columnNames = array_map(static function ($column) {
+            return strtolower($column->getName());
+        }, $columns);
+        $ownsColumn = $name !== 'profile_id' && in_array($name, $columnNames, true);
+        $sql = 'ALTER TABLE `' . $profile_handler->table . '` DROP `' . str_replace('`', '``', $name) . '`';
         if (!$ownsColumn || $this->db2->query($sql)) {
             //change this to update the cached field information storage
             if (!parent::delete($obj, $force)) {
