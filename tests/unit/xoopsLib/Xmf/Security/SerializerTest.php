@@ -463,7 +463,8 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
             'php null'       => ['N;', Format::PHP],
             'php double'     => [serialize(1.5), Format::PHP],
             'php object'     => [serialize(new \stdClass()), Format::PHP],
-            'legacy'         => [base64_encode(serialize(['a' => 'b'])), Format::LEGACY],
+            'php enum'       => ['E:23:"Xmf\Test\NoSuchEnum:One";', Format::PHP],
+            'legacy'       => [base64_encode(serialize(['a' => 'b'])), Format::LEGACY],
             'plain text'     => ['hello world', Format::AUTO],
             'base64 text'    => [base64_encode('just some plain text'), Format::AUTO],
         ];

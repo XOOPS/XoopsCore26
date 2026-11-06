@@ -316,13 +316,38 @@ class Protector
         return \XoopsBaseConfig::get('trust-path') . '/modules/protector/configs/bwlimit' . substr(md5(\XoopsBaseConfig::get('root-path') . \XoopsBaseConfig::get('db-user') . \XoopsBaseConfig::get('db-prefix')), 0, 6);
     }
 
-    function write_file_badips($bad_ips)
+    /**
+     * @param array       $bad_ips ip => expiry
+     * @param string|null $keep    an ip that trimming must never drop (the one just registered)
+     *
+     * @return bool
+     */
+    public function write_file_badips($bad_ips, $keep = null)
     {
         asort($bad_ips);
         $data = serialize($bad_ips);
-        // sorted by expiry, so trimming from the front drops the bans that end first
-        while (strlen($data) > self::BADIPS_MAX_BYTES && $bad_ips !== array()) {
-            $bad_ips = array_slice($bad_ips, intdiv(count($bad_ips), 10) + 1, null, true);
+        $excess = strlen($data) - self::BADIPS_MAX_BYTES;
+        if ($excess > 0) {
+            // the kept entry is already counted in $excess; take it out so the trim cannot drop it
+            $keep_time = ($keep !== null && isset($bad_ips[$keep])) ? $bad_ips[$keep] : null;
+            if ($keep_time !== null) {
+                unset($bad_ips[$keep]);
+            }
+            // sorted by expiry, so dropping from the front removes only the bans that end first,
+            // and only as many as the size limit needs
+            $drop = 0;
+            foreach ($bad_ips as $ip => $jailed_time) {
+                if ($excess <= 0) {
+                    break;
+                }
+                $excess -= strlen(serialize($ip)) + strlen(serialize($jailed_time));
+                ++$drop;
+            }
+            $bad_ips = array_slice($bad_ips, $drop, null, true);
+            if ($keep_time !== null) {
+                $bad_ips[$keep] = $keep_time;
+                asort($bad_ips);
+            }
             $data = serialize($bad_ips);
         }
 
@@ -354,7 +379,7 @@ class Protector
         }
         $bad_ips[$ip] = $jailed_time ? $jailed_time : 0x7fffffff;
 
-        return $this->write_file_badips($bad_ips);
+        return $this->write_file_badips($bad_ips, $ip);
     }
 
     /**
@@ -365,8 +390,17 @@ class Protector
      */
     public function get_bad_ips($with_jailed_time = false, &$readable = null)
     {
-        list($bad_ips_serialized) = @file(Protector::get_filepath4badips());
-        $bad_ips = empty($bad_ips_serialized) ? array() : Serializer::tryFrom($bad_ips_serialized, false, Format::PHP);
+        $path = $this->get_filepath4badips();
+        $raw = file_exists($path) ? @file_get_contents($path) : '';
+        if ($raw === false) {
+            // the list exists but could not be read: do not let a write replace it
+            $bad_ips = false;
+        } elseif (trim($raw) === '') {
+            // missing or empty: there is nothing to preserve
+            $bad_ips = array();
+        } else {
+            $bad_ips = Serializer::tryFrom(trim($raw), false, Format::PHP);
+        }
         $readable = is_array($bad_ips);
         if (!is_array($bad_ips) || isset($bad_ips[0])) {
             $bad_ips = array();
