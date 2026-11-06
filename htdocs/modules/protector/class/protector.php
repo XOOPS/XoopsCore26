@@ -401,8 +401,10 @@ class Protector
         } else {
             $bad_ips = Serializer::tryFrom(trim($raw), false, Format::PHP);
         }
-        $readable = is_array($bad_ips);
-        if (!is_array($bad_ips) || isset($bad_ips[0])) {
+        // a list-shaped array is not an ip => expiry map: treat it as unreadable too, so a
+        // registration does not replace the stored file with its single entry
+        $readable = is_array($bad_ips) && !isset($bad_ips[0]);
+        if (!$readable) {
             $bad_ips = array();
         }
 
@@ -414,7 +416,7 @@ class Protector
             }
             ++$pos;
         }
-        $bad_ips = array_slice($bad_ips, $pos);
+        $bad_ips = array_slice($bad_ips, $pos, null, true);
 
         if ($with_jailed_time) {
             return $bad_ips;
