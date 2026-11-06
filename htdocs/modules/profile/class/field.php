@@ -458,6 +458,11 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
     /**
      * Read field information from cached storage
      *
+     * A field stored before names were validated is left out: every consumer (forms, save
+     * loops, profile display, search) would otherwise read or write an account column or
+     * interpolate the name into SQL. The admin field list reads getObjects() directly, so
+     * such a field can still be deleted there.
+     *
      * @param bool   $force_update   read fields from database and not cached storage
      *
      * @return array
@@ -472,7 +477,10 @@ class ProfileFieldHandler extends XoopsPersistableObjectHandler
             $field_objs = $this->getByLink($criteria, array('o.*'), true, 'cat_id', 'cat_id');
             /* @var ProfileField $field */
             foreach ($field_objs as $field) {
-                $fields[$field->getVar('field_name')] = $field;
+                $name = $field->getVar('field_name', 'n');
+                if (self::isValidFieldName($name)) {
+                    $fields[$name] = $field;
+                }
             }
         }
         return $fields;

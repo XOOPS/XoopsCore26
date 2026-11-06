@@ -73,10 +73,6 @@ function profile_getRegisterForm(XoopsUser $user, $profile, $step = null)
     $weights = array();
     /* @var ProfileField $field */
     foreach ($fields as $field) {
-        // a field stored before names were validated must not override the account controls
-        if (!ProfileFieldHandler::isValidFieldName($field->getVar('field_name', 'n'))) {
-            continue;
-        }
         if ($field->getVar('step_id') == $step['step_id']) {
             $fieldinfo['element'] = $field->getEditElement($user, $profile);
             //assign and check (=)
@@ -206,10 +202,6 @@ function profile_getUserForm(XoopsUser $user, ?ProfileProfile $profile = null, $
     $count_fields = count($fields);
     /* @var ProfileField $field */
     foreach ($fields as $field) {
-        // a field stored before names were validated must not override the account controls
-        if (!ProfileFieldHandler::isValidFieldName($field->getVar('field_name', 'n'))) {
-            continue;
-        }
         if (in_array($field->getVar('field_id'), $editable_fields)) {
             // Set default value for user fields if available
             if ($user->isNew()) {

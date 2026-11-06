@@ -35,8 +35,10 @@ if ('submit' === @$_POST['op']) {
         $xoops->redirect('clone.php', 3, implode('<br>', $xoops->security()->getErrors()));
     }
 
-    // the clone is written under its lowercase name, so check that name for existence
-    $clone = mb_strtolower(\Xmf\Request::getString('clone', '', 'POST'));
+    // the clone is written under its lowercase name, so check that name for existence;
+    // getString() would turn an array value into "Array", so reject anything but a string
+    $clone = \Xmf\Request::getVar('clone', '', 'POST');
+    $clone = is_string($clone) ? mb_strtolower($clone) : '';
 
     //check if name is valid
     if (empty($clone) || preg_match('/[^a-zA-Z0-9\_\-]/', $clone)) {

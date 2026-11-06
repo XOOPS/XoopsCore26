@@ -11,6 +11,8 @@
 
 namespace Xoops\Auth;
 
+use Xoops\Core\Kernel\Criteria;
+
 /**
  * Authentication class factory
  *
@@ -104,7 +106,8 @@ class Factory
         }
         // a spelling the collation folds onto a reserved account (admín -> admin) is that account
         try {
-            $users = \Xoops::getInstance()->getHandlerMember()->getUsers(new \Xoops\Core\Kernel\Criteria('uname', $uname));
+            $criteria = new Criteria('uname', $uname);
+            $users = \Xoops::getInstance()->getHandlerMember()->getUsers($criteria);
         } catch (\Doctrine\DBAL\Exception $e) {
             // no database: there is no local account to protect, and the login cannot complete anyway
             return false;
