@@ -104,4 +104,18 @@ class ConfigItemTest extends \PHPUnit\Framework\TestCase
         $value = $instance->conf_order();
         $this->assertSame(null, $value);
     }
+
+    public function test_getConfValueForOutput_array_is_always_an_array()
+    {
+        $instance = new $this->myclass();
+        $instance->setVar('conf_valuetype', 'array');
+
+        $instance->setVar('conf_value', serialize(array('a', 'b')));
+        $this->assertSame(array('a', 'b'), $instance->getConfValueForOutput());
+
+        foreach (array(serialize('a|b'), serialize(7), 'O:8:"stdClass":0:{}', 'not serialized', '') as $stored) {
+            $instance->setVar('conf_value', $stored);
+            $this->assertSame(array(), $instance->getConfValueForOutput(), $stored);
+        }
+    }
 }

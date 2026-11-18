@@ -324,11 +324,52 @@ class Protector
      */
     public function write_file_badips($bad_ips, $keep = null)
     {
+        return $this->with_badips_lock(function () use ($bad_ips, $keep) {
+            return $this->store_bad_ips($bad_ips, $keep);
+        });
+    }
+
+    /**
+     * Run $update while holding the bad-IP write lock, so one read-modify-write cannot interleave
+     * with another. The lock is a file of its own: the list is replaced by rename(), and a lock
+     * held on the replaced file would not stop the next writer.
+     *
+     * @param callable $update
+     *
+     * @return mixed what $update returns
+     */
+    private function with_badips_lock(callable $update)
+    {
+        $lock = @fopen($this->get_filepath4badips() . '.lock', 'c');
+        if ($lock) {
+            // best effort, as before: where flock() does not work a ban is still recorded
+            @flock($lock, LOCK_EX);
+        }
+        try {
+            return $update();
+        } finally {
+            if ($lock) {
+                fclose($lock);
+            }
+        }
+    }
+
+    /**
+     * Trim the list to the size limit and replace the stored one. Callers hold the write lock.
+     *
+     * @param array       $bad_ips ip => expiry
+     * @param string|null $keep    an ip that trimming must never drop
+     *
+     * @return bool
+     */
+    private function store_bad_ips($bad_ips, $keep = null)
+    {
         asort($bad_ips);
         $data = serialize($bad_ips);
         $excess = strlen($data) - self::BADIPS_MAX_BYTES;
         if ($excess > 0) {
-            // the kept entry is already counted in $excess; take it out so the trim cannot drop it
+            // take the kept entry out so the trim cannot drop it. It goes back in below, so its
+            // bytes stay in the file and $excess must still be freed in full by the other entries
             $keep_time = ($keep !== null && isset($bad_ips[$keep])) ? $bad_ips[$keep] : null;
             if ($keep_time !== null) {
                 unset($bad_ips[$keep]);
@@ -351,16 +392,22 @@ class Protector
             $data = serialize($bad_ips);
         }
 
-        $fp = @fopen($this->get_filepath4badips(), 'w');
-        if ($fp) {
-            @flock($fp, LOCK_EX);
-            fwrite($fp, $data . "\n");
-            @flock($fp, LOCK_UN);
-            fclose($fp);
-            return true;
-        } else {
-            return false;
+        // write the whole list beside the live file and swap it in: a reader sees the old list or
+        // the new one, never a truncated one, and an interrupted write leaves the old list in place
+        $path = $this->get_filepath4badips();
+        $tmp = $path . '.' . bin2hex(random_bytes(6)) . '.tmp';
+        $written = @file_put_contents($tmp, $data . "\n") === strlen($data) + 1;
+        // Windows refuses to replace a file while a reader has it open. A read is over in
+        // microseconds, so try again a few times before giving up
+        for ($try = 0; $written && $try < 5; ++$try) {
+            if (@rename($tmp, $path)) {
+                return true;
+            }
+            usleep(10000);
         }
+        @unlink($tmp);
+
+        return false;
     }
 
     function register_bad_ips($jailed_time = 0, $ip = null)
@@ -372,14 +419,18 @@ class Protector
             return false;
         }
 
-        $bad_ips = $this->get_bad_ips(true, $readable);
-        if (!$readable) {
-            // never replace a stored list that could not be read with this one entry
-            return false;
-        }
-        $bad_ips[$ip] = $jailed_time ? $jailed_time : 0x7fffffff;
+        // read and write under one lock, so a concurrent registration is added to, not replaced
+        return $this->with_badips_lock(function () use ($ip, $jailed_time) {
+            $bad_ips = $this->get_bad_ips(true, $readable);
+            if (!$readable) {
+                // never replace a stored list that could not be read with this one entry;
+                // saving the list in the admin Protect Center rewrites it
+                return false;
+            }
+            $bad_ips[$ip] = $jailed_time ? $jailed_time : 0x7fffffff;
 
-        return $this->write_file_badips($bad_ips, $ip);
+            return $this->store_bad_ips($bad_ips, $ip);
+        });
     }
 
     /**

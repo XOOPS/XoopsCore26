@@ -20,7 +20,13 @@ Security:
    refused before unserialize() runs. Xmf Session::set() refuses values get() cannot read
    back (mamba)
  - Protector keeps its bad-IP file under the size the Serializer reads (dropping the bans
-   that expire first) and never overwrites a stored list it could not read (mamba)
+   that expire first) and never overwrites a stored list it could not read. The list is
+   now replaced atomically (written beside the live file, then renamed) and a ban is
+   registered under a lock, so concurrent bans no longer replace each other; a
+   badips*.lock file appears beside the list (mamba)
+ - An array config item whose stored value is not an array reads as an empty array, and a
+   session fingerprint that is not three strings fails the fingerprint check instead of
+   raising a TypeError (mamba)
  - Profile field names must be plain identifiers and may not name an account column or an
    account form control (uid, pass, level, password, groups, ...); fields stored with such
    names are no longer shown, saved onto the account, or dropped as columns when deleted (mamba)

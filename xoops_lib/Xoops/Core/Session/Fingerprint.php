@@ -83,7 +83,12 @@ class Fingerprint implements FingerprintInterface
         $changes = 0; // number of changed fields
         $currentFingerprint = $this->takePrint();
         $savedFingerprint = Serializer::tryFrom((string) $session->get('SESSION_FINGERPRINT'), false, Format::PHP);
-        if ($savedFingerprint === false) {
+        // anything but a string for every field we compare is not a fingerprint we saved
+        $valid = is_array($savedFingerprint);
+        foreach (array_keys($currentFingerprint) as $key) {
+            $valid = $valid && isset($savedFingerprint[$key]) && is_string($savedFingerprint[$key]);
+        }
+        if (!$valid) {
             $savedFingerprint = $currentFingerprint;
             $changes = empty($_SESSION) ? 0 : 3; // in a populated session - force fail;
         }

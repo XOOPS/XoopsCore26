@@ -218,7 +218,7 @@ class XoopsConfigItem extends XoopsObject
                 break;
             case 'array':
                 $value = Serializer::tryFrom((string) $this->getVar('conf_value', 'n'), false, Format::PHP);
-                return $value ? $value : array();
+                return is_array($value) ? $value : array();
             case 'float':
                 $value = $this->getVar('conf_value', 'n');
                 return (float)$value;

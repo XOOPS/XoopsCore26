@@ -22,6 +22,9 @@
             <directory>./tests/unit/xoopsLib/Xoops</directory>
             <file>./tests/unit/xoopsLib/XoopsTest.php</file>
         </testsuite>
+        <testsuite name="modules">
+            <directory>./tests/unit/modules</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
