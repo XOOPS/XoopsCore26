@@ -5,7 +5,7 @@ v2.6.0-alpha3). The 2013 sections further down use the earlier numbering, so "Al
 appears twice.
 
 ==================================
-NOT RELEASED: Version 2.6.0 Alpha 3
+2026/11/18: Version 2.6.0 Alpha 3
 ==================================
 
 Security:
