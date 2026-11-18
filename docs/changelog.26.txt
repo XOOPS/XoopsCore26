@@ -1,14 +1,12 @@
 XOOPS 2.6 Changelog
 
-==================================
-NOT RELEASED: Version 2.6.0 Alpha 4
-==================================
+Note: the 2026 releases are numbered by their tags (v2.6.0-alpha1, v2.6.0-alpha2,
+v2.6.0-alpha3). The 2013 sections further down use the earlier numbering, so "Alpha 3"
+appears twice.
 
-Updated:
- - jQuery to 3.7.0  (mamba)
- - jQueryUI to 1.13.2 (mamba)
- - jQuery Form to 4.3.0 (mamba)
- - XMF to 1.3.2, keeping the 2.6 Doctrine/Xoops adapters (mamba)
+==================================
+NOT RELEASED: Version 2.6.0 Alpha 3
+==================================
 
 Security:
  - Stored serialized values (array object vars, config items, module data, sessions) are
@@ -37,6 +35,76 @@ Security:
  - ldap_users_bypass now matches the account a directory login resolves to: any letter case
    or collation-equal spelling, and for AD also DOMAIN\name (mamba)
  - Publisher clone checks the lowercase module name it writes for an existing module (mamba)
+ - Passwords are checked in one place, XoopsMemberHandler::verifyPassword(), which compares
+   legacy MD5 hashes with hash_equals(). edituser.php asks for the current password before
+   it changes the password or email address, and so does Profile when an administrator
+   changes their own email address. Every password change revokes the account's remember-me
+   tokens (mamba)
+ - Lost-password links carry a SHA-256 digest of the stored hash; Profile used its first five
+   characters, which are the same for every bcrypt account. The new password is saved before
+   it is mailed (mamba)
+ - LDAP and Active Directory logins stop when the TLS upgrade fails instead of binding over a
+   plain connection (mamba)
+ - User activation links use a single-use token (mamba)
+ - Redirect targets are checked by Xoops\Core\RedirectUrl, in Xoops::redirect() and for
+   xoops_redirect at login: a target on another site, a scheme-relative URL or a look-alike
+   host is not followed unless the caller allows external links (mamba)
+ - System preferences, userconfigs, xcaptcha admin and xlanguage admin no longer import
+   request keys as variables (a key named _SESSION replaced the session); userconfigs saves
+   only the current user's own settings (mamba)
+ - Only a webmaster can change webmaster group membership, or edit or activate a webmaster
+   account (System users and groups, Profile admin); System users applies group changes only
+   with the group administration right (mamba)
+ - A security token sent by POST is now required for System user and group bulk actions, the
+   Images display toggle, Page view-permission toggles, the AJAX status toggles in admin,
+   module rename, account self-delete, Profile deactivation and field visibility, Plugins
+   admin, and the Publisher category, item, file and mimetype forms. A toggle that fails to
+   save answers HTTP 500. BC: scripts that call these by GET or without a token are
+   refused (mamba)
+ - Images admin write and delete permission checks now run; they tested operation names the
+   controllers no longer send (mamba)
+ - Installer: mainfile.php and secure.php values are written with var_export() and only
+   XOOPS_* defines are rewritten. Both files are written under a lock, and an existing
+   mainfile.php or secure.php that this install session did not write blocks the save (an
+   empty file counts as a first-install stub) (mamba)
+ - Shortcodes in theme output no longer expand inside tags, attributes, comments, CDATA or
+   form, script, style, textarea and select bodies, and a generated tag that copied such
+   markup into its attributes is dropped. BC: the [nosc42] base64 decoder is removed (mamba)
+ - XoopsCode color, size, font, url and email arguments are validated and escaped;
+   Xoops::confirm() escapes its names and captions and submits only to a local action (mamba)
+ - Comments admin no longer decodes sanitized comment text (stored XSS), avatar selection
+   accepts only the offered choices, and the TinyMCE file manager is limited to
+   webmasters (mamba)
+ - Private messages: deleting removes only the current folder's side of a message, message
+   ownership is checked, the message icon comes from an allow-list, and pm/readpmsg is not
+   served from the module cache (mamba)
+ - Protector queries stopforumspam as JSON over HTTPS and cuts email and uname to 255 bytes
+   before the lookup; temporary passwords are generated with random_int() (mamba)
+ - cp_header.php takes the module from the executing script path instead of REQUEST_URI (mamba)
+ - Publisher import loads only its known import scripts, and Publisher search always applies
+   the category read filter for non-admins (mamba)
+ - Banners no longer treat an advertiser without a linked account (uid 0) as the anonymous
+   visitor (mamba)
+
+Fixed:
+ - System blocks admin: a parse error on PHP 8 (mamba)
+ - The private-message save box counts only saved messages against its limit (mamba)
+
+==================================
+2026/10/14: Version 2.6.0 Alpha 2
+==================================
+
+Updated:
+ - XMF to 1.3.2, keeping the 2.6 Doctrine/Xoops adapters (mamba)
+
+==================================
+2026/02/15: Version 2.6.0 Alpha 1
+==================================
+
+Updated:
+ - jQuery to 3.7.0  (mamba)
+ - jQueryUI to 1.13.2 (mamba)
+ - jQuery Form to 4.3.0 (mamba)
 
 ==================================
 2013/04/15: Version 2.6.0 Alpha 3
