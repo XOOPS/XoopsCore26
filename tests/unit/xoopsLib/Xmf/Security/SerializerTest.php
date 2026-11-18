@@ -150,17 +150,171 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::fromPhp('a:1:{i:0;');
     }
 
-    public function testFromPhpRejectsNulBytesWithoutAllowedClasses(): void
+    public function testFromPhpKeepsNulBytesInStrings(): void
     {
-        $this->expectException(\RuntimeException::class);
-        Serializer::fromPhp(serialize("a\0b"));
+        // binary data such as random_bytes() round-trips; only object tokens are refused
+        $value = ['token' => "a\0b", "k\0" => ["\0"]];
+
+        $this->assertSame($value, Serializer::fromPhp(serialize($value)));
     }
 
-    public function testFromPhpDoesNotRestoreObjectsByDefault(): void
+    public function testFromPhpRejectsObjectWithPrivateProperty(): void
     {
-        $result = Serializer::fromPhp(serialize(new \ArrayObject([1])));
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp(serialize(['e' => new \Exception('x')]));
+    }
 
-        $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $result);
+    /**
+     * @return array<string, array{string}> payloads holding an object, class or enum token
+     */
+    public static function objectPayloads(): array
+    {
+        return [
+            'object'        => [serialize(new \ArrayObject([1]))],
+            'custom class'  => ['C:11:"ArrayObject":21:{x:i:0;a:0:{};m:a:0:{}}'],
+            'enum'          => ['E:23:"Xmf\Test\NoSuchEnum:One";'],
+            'nested enum'   => ['a:2:{i:0;s:1:"x";s:1:"k";a:1:{i:0;E:23:"Xmf\Test\NoSuchEnum:One";}}'],
+            'nested object' => ['a:1:{i:0;O:8:"stdClass":0:{}}'],
+        ];
+    }
+
+    /**
+     * Run $read with an autoload spy and return the classes it tried to load.
+     *
+     * @return array{0: mixed, 1: array<int, string>} the result and the autoloaded classes
+     */
+    private static function readWithAutoloadSpy(callable $read): array
+    {
+        $loaded = [];
+        $spy = static function (string $class) use (&$loaded): void {
+            $loaded[] = $class;
+        };
+        spl_autoload_register($spy);
+        try {
+            $result = $read();
+        } catch (\RuntimeException $e) {
+            $result = $e->getMessage();
+        } finally {
+            spl_autoload_unregister($spy);
+        }
+        return [$result, $loaded];
+    }
+
+    #[DataProvider('objectPayloads')]
+    public function testFromPhpRejectsObjectTokensBeforeAutoloading(string $payload): void
+    {
+        // allowed_classes=false still autoloads and builds enum cases, so the
+        // payload must be refused before unserialize() resolves any class.
+        [$result, $loaded] = self::readWithAutoloadSpy(static fn() => Serializer::fromPhp($payload));
+
+        $this->assertSame('Objects and enums are not allowed in this payload', $result);
+        $this->assertSame([], $loaded);
+    }
+
+    public function testFromLegacyRejectsEncodedEnumBeforeAutoloading(): void
+    {
+        $payload = base64_encode('E:23:"Xmf\Test\NoSuchEnum:One";');
+        [$result, $loaded] = self::readWithAutoloadSpy(static fn() => Serializer::tryFrom($payload, 'd', Format::LEGACY));
+
+        $this->assertSame('d', $result);
+        $this->assertSame([], $loaded);
+    }
+
+    public function testAllowListRestoresListedClassesAndEnums(): void
+    {
+        $value = ['o' => new \ArrayObject([1]), 'e' => SerializerTestEnum::On];
+
+        $restored = Serializer::fromPhp(serialize($value), [\ArrayObject::class, SerializerTestEnum::class]);
+
+        $this->assertInstanceOf(\ArrayObject::class, $restored['o']);
+        $this->assertSame([1], $restored['o']->getArrayCopy());
+        $this->assertSame(SerializerTestEnum::On, $restored['e']);
+    }
+
+    public function testAllowListRejectsUnlistedEnumBeforeAutoloading(): void
+    {
+        // an allow-list does not stop unserialize() from autoloading an unlisted enum
+        $payload = 'a:2:{i:0;O:11:"ArrayObject":4:{i:0;i:0;i:1;a:0:{}i:2;a:0:{}i:3;N;}i:1;E:23:"Xmf\Test\NoSuchEnum:One";}';
+        [$result, $loaded] = self::readWithAutoloadSpy(static fn() => Serializer::fromPhp($payload, [\ArrayObject::class]));
+
+        $this->assertSame('Objects and enums are not allowed in this payload', $result);
+        $this->assertSame([], $loaded);
+    }
+
+    /**
+     * @return array<string, array{string}> tokens whose declared length runs past the payload
+     */
+    public static function overlongPayloads(): array
+    {
+        return [
+            'string'     => ['s:99999999999999999999:"x";'],
+            'enum name'  => ['E:99999999999999999999:"A:B";'],
+            'class data' => ['C:11:"ArrayObject":99999999999999999999:{}'],
+        ];
+    }
+
+    #[DataProvider('overlongPayloads')]
+    public function testFromPhpRejectsLengthsPastThePayload(string $payload): void
+    {
+        $this->expectException(\UnexpectedValueException::class);
+        Serializer::fromPhp($payload, [\ArrayObject::class, 'A']);
+    }
+
+    public function testAllowListRejectsUnlistedObject(): void
+    {
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp(serialize([new \ArrayObject([1])]), [\SplStack::class]);
+    }
+
+    public function testAllowListRejectsUnlistedEnumInsideClassDataBeforeAutoloading(): void
+    {
+        // ArrayObject decodes its own C: body, where allowed_classes does not stop an enum autoloading
+        $body = 'x:i:0;a:1:{i:0;E:23:"Xmf\Test\NoSuchEnum:One";};m:a:0:{}';
+        $payload = 'C:11:"ArrayObject":' . \strlen($body) . ':{' . $body . '}';
+        [$result, $loaded] = self::readWithAutoloadSpy(static fn() => Serializer::fromPhp($payload, [\ArrayObject::class]));
+
+        $this->assertSame('Objects and enums are not allowed in this payload', $result);
+        $this->assertSame([], $loaded);
+    }
+
+    public function testAllowListRejectsUnlistedObjectInsideClassData(): void
+    {
+        // unserialize() would hand back an ArrayObject holding a __PHP_Incomplete_Class
+        $body = 'x:i:0;a:1:{i:0;O:8:"stdClass":1:{s:1:"x";i:1;}};m:a:0:{}';
+        $payload = 'C:11:"ArrayObject":' . \strlen($body) . ':{' . $body . '}';
+
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp($payload, [\ArrayObject::class]);
+    }
+
+    public function testAllowListRefusesEnumLikeTextInsideClassDataStrings(): void
+    {
+        // the C: body is the class's own format, so its strings are not skipped: fail closed
+        $body = 'x:i:0;a:1:{i:0;s:31:"E:23:"Xmf\Test\NoSuchEnum:One";";};m:a:0:{}';
+        $payload = 'C:11:"ArrayObject":' . \strlen($body) . ':{' . $body . '}';
+
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromPhp($payload, [\ArrayObject::class]);
+    }
+
+    public function testFromPhpKeepsTokenLikeTextInsideStrings(): void
+    {
+        $value = ['O:8:"stdClass":0:{}' => 'E:23:"Xmf\Test\NoSuchEnum:One";', 'n' => [1.5e-7, -INF, true, null, 'C:']];
+
+        $this->assertSame(serialize($value), serialize(Serializer::fromPhp(serialize($value))));
+    }
+
+    public function testFromPhpIgnoresTrailingBytesLikeUnserialize(): void
+    {
+        // Protector writes its IP lists as serialize($list) . "\n"
+        $this->assertSame(['1.2.3.4' => 5], Serializer::fromPhp(serialize(['1.2.3.4' => 5]) . "\n"));
+    }
+
+    public function testFromPhpRejectsUnknownTokens(): void
+    {
+        // serialize() never writes the escaped-string form S:, so it stays outside the grammar
+        $this->expectException(\UnexpectedValueException::class);
+        Serializer::fromPhp('S:1:"\61";');
     }
 
     public function testFromPhpRestoresAllowedClasses(): void
@@ -234,10 +388,19 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::fromLegacy('not a serialized or base64 value');
     }
 
-    public function testFromLegacyRejectsNulBytesInDecodedPayload(): void
+    public function testFromLegacyReportsClassRejectionForPlainPayload(): void
     {
-        $this->expectException(\RuntimeException::class);
-        Serializer::fromLegacy(base64_encode(serialize("abc\0def-padding")));
+        // the plain path reports the same rejection the base64 path does
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessage('Objects and enums are not allowed in this payload');
+        Serializer::fromLegacy(serialize(new \ArrayObject([1])), [\SplStack::class]);
+    }
+
+    public function testFromLegacyKeepsNulBytesInStrings(): void
+    {
+        $value = ['k' => "abc\0def-padding"];
+
+        $this->assertSame($value, Serializer::fromLegacy(base64_encode(serialize($value))));
     }
 
     #[RequiresPhpExtension('zlib')]
@@ -300,7 +463,8 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
             'php null'       => ['N;', Format::PHP],
             'php double'     => [serialize(1.5), Format::PHP],
             'php object'     => [serialize(new \stdClass()), Format::PHP],
-            'legacy'         => [base64_encode(serialize(['a' => 'b'])), Format::LEGACY],
+            'php enum'       => ['E:23:"Xmf\Test\NoSuchEnum:One";', Format::PHP],
+            'legacy'       => [base64_encode(serialize(['a' => 'b'])), Format::LEGACY],
             'plain text'     => ['hello world', Format::AUTO],
             'base64 text'    => [base64_encode('just some plain text'), Format::AUTO],
         ];
@@ -448,4 +612,9 @@ class SerializerTest extends \PHPUnit\Framework\TestCase
         Serializer::enableDebug(false);
         $this->assertSame([], Serializer::getDebugStats());
     }
+}
+
+enum SerializerTestEnum
+{
+    case On;
 }

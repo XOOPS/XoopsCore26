@@ -15,6 +15,8 @@ namespace XoopsModules\Publisher;
 use Criteria;
 use RuntimeException;
 use Xmf\Module\Helper\Session;
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
 use Xoops;
 use Xoops\Core\Text\Sanitizer;
 use XoopsBaseConfig;
@@ -1003,7 +1005,7 @@ class Utils
             return mb_convert_encoding($item, 'UTF-8', 'ISO-8859-1');
         }
 
-        if ($unserialize = \unserialize($item, ['allowed_classes' => false])) {
+        if ($unserialize = Serializer::tryFrom((string) $item, false, Format::PHP)) {
             foreach ($unserialize as $key => $value) {
                 $unserialize[$key] = @iconv('windows-1256', 'UTF-8', $value);
             }

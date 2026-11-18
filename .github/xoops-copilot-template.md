@@ -78,7 +78,7 @@ XOOPS has two major generations with different APIs. Code must support both:
 - All user input must be filtered. Use `Xmf\Request::getVar()` or `Xmf\FilterInput::clean()` — never access `$_GET`, `$_POST`, or `$_REQUEST` directly.
 - Escape all output with `htmlspecialchars($value, ENT_QUOTES, 'UTF-8')` or use Smarty auto-escaping in templates.
 - Use parameterized queries via XOOPS database handlers — never concatenate user input into SQL.
-- Pass `['allowed_classes' => false]` to any `unserialize()` calls to prevent PHP Object Injection.
+- Read serialized data with `Xmf\Security\Serializer::fromPhp()` / `tryFrom()` (XMF 1.3+, PHP 7.4+), not bare `unserialize()`: on PHP 8.1+ `['allowed_classes' => false]` alone still builds enums. Where the Serializer is not available (PHP 7.2/7.3), `unserialize($data, ['allowed_classes' => false])` is sufficient: enums do not exist before PHP 8.1, and objects become `__PHP_Incomplete_Class` without running any class code.
 - Validate file paths with `realpath()` and boundary checks to prevent directory traversal.
 - When generating PHP code (config files, caches), use `var_export()` — never string interpolation with user data.
 - For file operations, follow the defensive pattern: exists -> size check -> readable check -> read -> verify not false.

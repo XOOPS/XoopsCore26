@@ -19,6 +19,8 @@
 
 namespace Xoops\Core\Kernel\Handlers;
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
 use Xoops\Core\Kernel\Dtype;
 use Xoops\Core\Kernel\XoopsObject;
 
@@ -206,7 +208,7 @@ class XoopsConfigItem extends XoopsObject
     /**
      * Get a config value in a format ready for output
      *
-     * @return    string
+     * @return    mixed an int, float or array for those value types, otherwise the stored string
      */
     public function getConfValueForOutput()
     {
@@ -215,8 +217,8 @@ class XoopsConfigItem extends XoopsObject
                 return (int)($this->getVar('conf_value', 'n'));
                 break;
             case 'array':
-                $value = @unserialize($this->getVar('conf_value', 'n'), ['allowed_classes' => false]);
-                return $value ? $value : array();
+                $value = Serializer::tryFrom((string) $this->getVar('conf_value', 'n'), false, Format::PHP);
+                return is_array($value) ? $value : array();
             case 'float':
                 $value = $this->getVar('conf_value', 'n');
                 return (float)$value;

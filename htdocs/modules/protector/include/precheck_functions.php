@@ -19,6 +19,9 @@
  * @version         $Id$
  */
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
+
 /**
  * @return null|boolean
  */
@@ -58,10 +61,10 @@ function protector_precheck()
     }
 
     // reliable ips
-    $reliable_ips = @unserialize(@$conf['reliable_ips'], ['allowed_classes' => false]);
+    $reliable_ips = Serializer::tryFrom((string) ($conf['reliable_ips'] ?? ''), false, Format::PHP);
     if (!is_array($reliable_ips)) {
         // for the environment of (buggy core version && magic_quotes_gpc)
-        $reliable_ips = @unserialize(stripslashes(@$conf['reliable_ips']), ['allowed_classes' => false]);
+        $reliable_ips = Serializer::tryFrom(stripslashes((string) ($conf['reliable_ips'] ?? '')), false, Format::PHP);
         if (!is_array($reliable_ips)) {
             $reliable_ips = array();
         }

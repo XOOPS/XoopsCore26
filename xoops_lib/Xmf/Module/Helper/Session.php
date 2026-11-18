@@ -12,11 +12,17 @@
 
 namespace Xmf\Module\Helper;
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
+
 /**
  * Manage session variables for a module. Session variable will be
  * prefixed with the module name to separate it from variables set
- * by other modules or system functions. All data is serialized, so
- * any arbitrary data (i.e. array) can be stored.
+ * by other modules or system functions. Values are serialized, so
+ * scalars, null and arrays of them can be stored. set() throws for an
+ * object, enum or closure anywhere in the value and for a resource passed
+ * directly (PHP serializes one inside an array as 0), and get() returns
+ * false for a stored value it cannot read back safely.
  *
  * @category  Xmf\Module\Helper\Session
  * @package   Xmf
@@ -60,18 +66,24 @@ class Session extends AbstractHelper
     /**
      * Sets a named session variable respecting our module prefix
      *
-     * Store scalars and arrays only: get() does not restore objects, which
-     * come back as __PHP_Incomplete_Class.
+     * Store scalars and arrays only: a value get() could not read back (one
+     * holding an object or enum, or over the size limit) is refused, not stored.
      *
      * @param string $name  name of variable
      * @param mixed  $value value of variable
      *
      * @return void
+     *
+     * @throws \InvalidArgumentException When $value holds a resource or closure
+     * @throws \RuntimeException When $value holds an object or enum, or exceeds the Serializer size limit
      */
     public function set($name, $value)
     {
         $prefixedName = $this->prefix($name);
-        $_SESSION[$prefixedName] = serialize($value);
+        $serialized = Serializer::toPhp($value);
+        // the same check get() applies, so nothing is stored that would read back as false
+        Serializer::fromPhp($serialized);
+        $_SESSION[$prefixedName] = $serialized;
     }
 
     /**
@@ -80,13 +92,15 @@ class Session extends AbstractHelper
      * @param string $name    name of variable
      * @param mixed  $default default value to return if config $name is not set
      *
-     * @return mixed  $value value of session variable or false if not set
+     * @return mixed  $value value of session variable, $default if not set, or false if unreadable
      */
     public function get($name, $default = false)
     {
         $prefixedName = $this->prefix($name);
         if (isset($_SESSION[$prefixedName])) {
-            return unserialize($_SESSION[$prefixedName], ['allowed_classes' => false]);
+            $stored = $_SESSION[$prefixedName];
+            // set() stores a string; anything else was written around it and is not read
+            return \is_string($stored) ? Serializer::tryFrom($stored, false, Format::PHP) : false;
         } else {
             return $default;
         }

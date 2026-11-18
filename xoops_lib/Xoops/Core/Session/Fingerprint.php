@@ -11,6 +11,8 @@
 
 namespace Xoops\Core\Session;
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
 use Xoops\Core\AttributeInterface;
 use Xoops\Core\HttpRequest;
 
@@ -80,8 +82,13 @@ class Fingerprint implements FingerprintInterface
         $score = 0;   // combined levenshtein distance of changes
         $changes = 0; // number of changed fields
         $currentFingerprint = $this->takePrint();
-        $savedFingerprint = unserialize((string) $session->get('SESSION_FINGERPRINT'), ['allowed_classes' => false]);
-        if ($savedFingerprint === false) {
+        $savedFingerprint = Serializer::tryFrom((string) $session->get('SESSION_FINGERPRINT'), false, Format::PHP);
+        // anything but a string for every field we compare is not a fingerprint we saved
+        $valid = is_array($savedFingerprint);
+        foreach (array_keys($currentFingerprint) as $key) {
+            $valid = $valid && isset($savedFingerprint[$key]) && is_string($savedFingerprint[$key]);
+        }
+        if (!$valid) {
             $savedFingerprint = $currentFingerprint;
             $changes = empty($_SESSION) ? 0 : 3; // in a populated session - force fail;
         }

@@ -11,6 +11,8 @@
 
 namespace Xoops\Core\Kernel\Dtype;
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
 use Xoops\Core\Kernel\Dtype;
 use Xoops\Core\Kernel\XoopsObject;
 
@@ -45,7 +47,7 @@ class DtypeArray extends DtypeAbstract
             default:
                 if (!is_array($value)) {
                     if ($value != '') {
-                        $value = unserialize($value, ['allowed_classes' => false]);
+                        $value = Serializer::tryFrom((string) $value, false, Format::PHP);
                     }
                     $value = is_array($value) ? $value : array();
                 }

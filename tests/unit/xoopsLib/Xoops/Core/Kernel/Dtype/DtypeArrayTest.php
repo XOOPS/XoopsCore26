@@ -90,8 +90,21 @@ class DtypeArrayTest extends \PHPUnit\Framework\TestCase
         $value = $this->xObject->getVar('arraytest', Dtype::FORMAT_SHOW);
 
         $this->assertFalse(DtypeArrayProbe::$woken);
-        $this->assertInstanceOf(\__PHP_Incomplete_Class::class, $value['x']);
+        $this->assertSame([], $value);
     }
+
+    public function testStoredEnumIsNotRestored()
+    {
+        // allowed_classes=false alone still returns enum cases
+        $this->xObject->vars['arraytest']['value'] = serialize(['x' => DtypeArrayProbeEnum::On]);
+
+        $this->assertSame([], $this->xObject->getVar('arraytest', Dtype::FORMAT_SHOW));
+    }
+}
+
+enum DtypeArrayProbeEnum
+{
+    case On;
 }
 
 class DtypeArrayProbe

@@ -18,6 +18,8 @@
  * @version         $Id$
  */
 
+use Xmf\Security\Format;
+use Xmf\Security\Serializer;
 use Xoops\Core\Database\Connection;
 use Xoops\Core\Kernel\XoopsObject;
 use Xoops\Core\Kernel\XoopsPersistableObjectHandler;
@@ -156,7 +158,7 @@ class UserconfigsItem extends XoopsObject
     /**
      * Get a config value in a format ready for output
      *
-     * @return    string
+     * @return    mixed an int, float or array for those value types, otherwise the stored string
      */
     public function getConfValueForOutput()
     {
@@ -165,8 +167,8 @@ class UserconfigsItem extends XoopsObject
             return (int)($this->getVar('conf_value', 'n'));
             break;
         case 'array':
-            $value = @unserialize($this->getVar('conf_value', 'n'), ['allowed_classes' => false]);
-            return $value ? $value : array();
+            $value = Serializer::tryFrom((string) $this->getVar('conf_value', 'n'), false, Format::PHP);
+            return is_array($value) ? $value : array();
         case 'float':
             $value = $this->getVar('conf_value', 'n');
             return (float)$value;
