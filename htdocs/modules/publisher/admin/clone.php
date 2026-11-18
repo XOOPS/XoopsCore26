@@ -86,22 +86,6 @@ if ('submit' === @$_POST['op']) {
 Publisher\Utils::closeCollapsableBar('clone', 'cloneicon');
 $xoops->footer();
 
-// work around for PHP < 5.0.x
-if (!function_exists('file_put_contents')) {
-    /**
-     * @param      $filename
-     * @param      $data
-     * @param bool $file_append
-     */
-    function file_put_contents($filename, $data, $file_append = false)
-    {
-        if ($fp = fopen($filename, (!$file_append ? 'w+' : 'a+'))) {
-            fwrite($fp, $data);
-            fclose($fp);
-        }
-    }
-}
-
 // recursive clonning script
 /**
  * @param $path

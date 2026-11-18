@@ -15,9 +15,10 @@ class ProtectorBadIpsDouble extends \Protector
 
     public function __construct()
     {
+        // deliberately empty: Protector's own constructor reads the site's config cache
     }
 
-    function get_filepath4badips()
+    public function get_filepath4badips()
     {
         return $this->badipsPath;
     }
@@ -182,7 +183,9 @@ class ProtectorBadIpsTest extends \PHPUnit\Framework\TestCase
         $data = trim(file_get_contents($this->protector->badipsPath));
         $this->assertLessThanOrEqual(\Protector::BADIPS_MAX_BYTES, strlen($data));
 
-        $stored = unserialize($data, array('allowed_classes' => false));
+        // through the production reader: the trimmed file must still be one Protector can read
+        $stored = $this->protector->get_bad_ips(true, $readable);
+        $this->assertTrue($readable);
         $this->assertSame($base - 1, $stored[$keep]);
 
         $dropped = array_diff_key($bad_ips, $stored);
